@@ -1,28 +1,55 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use serde::Serialize;
-use solana_program::program_error::ProgramError;
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
+
+use crate::state::AclType;
+
 // use solana_config_program::ConfigState;
 
 pub enum ConfigInstructions {
-    AddOrEditBlocklist {
-        pubkey: String,
-        blocklist: Vec<String>,
+    // 0 - This will include initialization
+    AddBlockList {
+        acl_type: AclType,
+        blocklist: Vec<Pubkey>,
     },
-    DeleteBlocklist {
-        pubkey: String,
+    // 1 - This will update blocklist and rent if is required
+    UpdateBlocklist {
+        edit_list: Vec<IndexPubkey>,
     },
-    InitializeAccount
+    // 2
+    CloseAccount,
+    // 3
+    UpdateAuthority,
+    // 4
+    UpdateAclType {
+        acl_type: AclType,
+    },
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Default, Serialize)]
+#[derive(BorshDeserialize, BorshSerialize, Default)]
 pub struct ConfigPayload {
-    pubkey: String,
-    blocklist: Vec<String>,
+    acl_type: AclType,
+    blocklist: Vec<Pubkey>,
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Default, Serialize)]
-pub struct DeleteConfigPayload {
-    pubkey: String,
+#[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct UpdateAclPayload {
+    acl_type: AclType,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct UpdateAuthPayload {
+    authority: Option<Pubkey>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct UpdateBlocklistPayload {
+    edit_list: Vec<IndexPubkey>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct IndexPubkey {
+    pub index: u64,
+    pub key: Pubkey,
 }
 
 impl ConfigInstructions {
@@ -33,22 +60,26 @@ impl ConfigInstructions {
         Ok(match variant {
             0 => {
                 let payload = ConfigPayload::try_from_slice(raw)?;
-                Self::AddOrEditBlocklist {
-                    pubkey: payload.pubkey,
+                Self::AddBlockList {
                     blocklist: payload.blocklist,
+                    acl_type: payload.acl_type,
                 }
             }
             1 => {
-                let payload = DeleteConfigPayload::try_from_slice(raw)?;
-                Self::DeleteBlocklist {
-                    pubkey: payload.pubkey,
+                let payload = UpdateBlocklistPayload::try_from_slice(raw)?;
+                Self::UpdateBlocklist {
+                    edit_list: payload.edit_list,
                 }
             }
-            2 => {
-                Self::InitializeAccount
-            },
+            2 => Self::CloseAccount,
+            3 => Self::UpdateAuthority,
+            4 => {
+                let payload = UpdateAclPayload::try_from_slice(raw)?;
+                Self::UpdateAclType {
+                    acl_type: payload.acl_type,
+                }
+            }
             _ => return Err(ProgramError::InvalidInstructionData),
         })
     }
 }
-

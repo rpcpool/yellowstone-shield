@@ -1,14 +1,19 @@
-
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ConfigErrors { 
+pub enum ConfigErrors {
     #[error("Not enough data in instructions")]
     NotEnoughData,
-    
+
     #[error("Invalid PDA")]
-    InvalidPDA
+    InvalidPDA,
+
+    #[error("The account is not writable")]
+    NotWritableAccount,
+
+    #[error("Unable to get struct size")]
+    ErrorGetStructSize,
 }
 
 impl From<ConfigErrors> for ProgramError {

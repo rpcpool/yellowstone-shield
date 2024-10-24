@@ -15,9 +15,5 @@ serde = { version = "1.0.145" }
 getrandom = { version = "0.1.14", features = ["dummy"] }
 # getrandom = { version = "0.1.14", features = ["dummy"] }
 
-
-[dev-dependencies]
-solana-config-program = "2.0.9"
-
 [lib]
 crate-type = ["cdylib", "lib"]
