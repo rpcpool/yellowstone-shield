@@ -14,6 +14,9 @@ pub enum ConfigErrors {
 
     #[error("Unable to get struct size")]
     ErrorGetStructSize,
+
+    #[error("Inmutable account")]
+    ErrorInmutable,
 }
 
 impl From<ConfigErrors> for ProgramError {

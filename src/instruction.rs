@@ -3,53 +3,58 @@ use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
 use crate::state::AclType;
 
-// use solana_config_program::ConfigState;
-
+#[derive(BorshDeserialize, BorshSerialize)]
 pub enum ConfigInstructions {
     // 0 - This will include initialization
-    AddBlockList {
-        acl_type: AclType,
-        blocklist: Vec<Pubkey>,
-    },
+    InitializeList(InitializeListPayload),
     // 1 - This will update blocklist and rent if is required
-    UpdateBlocklist {
-        edit_list: Vec<IndexPubkey>,
-    },
+    ExtendList(ExtendListPayload),
     // 2
+    RemoveItemList(DeleteListPayload),
+    // 3 - Close account and transfer sol to desired account
     CloseAccount,
-    // 3
-    UpdateAuthority,
-    // 4
-    UpdateAclType {
-        acl_type: AclType,
-    },
+    // 4 - Update account list type
+    UpdateAclType(AclPayload),
+    // 5 - Freeze account
+    FreezeAccount,
+    // 6 - Update item list
+    UpdateList(EditListPayload),
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default)]
-pub struct ConfigPayload {
-    acl_type: AclType,
-    blocklist: Vec<Pubkey>,
+pub struct InitializeListPayload {
+    pub acl_type: AclType,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default)]
-pub struct UpdateAclPayload {
-    acl_type: AclType,
+pub struct AclPayload {
+    pub acl_type: AclType,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default)]
 pub struct UpdateAuthPayload {
-    authority: Option<Pubkey>,
+    pub authority: Option<Pubkey>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default)]
-pub struct UpdateBlocklistPayload {
-    edit_list: Vec<IndexPubkey>,
+pub struct ExtendListPayload {
+    pub list: Vec<Pubkey>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct EditListPayload {
+    pub list: Vec<IndexPubkey>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Default, Clone)]
 pub struct IndexPubkey {
     pub index: u64,
     pub key: Pubkey,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Default)]
+pub struct DeleteListPayload {
+    pub index: usize,
 }
 
 impl ConfigInstructions {
@@ -57,27 +62,30 @@ impl ConfigInstructions {
         let (&variant, raw) = data
             .split_first()
             .ok_or(ProgramError::InvalidInstructionData)?;
+
         Ok(match variant {
             0 => {
-                let payload = ConfigPayload::try_from_slice(raw)?;
-                Self::AddBlockList {
-                    blocklist: payload.blocklist,
-                    acl_type: payload.acl_type,
-                }
+                let payload = InitializeListPayload::try_from_slice(raw)?;
+
+                Self::InitializeList(payload)
             }
             1 => {
-                let payload = UpdateBlocklistPayload::try_from_slice(raw)?;
-                Self::UpdateBlocklist {
-                    edit_list: payload.edit_list,
-                }
+                let payload = ExtendListPayload::try_from_slice(raw)?;
+                Self::ExtendList(payload)
             }
-            2 => Self::CloseAccount,
-            3 => Self::UpdateAuthority,
+            2 => {
+                let payload = DeleteListPayload::try_from_slice(raw)?;
+                Self::RemoveItemList(payload)
+            }
+            3 => Self::CloseAccount,
             4 => {
-                let payload = UpdateAclPayload::try_from_slice(raw)?;
-                Self::UpdateAclType {
-                    acl_type: payload.acl_type,
-                }
+                let payload = AclPayload::try_from_slice(raw)?;
+                Self::UpdateAclType(payload)
+            }
+            5 => Self::FreezeAccount,
+            6 => {
+                let payload = EditListPayload::try_from_slice(raw)?;
+                Self::UpdateList(payload)
             }
             _ => return Err(ProgramError::InvalidInstructionData),
         })
