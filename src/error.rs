@@ -17,6 +17,9 @@ pub enum ConfigErrors {
 
     #[error("Inmutable account")]
     ErrorInmutable,
+
+    #[error("Incorrect authority account")]
+    IncorrectAuthority,
 }
 
 impl From<ConfigErrors> for ProgramError {

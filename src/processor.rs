@@ -368,7 +368,7 @@ fn check_auth_freeze(meta_list: &MetaList, auth_key: Option<Pubkey>) -> ProgramR
 
     if auth_key.ne(&meta_list.authority) {
         msg!("Unauthorized");
-        return Err(ProgramError::IncorrectAuthority);
+        return Err(ConfigErrors::IncorrectAuthority.into());
     }
     Ok(())
 }
