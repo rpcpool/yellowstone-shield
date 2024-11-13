@@ -1,0 +1,24 @@
+[package]
+name = "solana-jet-list-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.92"
+borsh = {workspace = true}
+thiserror = { workspace = true }
+bincode = { workspace = true }
+serde_derive = { workspace = true }
+serde = { workspace = true }
+bytemuck = { workspace = true }
+clap = {version="4.5.20", features=["cargo","derive"]}
+serde_yml = "0.0.12"
+serde_json = "1.0.132"
+solana-client = "~1.18.23"
+solana-sdk = "~1.18.23"
+solana-yellowstone-blocklist = {path = "../jet-list"}
+tokio = "1.41.0"
+
+[[bin]]
+name = "jet-cli"
+path = "src/main.rs"

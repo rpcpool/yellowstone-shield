@@ -1,14 +1,8 @@
-[package]
-name = "solana-yellowstone-blocklist"
-version = "0.1.0"
-edition = "2021"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+resolver = "2"
+members = ["jet-list", "jet-cli"]
 
-[features]
-no-entrypoint = []
-test-sbf = []
-
-[dependencies]
+[workspace.dependencies]
 solana-program = "~1.18.23"
 borsh = "1.5.1"
 thiserror = "1.0.58"
@@ -18,19 +12,6 @@ serde = { version = "1.0.145" }
 bytemuck = "1.19.0"
 getrandom = { version = "0.1.14", features = ["dummy"] }
 
-[dev-dependencies]
-assert_matches = "1.5.0"
-solana-logger = "~1.18.23"
-solana-program-test = "~1.18.23"
-# solana-test-validator = "=2.0.2"
-solana-sdk = "~1.18.23"
-borsh = "1.5.1"
-
-
-[patch.crates-io]
+[workspace.metadata.patch.crates-io]
 solana-program = { git = "https://github.com/rpcpool/solana-public.git", tag = "v1.18.23-triton-public" }
 solana-sdk = { git = "https://github.com/rpcpool/solana-public.git", tag = "v1.18.23-triton-public" }
-
-[lib]
-crate-type = ["cdylib", "lib"]
-doctest = false

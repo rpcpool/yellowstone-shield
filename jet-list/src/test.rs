@@ -5,8 +5,7 @@ mod tests {
     use crate::*;
     use borsh::BorshSerialize;
     use instruction::{
-        AclPayload, DeleteListPayload, EditListPayload, ExtendListPayload, IndexPubkey,
-        InitializeListPayload,
+        AclPayload, AddListPayload, DeleteListPayload, IndexPubkey, InitializeListPayload,
     };
     use pda::find_pda;
     use solana_sdk::signature::Keypair;
@@ -177,11 +176,28 @@ mod tests {
         .await
         .unwrap();
 
-        let mut new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        // Second list is to check that is possible to concat more pubkeys
-        let mut concat_list = vec![Pubkey::new_unique()];
+        let mut key_list = vec![];
+        for _ in 0..3 {
+            key_list.push(Pubkey::new_unique());
+        }
 
-        extend_list_acc(
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: key_list[0],
+            },
+            IndexPubkey {
+                index: 2,
+                key: key_list[1],
+            },
+        ];
+
+        let concat_list = vec![IndexPubkey {
+            index: 2,
+            key: key_list[2],
+        }];
+
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -192,7 +208,7 @@ mod tests {
         )
         .await
         .unwrap();
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -212,11 +228,9 @@ mod tests {
             .unwrap()
             .data;
 
-        new_list.append(&mut concat_list);
-
         let state = ListState::deserialize(data.as_ref()).unwrap();
 
-        assert_eq!(state.list, new_list.as_slice());
+        assert_eq!(state.list, key_list.as_slice());
     }
 
     // Update with wrong authorization
@@ -243,7 +257,16 @@ mod tests {
         ];
         let signing_keypairs_wrong = &[&payer];
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
 
         // create Initialize instruction
         initialize_account(
@@ -257,7 +280,7 @@ mod tests {
         .await
         .unwrap();
 
-        let res = extend_list_acc(
+        let res = add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -289,9 +312,17 @@ mod tests {
         ];
         let signing_keypairs = &[&payer, &authority];
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-
-        let res = extend_list_acc(
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let res = add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -347,8 +378,18 @@ mod tests {
         .unwrap();
 
         // send tx
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let res = extend_list_acc(
+
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let res = add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -966,15 +1007,25 @@ mod tests {
         )
         .await
         .unwrap();
+        let mut key_list = vec![];
+        for _ in 0..4 {
+            key_list.push(Pubkey::new_unique());
+        }
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let update_list = vec![IndexPubkey {
-            index: 0,
-            key: Pubkey::new_unique(),
-        }];
-        let cmp_list = vec![update_list[0].key, new_list[1]];
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: key_list[0],
+            },
+            IndexPubkey {
+                index: 2,
+                key: key_list[1],
+            },
+        ];
+        let update_list = vec![key_list[2], key_list[3]];
+        let cmp_list = vec![key_list[2], key_list[1], key_list[3]];
 
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -986,14 +1037,16 @@ mod tests {
         .await
         .unwrap();
 
-        update_list_acc(
+        let remove = vec![0];
+
+        delete_item_acc(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
             &mut banks_client,
             accounts.clone(),
             signing_keypairs,
-            update_list.clone(),
+            remove,
         )
         .await
         .unwrap();
@@ -1005,240 +1058,54 @@ mod tests {
             .unwrap()
             .data;
 
-        let state = ListState::deserialize(data.as_ref()).unwrap();
+        let state: ListState<'_> = ListState::deserialize(&data).unwrap();
+        let indexes: Vec<usize> = state
+            .list
+            .iter()
+            .enumerate()
+            .filter_map(|(index, key)| (key.to_bytes().eq(&ZEROED)).then(|| index))
+            .collect();
+
+        let mut list = vec![];
+        let mut it_list = update_list.iter();
+        let mut iter_i = indexes.iter();
+        loop {
+            match (it_list.next(), iter_i.next()) {
+                (Some(key), Some(index)) => list.push(IndexPubkey {
+                    index: *index as u64,
+                    key: *key,
+                }),
+                (Some(key), None) => list.push(IndexPubkey {
+                    index: (state.meta.list_items + 1) as _,
+                    key: *key,
+                }),
+                (None, Some(_)) => break,
+                (None, None) => break,
+            }
+        }
+
+        add_list(
+            program_id,
+            payer.insecure_clone(),
+            recent_blockhash,
+            &mut banks_client,
+            accounts.clone(),
+            signing_keypairs,
+            list.clone(),
+        )
+        .await
+        .unwrap();
+
+        let data = banks_client
+            .get_account(pda_key)
+            .await
+            .unwrap()
+            .unwrap()
+            .data;
+
+        let state: ListState<'_> = ListState::deserialize(&data).unwrap();
 
         assert_eq!(state.list, cmp_list);
-    }
-
-    // Check for wrong index
-
-    #[tokio::test]
-    async fn test_update_2() {
-        let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
-        // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
-
-        let accounts = vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
-            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-        ];
-        let signing_keypairs = &[&payer];
-
-        // create Initialize instruction
-        initialize_account(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-        )
-        .await
-        .unwrap();
-
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let update_list = vec![IndexPubkey {
-            index: 3,
-            key: Pubkey::new_unique(),
-        }];
-
-        extend_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            new_list.clone(),
-        )
-        .await
-        .unwrap();
-
-        let res = update_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            update_list.clone(),
-        )
-        .await;
-
-        assert!(res.is_err());
-    }
-
-    // Check for wrong authority
-    #[tokio::test]
-    async fn test_update_3() {
-        let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
-        // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
-
-        let authority = Keypair::new();
-
-        let accounts = vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
-            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-            AccountMeta::new(authority.pubkey(), true),
-        ];
-        let signing_keypairs = &[&payer, &authority];
-
-        let wrong_accounts = vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
-            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-        ];
-        let signing_keypairs_wrong = &[&payer];
-
-        // create Initialize instruction
-        initialize_account(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-        )
-        .await
-        .unwrap();
-
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let update_list = vec![IndexPubkey {
-            index: 0,
-            key: Pubkey::new_unique(),
-        }];
-
-        extend_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            new_list,
-        )
-        .await
-        .unwrap();
-
-        let res = update_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            wrong_accounts,
-            signing_keypairs_wrong,
-            update_list.clone(),
-        )
-        .await;
-
-        assert!(res.is_err());
-    }
-
-    // Check for freeze account
-    #[tokio::test]
-    async fn test_update_4() {
-        let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
-        // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
-
-        let accounts = vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
-            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-        ];
-        let signing_keypairs = &[&payer];
-
-        // create Initialize instruction
-        initialize_account(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-        )
-        .await
-        .unwrap();
-
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let update_list = vec![IndexPubkey {
-            index: 0,
-            key: Pubkey::new_unique(),
-        }];
-
-        extend_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            new_list.clone(),
-        )
-        .await
-        .unwrap();
-
-        freeze_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-        )
-        .await
-        .unwrap();
-
-        let res = update_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            update_list.clone(),
-        )
-        .await;
-
-        assert!(res.is_err());
-    }
-
-    // Check for uninitialized account
-
-    #[tokio::test]
-    async fn test_update_5() {
-        let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
-        // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
-
-        let accounts = vec![
-            AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
-            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-        ];
-        let signing_keypairs = &[&payer];
-
-        // create Initialize instruction
-        let update_list = vec![IndexPubkey {
-            index: 0,
-            key: Pubkey::new_unique(),
-        }];
-
-        let res = update_list_acc(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            &mut banks_client,
-            accounts.clone(),
-            signing_keypairs,
-            update_list.clone(),
-        )
-        .await;
-
-        assert!(res.is_err());
     }
 
     // Delete items
@@ -1268,11 +1135,20 @@ mod tests {
         .await
         .unwrap();
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let remove = 0;
-        let cmp_list = vec![Pubkey::from(ZEROED), new_list[1]];
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let remove = vec![0];
+        let cmp_list = vec![Pubkey::from(ZEROED), new_list[1].key];
 
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -1334,10 +1210,19 @@ mod tests {
         .await
         .unwrap();
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let remove = 3;
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let remove = vec![3];
 
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -1399,10 +1284,19 @@ mod tests {
         .await
         .unwrap();
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let remove = 0;
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let remove = vec![0];
 
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -1453,10 +1347,19 @@ mod tests {
         .await
         .unwrap();
 
-        let new_list = vec![Pubkey::new_unique(), Pubkey::new_unique()];
-        let remove = 0;
+        let new_list = vec![
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+            IndexPubkey {
+                index: 2,
+                key: Pubkey::new_unique(),
+            },
+        ];
+        let remove = vec![0];
 
-        extend_list_acc(
+        add_list(
             program_id,
             payer.insecure_clone(),
             recent_blockhash,
@@ -1508,7 +1411,7 @@ mod tests {
         ];
         let signing_keypairs = &[&payer];
 
-        let remove = 0;
+        let remove = vec![0];
 
         let res = delete_item_acc(
             program_id,
@@ -1588,16 +1491,16 @@ mod tests {
         return banks_client.process_transaction(transaction).await;
     }
 
-    async fn extend_list_acc(
+    async fn add_list(
         program_id: Pubkey,
         payer: Keypair,
         recent_blockhash: Hash,
         banks_client: &mut BanksClient,
         accounts: Vec<AccountMeta>,
         signing_keypairs: &[&Keypair],
-        list: Vec<Pubkey>,
+        list: Vec<IndexPubkey>,
     ) -> Result<(), BanksClientError> {
-        let extend_list = instruction::ConfigInstructions::ExtendList(ExtendListPayload { list });
+        let extend_list = instruction::ConfigInstructions::Add(AddListPayload { list });
         let mut extend_list_data = Vec::new();
         extend_list.serialize(&mut extend_list_data).unwrap();
 
@@ -1609,31 +1512,6 @@ mod tests {
             accounts,
             signing_keypairs,
             extend_list_data,
-        )
-        .await;
-    }
-
-    async fn update_list_acc(
-        program_id: Pubkey,
-        payer: Keypair,
-        recent_blockhash: Hash,
-        banks_client: &mut BanksClient,
-        accounts: Vec<AccountMeta>,
-        signing_keypairs: &[&Keypair],
-        list: Vec<IndexPubkey>,
-    ) -> Result<(), BanksClientError> {
-        let update_list = instruction::ConfigInstructions::UpdateList(EditListPayload { list });
-        let mut update_list_data = Vec::new();
-        update_list.serialize(&mut update_list_data).unwrap();
-
-        return make_transaction(
-            program_id,
-            payer.insecure_clone(),
-            recent_blockhash,
-            banks_client,
-            accounts,
-            signing_keypairs,
-            update_list_data,
         )
         .await;
     }
@@ -1671,10 +1549,10 @@ mod tests {
         banks_client: &mut BanksClient,
         accounts: Vec<AccountMeta>,
         signing_keypairs: &[&Keypair],
-        index: usize,
+        vec_index: Vec<usize>,
     ) -> Result<(), BanksClientError> {
         let delete_list =
-            instruction::ConfigInstructions::RemoveItemList(DeleteListPayload { index });
+            instruction::ConfigInstructions::RemoveItemList(DeleteListPayload { vec_index });
         let mut delete_list_data = Vec::new();
         delete_list.serialize(&mut delete_list_data).unwrap();
 

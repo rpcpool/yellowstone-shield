@@ -1,3 +1,5 @@
 /target
-buffer.json
-test.json
+*/buffer.json
+*/test.json
+*/target
+config_list.yaml

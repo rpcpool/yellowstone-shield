@@ -1,28 +1,57 @@
-# Blocklists smart contract
+# jet-cli Commands
 
-Smart contract used to store the blocklist created by a client.
+jet-cli is a tool to interact with the allow/deny list program. This tool needs a configuration file. It can be used the following way or by creating the config_list.yaml in the root:
 
-## How to deploy smart contract
-1. First run 
 ```
-    cargo build-bpf
-``` 
-This command line argument comes with the Solana CLI.
+jet-cli --config <path>
+```
 
-2. After that, you must use 
-```
-cargo solana deploy <PROGRAM_FILEPATH> --keypair <KEYPAIR_FILEPATH>
-```
-The keypair will be the owner and authority of the program to update it. In case you want to set another upgrade authority, it is possible to use --upgrade-authority. The keypair must be funded in SOL to pay the transaction and rent-exempt.
+It can use authority, payer, rpc-url and program-id arguments to bypass the ones established in the config.
+Example:
 
-## How to update smart contract
-1. To update a program, it is mandatory to use this command that creates a buffer-account 
 ```
-solana program write-buffer <PROGRAM_FILEPATH> --buffer-authority <BUFFER_AUTHORITY_FILEPATH>
-``` 
-where the buffer authority must be the same that the upgrade authority.
+jet-cli --authority <path/keypair> --payer <path/keypair> --rpc-url <url> --program-id <pubkey>
+```
 
-2. After using the first command, it'll return the buffer keypair and we have to use it with 
+The CLI has 9 actions to perform: 
+
+- Initialize: starts the account with a certain type of list.
+Example: 
 ```
-solana program upgrade <BUFFER_ACCOUNT_KEYPAIR> <SMART_CONTRACT_PUBKEY> --upgrade-authority <UPGRADE_AUTHORITY_FILEPATH>
+jet-cli initialize <deny/allow>
 ```
+- Add: update any item inside the pubkey passing the index and pubkey
+```
+jet-cli add <path/pubkey>
+```
+- Delete: remove items from the list
+```
+jet-cli delete <path/pubkey>
+```
+- Close: close account and transfer lamports in PDA account to desired recipient account
+```
+jet-cli close
+```
+- Freeze
+```
+jet-cli freeze
+```
+- Update-acl: updates list type
+```
+jet-cli update-acl <deny/allow> 
+```
+- State: shows PDA account state. 
+```
+jet-cli state
+// There is an optional argument to parse data from a different account than the PDA calculated by payer keypair, is called using --pubkey <pubkey>
+```
+- Pda-key: shows PDA pubkey
+```
+jet-cli pda-key
+```
+
+NOTE: remember that if you do not have a config_list.yml or do not provide the flag `--config <path>`, each of the actions must receive the following parameters:
+`--authority <path/keypair>`
+`--payer <path/keypair>`
+`--rpc-url <url>`
+`--program-id <pubkey>`

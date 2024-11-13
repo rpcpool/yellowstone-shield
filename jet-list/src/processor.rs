@@ -3,8 +3,8 @@ use std::ops::Sub;
 use crate::{
     error::ConfigErrors,
     instruction::{
-        AclPayload, ConfigInstructions, DeleteListPayload, EditListPayload, ExtendListPayload,
-        IndexPubkey, InitializeListPayload,
+        AclPayload, AddListPayload, ConfigInstructions, DeleteListPayload, IndexPubkey,
+        InitializeListPayload,
     },
     pda::check_pda,
     state::{AclType, EnumListState, MetaList, ZEROED},
@@ -34,19 +34,14 @@ pub fn process_instruction(
         ConfigInstructions::InitializeList(InitializeListPayload { acl_type }) => {
             initialize_list(program_id, accounts, acl_type)?
         }
-        ConfigInstructions::ExtendList(ExtendListPayload { list }) => {
-            extend_list(program_id, accounts, list)?
-        }
+        ConfigInstructions::Add(AddListPayload { list }) => add_list(program_id, accounts, list)?,
         ConfigInstructions::CloseAccount => close_account(program_id, accounts)?,
         ConfigInstructions::UpdateAclType(AclPayload { acl_type }) => {
             update_acl_type(program_id, accounts, acl_type)?
         }
         ConfigInstructions::FreezeAccount => freeze_account(program_id, accounts)?,
-        ConfigInstructions::RemoveItemList(DeleteListPayload { index }) => {
-            remove_item_list(program_id, accounts, index)?
-        }
-        ConfigInstructions::UpdateList(EditListPayload { list }) => {
-            update_list(program_id, accounts, list)?
+        ConfigInstructions::RemoveItemList(DeleteListPayload { vec_index }) => {
+            remove_item_list(program_id, accounts, vec_index)?
         }
     }
 
@@ -61,14 +56,10 @@ fn initialize_list(
     let (initializer, pda_config_account, system_program_account, authority, bump_seed) =
         check_accounts(program_id, accounts)?;
 
-    if let Ok(account_data) =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])
+    if let Ok(_) = try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])
     {
-        // If the account is not in the Uninitialized state, return an error
-        if !matches!(account_data, EnumListState::Uninitialized) {
-            msg!("Account already initialized");
-            return Err(ProgramError::AccountAlreadyInitialized);
-        }
+        msg!("Account already exists");
+        return Err(ProgramError::AccountAlreadyInitialized);
     }
 
     let mut accounts_info = vec![
@@ -111,14 +102,25 @@ fn initialize_list(
     Ok(())
 }
 
-fn extend_list(program_id: &Pubkey, accounts: &[AccountInfo], list: Vec<Pubkey>) -> ProgramResult {
+fn add_list(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    list: Vec<IndexPubkey>,
+) -> ProgramResult {
     let (initializer, pda_config_account, system_program_account, authority, _) =
         check_accounts(program_id, accounts)?;
 
     let (pda_key, _) = check_pda(program_id, initializer.key, pda_config_account.key)?;
 
     let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
+        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
+            Ok(data) => data,
+            Err(_) => {
+                msg!("Account is not already initialized or does not exist");
+                return Err(ProgramError::UninitializedAccount);
+            }
+        };
+    let size = account_data.get_size()?;
 
     match account_data {
         EnumListState::Uninitialized => {
@@ -138,25 +140,47 @@ fn extend_list(program_id: &Pubkey, accounts: &[AccountInfo], list: Vec<Pubkey>)
                 accounts_info.push(authority.clone());
             };
 
-            let list_len = list.len();
-            let old_len = meta_list.list_items;
-            meta_list.list_items += list_len;
+            let mut extend_items = vec![];
+            let list_len = meta_list.list_items;
 
-            let new_size = pda_config_account.data_len() + (list_len * PUBKEY_BYTES);
-            let payment = get_rent(&new_size)?;
-            let diff = payment.sub(pda_config_account.lamports());
+            {
+                let data = &mut &mut pda_config_account.data.borrow_mut()[..];
 
-            invoke(&transfer(initializer.key, &pda_key, diff), &accounts_info)?;
+                for IndexPubkey { index, key } in list.into_iter() {
+                    let index: usize = index as _;
+                    if (index + 1) > list_len {
+                        extend_items.push(key);
+                        continue;
+                    }
+                    let start = size + (PUBKEY_BYTES * index);
 
-            pda_config_account.realloc(new_size, false)?;
-            let data = &mut &mut pda_config_account.data.borrow_mut()[..];
-            EnumListState::ListStateV1(meta_list).serialize(data)?;
+                    let end = start + PUBKEY_BYTES;
+                    data[start..end].copy_from_slice(&key.to_bytes());
+                }
+            }
 
-            for (i, pubkey) in list.iter().enumerate() {
-                let start = (PUBKEY_BYTES * i) + (old_len * PUBKEY_BYTES);
+            if !extend_items.is_empty() {
+                let extend_len = extend_items.len();
 
-                let end = start + 32;
-                data[start..end].copy_from_slice(&pubkey.to_bytes());
+                let old_len = meta_list.list_items;
+                meta_list.list_items += extend_len;
+
+                let new_size = pda_config_account.data_len() + (extend_len * PUBKEY_BYTES);
+                let payment = get_rent(&new_size)?;
+                let diff = payment.sub(pda_config_account.lamports());
+
+                invoke(&transfer(initializer.key, &pda_key, diff), &accounts_info)?;
+
+                pda_config_account.realloc(new_size, false)?;
+                let data = &mut &mut pda_config_account.data.borrow_mut()[..];
+                EnumListState::ListStateV1(meta_list.clone()).serialize(data)?;
+
+                for (i, pubkey) in extend_items.iter().enumerate() {
+                    let start = (PUBKEY_BYTES * i) + (old_len * PUBKEY_BYTES);
+
+                    let end = start + 32;
+                    data[start..end].copy_from_slice(&pubkey.to_bytes());
+                }
             }
         }
     }
@@ -164,15 +188,21 @@ fn extend_list(program_id: &Pubkey, accounts: &[AccountInfo], list: Vec<Pubkey>)
     Ok(())
 }
 
-fn update_list(
+fn remove_item_list(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    list: Vec<IndexPubkey>,
+    vec_index: Vec<usize>,
 ) -> ProgramResult {
     let (_initializer, pda_config_account, _, authority, _) = check_accounts(program_id, accounts)?;
 
     let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
+        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
+            Ok(data) => data,
+            Err(_) => {
+                msg!("Account is not already initialized or does not exist");
+                return Err(ProgramError::UninitializedAccount);
+            }
+        };
 
     match &account_data {
         EnumListState::Uninitialized => {
@@ -186,51 +216,17 @@ fn update_list(
             let size = account_data.get_size()?;
 
             let data = &mut &mut pda_config_account.data.borrow_mut()[..];
-
-            for IndexPubkey { index, key } in list.into_iter() {
-                let index: usize = index as _;
+            for index in vec_index.into_iter() {
                 if (index + 1) > list_len {
                     msg!("Wrong index");
                     return Err(ProgramError::InvalidInstructionData);
                 }
                 let start = size + (PUBKEY_BYTES * index);
 
-                let end = start + 32;
-                data[start..end].copy_from_slice(&key.to_bytes());
+                let end = start + PUBKEY_BYTES;
+                data[start..end].copy_from_slice(&ZEROED);
             }
-        }
-    }
 
-    Ok(())
-}
-
-fn remove_item_list(program_id: &Pubkey, accounts: &[AccountInfo], index: usize) -> ProgramResult {
-    let (_initializer, pda_config_account, _, authority, _) = check_accounts(program_id, accounts)?;
-
-    let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
-
-    match &account_data {
-        EnumListState::Uninitialized => {
-            msg!("Account is not already initialized");
-            return Err(ProgramError::UninitializedAccount);
-        }
-        EnumListState::ListStateV1(meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
-
-            let list_len = meta_list.list_items;
-            let size = account_data.get_size()?;
-
-            let data = &mut &mut pda_config_account.data.borrow_mut()[..];
-
-            if (index + 1) > list_len {
-                msg!("Wrong index");
-                return Err(ProgramError::InvalidInstructionData);
-            }
-            let start = size + (PUBKEY_BYTES * index);
-
-            let end = start + 32;
-            data[start..end].copy_from_slice(&ZEROED);
             Ok(())
         }
     }
@@ -274,7 +270,13 @@ fn close_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult
     check_pda(program_id, initializer.key, pda_config_account.key)?;
 
     let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
+        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
+            Ok(data) => data,
+            Err(_) => {
+                msg!("Account is not already initialized or does not exist");
+                return Err(ProgramError::UninitializedAccount);
+            }
+        };
 
     match &account_data {
         EnumListState::Uninitialized => {
@@ -311,7 +313,13 @@ fn update_acl_type(
     }
 
     let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
+        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
+            Ok(data) => data,
+            Err(_) => {
+                msg!("Account is not already initialized or does not exist");
+                return Err(ProgramError::UninitializedAccount);
+            }
+        };
 
     match account_data {
         EnumListState::Uninitialized => {
@@ -335,7 +343,13 @@ fn freeze_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let (_initializer, pda_config_account, _, authority, _) = check_accounts(program_id, accounts)?;
 
     let account_data =
-        try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])?;
+        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
+            Ok(data) => data,
+            Err(_) => {
+                msg!("Account is not already initialized or does not exist");
+                return Err(ProgramError::UninitializedAccount);
+            }
+        };
 
     match account_data {
         EnumListState::Uninitialized => {
@@ -362,7 +376,7 @@ fn get_rent(account_len: &usize) -> Result<u64, ProgramError> {
 
 fn check_auth_freeze(meta_list: &MetaList, auth_key: Option<Pubkey>) -> ProgramResult {
     if meta_list.authority.is_none() {
-        msg!("Account is freeze");
+        msg!("Account is frozen");
         return Err(ConfigErrors::ErrorInmutable.into());
     }
 
