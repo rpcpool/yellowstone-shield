@@ -6,19 +6,19 @@ The intended usage is for transaction senders (whether the Agave Solana STS serv
 
 ### Why custom program?
 
-The idea with using a separate program for this on chain provide a couple of benefits:
+The idea with using a separate program for this on-chain provides a couple of benefits:
 
-1. Transaction sendders can cache all the possible allow/blocklists by doing getProgramAccounts
+1. Transaction senders can cache all the possible allow/blocklists by doing getProgramAccounts
 2. Allow/blocklists can be kept updated via websocket/grpc
 3. For integration into Agave, there is already a bank available to access allow/blocklists similar to ALTs
 
 ### Why not ALTs or the Config program?
 
-Both of these programs has limitations that make them less suitable for this type of lists including not allowing partial updates / expansion of lists.
+Both of these programs have limitations that make them less suitable for this type of list, including not allowing partial updates/expansions of lists.
 
 ## Proposed RPC interface for integrating with this program
 
-Currently discussions on changes to the RPC interface is ongoing. Please feel free to leave issue comments on this repository regarding the RPC interface. The goal is to standardise across providers so that end-users and developers can submit transactions, having the lists respected, regardless of which provider they use.
+Currently, discussions on changes to the RPC interface are ongoing. Please feel free to leave issue comments on this repository regarding the RPC interface. The goal is to standardise across providers so that end-users and developers can submit transactions, having the lists respected, regardless of which provider they use.
 
 The present suggestions are:
 
@@ -28,7 +28,7 @@ The present suggestions are:
 
 The parameter could take values in the form of a URI or a list of account IDs. The list will have to be flattened by the transaction sender into a final filter that can be used to choose which validators to send to. 
 
-The transaction sender would need to interpret this list. In case of URI, a separate format for this content would need to be agreed upon (proposed: JSON URI).
+The transaction sender would need to interpret this list. In the case of URI, a separate format for this content would need to be agreed upon (proposed: JSON URI).
 
 ```
 curl https://api.devnet.solana.com -X POST -H "Content-Type: application/json" -d '
@@ -50,9 +50,9 @@ Using the recently released web3.js 2.0 version should allow this custom additio
 
 Suggested rules for flattening (**TODO**);
 
-- Explicitly specified allow implicitly suggests that all others are block by default (default closed if allow is provided). This would mean allow should mostly be used with a larger lisst.
-- Explicitly specified block overrides explicitly specifeid allow? This would allow you to specify a large allow list but narrow down by selectively blocking specific accounts.
+- Explicitly specified 'allow' implicitly suggests that all others are blocked by default (default closed if allow is provided). This would mean 'allow' should mostly be used with a larger list.
+- Explicitly specified block overrides explicitly specified allow? This would allow you to specify a large 'allow' list but narrow it down by selectively blocking specific accounts.
 
 ### Addition of a header
 
-An `Solana-ForwardingPolicy` header containing a comma separated list of policies in the same way the parameter would, but would more easily support older web3.js without having to resort to building custom RPC requests.
+A `Solana-ForwardingPolicy` header containing a comma-separated list of policies in the same way the parameter would, but would more easily support older web3.js without having to resort to building custom RPC requests.
