@@ -26,7 +26,9 @@ The present suggestions are:
 
 `forwardingPolicy`: list of forwarding policies to apply to the sending of this transaction
 
-The parameter could take values in the form of a URI or a list of account IDs. The transaction sender would need to interpret this list. In case of URI, a separate format for this content would need to be agreed upon (proposed: JSON URI).
+The parameter could take values in the form of a URI or a list of account IDs. The list will have to be flattened by the transaction sender into a final filter that can be used to choose which validators to send to. 
+
+The transaction sender would need to interpret this list. In case of URI, a separate format for this content would need to be agreed upon (proposed: JSON URI).
 
 ```
 curl https://api.devnet.solana.com -X POST -H "Content-Type: application/json" -d '
@@ -45,6 +47,11 @@ curl https://api.devnet.solana.com -X POST -H "Content-Type: application/json" -
 ```
 
 Using the recently released web3.js 2.0 version should allow this custom addition easily.
+
+Suggested rules for flattening (**TODO**);
+
+- Explicitly specified allow implicitly suggests that all others are block by default (default closed if allow is provided). This would mean allow should mostly be used with a larger lisst.
+- Explicitly specified block overrides explicitly specifeid allow? This would allow you to specify a large allow list but narrow down by selectively blocking specific accounts.
 
 ### Addition of a header
 
