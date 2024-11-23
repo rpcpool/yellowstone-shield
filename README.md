@@ -1,57 +1,37 @@
-# jet-cli Commands
+# Transaction Allow/Blocklists
 
-jet-cli is a tool to interact with the allow/deny list program. This tool needs a configuration file. It can be used the following way or by creating the config_list.yaml in the root:
+This repo contains a Solana program and associated CLI for maintaining allow and blocklists on chain. An allowlist or blocklists contains a set of pubkeys and the associated action (allow/deny).
+
+The intended usage is for transaction senders (whether the Agave Solana STS service or specialised senders like Helius' atlas, Mango's lite-rpc, Jito's blockEngine or Triton's Jet) to be able to read these block lists and apply these as filters for which downstream validators they are willing to forward transactions to.
+
+
+## Proposed RPC interface
+
+Currently discussions on changes to the RPC interface is ongoing. Please feel free to leave issue comments on this repository regarding the RPC interface. The goal is to standardise across providers so that end-users and developers can submit transactions, having the lists respected, regardless of which provider they use.
+
+The present suggestions are:
+
+### Addition of a parameter to sendTransaction
+
+`forwardingPolicy`: list of forwarding policies to apply to the sending of this transaction
+
+The parameter could take values in the form of a URI or a list of account IDs. The transaction sender would need to interpret this list. In case of URI, a separate format for this content would need to be agreed upon.
 
 ```
-jet-cli --config <path>
-```
-
-It can use authority, payer, rpc-url and program-id arguments to bypass the ones established in the config.
-Example:
-
-```
-jet-cli --authority <path/keypair> --payer <path/keypair> --rpc-url <url> --program-id <pubkey>
-```
-
-The CLI has 9 actions to perform: 
-
-- Initialize: starts the account with a certain type of list.
-Example: 
-```
-jet-cli initialize <deny/allow>
-```
-- Add: update any item inside the pubkey passing the index and pubkey
-```
-jet-cli add <path/pubkey>
-```
-- Delete: remove items from the list
-```
-jet-cli delete <path/pubkey>
-```
-- Close: close account and transfer lamports in PDA account to desired recipient account
-```
-jet-cli close
-```
-- Freeze
-```
-jet-cli freeze
-```
-- Update-acl: updates list type
-```
-jet-cli update-acl <deny/allow> 
-```
-- State: shows PDA account state. 
-```
-jet-cli state
-// There is an optional argument to parse data from a different account than the PDA calculated by payer keypair, is called using --pubkey <pubkey>
-```
-- Pda-key: shows PDA pubkey
-```
-jet-cli pda-key
+curl https://api.devnet.solana.com -X POST -H "Content-Type: application/json" -d '
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "sendTransaction",
+    "params": [
+      "4hXTCkRzt9WyecNzV1XPgCDfGAZzQKNxLXgynz5QDuWWPSAZBZSHptvWRL3BjCvzUXRdKvHL2b7yGrRQcWyaqsaBCncVG7BFggS8w9snUts67BSh3EqKpXLUm5UMHfD7ZBe9GhARjbNQMLJ1QD3Spr6oMTBU6EhdB4RD8CP2xUxr2u3d6fos36PD98XS6oX8TQjLpsMwncs5DAMiD4nNnR8NBfyghGCWvCVifVwvA8B8TJxE1aiyiv2L429BCWfyzAme5sZW8rDb14NeCQHhZbtNqfXhcp2tAnaAT", {"encoding": "base64", skipPreflight: true, "forwardingPolicy": ["block1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg"]}
+    ]
+  }
+'
 ```
 
-NOTE: remember that if you do not have a config_list.yml or do not provide the flag `--config <path>`, each of the actions must receive the following parameters:
-`--authority <path/keypair>`
-`--payer <path/keypair>`
-`--rpc-url <url>`
-`--program-id <pubkey>`
+Using the recently released web3.js 2.0 version should allow this custom addition easily.
+
+### Addition of a header
+
+An `Solana-ForwardingPolicy` header containing a comma separated list of policies in the same way the parameter would, but would more easily support older web3.js without having to resort to building custom RPC requests.
