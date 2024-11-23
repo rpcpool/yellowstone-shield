@@ -4017,26 +4017,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-jet-list-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "borsh 1.5.2",
- "bytemuck",
- "clap 4.5.20",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yml",
- "solana-client",
- "solana-sdk",
- "solana-yellowstone-blocklist",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "solana-loader-v4-program"
 version = "2.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6246,6 +6226,26 @@ dependencies = [
  "libc",
  "linux-raw-sys",
  "rustix",
+]
+
+[[package]]
+name = "yellowstone-blocklist-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "borsh 1.5.2",
+ "bytemuck",
+ "clap 4.5.20",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_yml",
+ "solana-client",
+ "solana-sdk",
+ "solana-yellowstone-blocklist",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
