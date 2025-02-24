@@ -1,20 +1,19 @@
-use borsh::{object_length, BorshDeserialize, BorshSerialize};
-use solana_program::{
-    borsh1::try_from_slice_unchecked, program_error::ProgramError, pubkey::Pubkey,
-};
+use borsh::{object_length, BorshDeserialize};
+use borsh_derive::{BorshDeserialize as DeBorshDeserialize, BorshSerialize as DeBorshSerialize};
+use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
 
 use crate::error::ConfigErrors;
 
 pub const ZEROED: [u8; 32] = [0u8; 32];
 
-#[derive(BorshSerialize, BorshDeserialize, Default, Debug, Clone)]
+#[derive(DeBorshSerialize, DeBorshDeserialize, Default, Debug, Clone)]
 pub enum EnumListState {
     #[default]
     Uninitialized,
     ListStateV1(MetaList),
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Default, Debug, Clone)]
+#[derive(DeBorshSerialize, DeBorshDeserialize, Default, Debug, Clone)]
 pub struct MetaList {
     pub acl_type: AclType,
     pub authority: Option<Pubkey>,
@@ -28,7 +27,7 @@ impl EnumListState {
 }
 
 #[derive(
-    BorshDeserialize, BorshSerialize, Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord,
+    DeBorshSerialize, DeBorshDeserialize, Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord,
 )]
 pub enum AclType {
     #[default]
@@ -44,7 +43,8 @@ pub struct ListState<'a> {
 
 impl<'a> ListState<'a> {
     pub fn deserialize(data: &'a [u8]) -> Result<ListState<'a>, ProgramError> {
-        let state = try_from_slice_unchecked::<EnumListState>(data)
+        let mut data_mut = data;
+        let state = EnumListState::try_from_slice(&mut data_mut)
             .map_err(|_| ProgramError::InvalidAccountData)?;
 
         let meta = match state.clone() {

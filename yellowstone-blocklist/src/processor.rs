@@ -9,19 +9,17 @@ use crate::{
     pda::check_pda,
     state::{AclType, EnumListState, MetaList, ZEROED},
 };
-use borsh::BorshSerialize;
-use solana_program::{
-    account_info::{next_account_info, AccountInfo},
-    borsh1::try_from_slice_unchecked,
-    entrypoint::ProgramResult,
-    msg,
-    program::{invoke, invoke_signed},
+use borsh::{BorshDeserialize, BorshSerialize};
+use pinocchio::{
+    account_info::AccountInfo,
+    get_account_info, msg,
     program_error::ProgramError,
     pubkey::{Pubkey, PUBKEY_BYTES},
-    system_instruction::{self, transfer},
-    system_program::{self},
-    sysvar::{rent::Rent, Sysvar},
+    signer,
+    sysvars::{rent::Rent, Sysvar},
+    ProgramResult,
 };
+use pinocchio_system::instructions::{CreateAccount, Transfer};
 
 pub fn process_instruction(
     program_id: &Pubkey,
@@ -56,8 +54,8 @@ fn initialize_list(
     let (initializer, pda_config_account, system_program_account, authority, bump_seed) =
         check_accounts(program_id, accounts)?;
 
-    if let Ok(_) = try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..])
-    {
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    if let Ok(_) = EnumListState::deserialize(&mut &pda_config_data[..]) {
         msg!("Account already exists");
         return Err(ProgramError::AccountAlreadyInitialized);
     }
@@ -68,13 +66,13 @@ fn initialize_list(
         system_program_account.clone(),
     ];
 
-    if initializer.key != authority.key {
+    if initializer.key() != authority.key() {
         accounts_info.push(authority.clone());
     };
 
     let data = EnumListState::ListStateV1(MetaList {
         acl_type,
-        authority: Some(*authority.key),
+        authority: Some(*authority.key()),
         list_items: 0,
     });
 
@@ -82,23 +80,22 @@ fn initialize_list(
 
     let rent = get_rent(&size)?;
 
-    invoke_signed(
-        &system_instruction::create_account(
-            initializer.key,
-            pda_config_account.key,
-            rent,
-            size as u64,
-            program_id,
-        ),
-        &accounts_info,
-        &[&[
-            initializer.key.as_ref(),
-            "noneknows".as_bytes(),
-            &[bump_seed],
-        ]],
-    )?;
+    CreateAccount {
+        from: initializer,
+        to: pda_config_account,
+        lamports: rent,
+        space: size as u64,
+        owner: program_id,
+    }
+    .invoke_signed(&[signer!(
+        initializer.key().as_ref(),
+        b"noneknows",
+        &[bump_seed]
+    )])?;
 
-    data.serialize(&mut &mut pda_config_account.data.borrow_mut()[..])?;
+    data.serialize(&mut &mut pda_config_data[..])
+        .map_err(|_| ProgramError::BorshIoError)?;
+
     Ok(())
 }
 
@@ -110,16 +107,14 @@ fn add_list(
     let (initializer, pda_config_account, system_program_account, authority, _) =
         check_accounts(program_id, accounts)?;
 
-    let (pda_key, _) = check_pda(program_id, initializer.key, pda_config_account.key)?;
-
-    let account_data =
-        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
-            Ok(data) => data,
-            Err(_) => {
-                msg!("Account is not already initialized or does not exist");
-                return Err(ProgramError::UninitializedAccount);
-            }
-        };
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    let account_data = match EnumListState::deserialize(&mut &pda_config_data[..]) {
+        Ok(data) => data,
+        Err(_) => {
+            msg!("Account is not already initialized or does not exist");
+            return Err(ProgramError::UninitializedAccount);
+        }
+    };
     let size = account_data.get_size()?;
 
     match account_data {
@@ -128,7 +123,7 @@ fn add_list(
             return Err(ProgramError::UninitializedAccount);
         }
         EnumListState::ListStateV1(mut meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
+            check_auth_freeze(&meta_list, Some(*authority.key()))?;
 
             let mut accounts_info = vec![
                 initializer.clone(),
@@ -136,7 +131,7 @@ fn add_list(
                 system_program_account.clone(),
             ];
 
-            if initializer.key != authority.key {
+            if initializer.key() != authority.key() {
                 accounts_info.push(authority.clone());
             };
 
@@ -144,8 +139,6 @@ fn add_list(
             let list_len = meta_list.list_items;
 
             {
-                let data = &mut &mut pda_config_account.data.borrow_mut()[..];
-
                 for IndexPubkey { index, key } in list.into_iter() {
                     let index: usize = index as _;
                     if (index + 1) > list_len {
@@ -155,7 +148,7 @@ fn add_list(
                     let start = size + (PUBKEY_BYTES * index);
 
                     let end = start + PUBKEY_BYTES;
-                    data[start..end].copy_from_slice(&key.to_bytes());
+                    pda_config_data[start..end].copy_from_slice(&key);
                 }
             }
 
@@ -169,17 +162,24 @@ fn add_list(
                 let payment = get_rent(&new_size)?;
                 let diff = payment.sub(pda_config_account.lamports());
 
-                invoke(&transfer(initializer.key, &pda_key, diff), &accounts_info)?;
+                Transfer {
+                    from: initializer,
+                    to: pda_config_account,
+                    lamports: diff,
+                }
+                .invoke()
+                .map_err(|e| e)?;
 
                 pda_config_account.realloc(new_size, false)?;
-                let data = &mut &mut pda_config_account.data.borrow_mut()[..];
-                EnumListState::ListStateV1(meta_list.clone()).serialize(data)?;
+                EnumListState::ListStateV1(meta_list.clone())
+                    .serialize(&mut &mut pda_config_data[..])
+                    .map_err(|_| ProgramError::BorshIoError)?;
 
                 for (i, pubkey) in extend_items.iter().enumerate() {
                     let start = (PUBKEY_BYTES * i) + (old_len * PUBKEY_BYTES);
 
                     let end = start + 32;
-                    data[start..end].copy_from_slice(&pubkey.to_bytes());
+                    pda_config_data[start..end].copy_from_slice(pubkey);
                 }
             }
         }
@@ -195,14 +195,14 @@ fn remove_item_list(
 ) -> ProgramResult {
     let (_initializer, pda_config_account, _, authority, _) = check_accounts(program_id, accounts)?;
 
-    let account_data =
-        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
-            Ok(data) => data,
-            Err(_) => {
-                msg!("Account is not already initialized or does not exist");
-                return Err(ProgramError::UninitializedAccount);
-            }
-        };
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    let account_data = match EnumListState::deserialize(&mut &pda_config_data[..]) {
+        Ok(data) => data,
+        Err(_) => {
+            msg!("Account is not already initialized or does not exist");
+            return Err(ProgramError::UninitializedAccount);
+        }
+    };
 
     match &account_data {
         EnumListState::Uninitialized => {
@@ -210,12 +210,11 @@ fn remove_item_list(
             return Err(ProgramError::UninitializedAccount);
         }
         EnumListState::ListStateV1(meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
+            check_auth_freeze(&meta_list, Some(*authority.key()))?;
 
             let list_len = meta_list.list_items;
             let size = account_data.get_size()?;
 
-            let data = &mut &mut pda_config_account.data.borrow_mut()[..];
             for index in vec_index.into_iter() {
                 if (index + 1) > list_len {
                     msg!("Wrong index");
@@ -224,7 +223,7 @@ fn remove_item_list(
                 let start = size + (PUBKEY_BYTES * index);
 
                 let end = start + PUBKEY_BYTES;
-                data[start..end].copy_from_slice(&ZEROED);
+                pda_config_data[start..end].copy_from_slice(&ZEROED);
             }
 
             Ok(())
@@ -233,50 +232,41 @@ fn remove_item_list(
 }
 
 fn close_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
+    let initializer = get_account_info!(accounts, 0 as usize);
+    let pda_config_account = get_account_info!(accounts, 1 as usize);
+    let dest_account = get_account_info!(accounts, 2 as usize);
+    let system_program_account = get_account_info!(accounts, 3 as usize);
+    let authority = get_account_info!(accounts, 4 as usize);
 
-    let initializer = next_account_info(accounts_iter)?;
-    let pda_config_account = next_account_info(accounts_iter)?;
-    let dest_account = next_account_info(accounts_iter)?;
-
-    let system_program_account = next_account_info(accounts_iter)?;
-
-    let authority = match next_account_info(accounts_iter) {
-        Ok(val) => {
-            if !val.is_signer {
-                msg!("Missing required signature");
-                return Err(ProgramError::MissingRequiredSignature);
-            }
-            val
-        }
-        Err(ProgramError::NotEnoughAccountKeys) => initializer,
-        Err(rest) => return Err(rest),
-    };
-
-    if system_program_account.key.ne(&system_program::ID) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    if !initializer.is_signer {
+    if authority.is_signer() {
         msg!("Missing required signature");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if !pda_config_account.is_writable {
+    if system_program_account.key().ne(&pinocchio_system::id()) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    if !initializer.is_signer() {
+        msg!("Missing required signature");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if !pda_config_account.is_writable() {
         msg!("PDA account is not writable");
         return Err(ConfigErrors::NotWritableAccount.into());
     }
 
-    check_pda(program_id, initializer.key, pda_config_account.key)?;
+    check_pda(program_id, initializer.key(), pda_config_account.key())?;
 
-    let account_data =
-        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
-            Ok(data) => data,
-            Err(_) => {
-                msg!("Account is not already initialized or does not exist");
-                return Err(ProgramError::UninitializedAccount);
-            }
-        };
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    let account_data = match EnumListState::deserialize(&mut &pda_config_data[..]) {
+        Ok(data) => data,
+        Err(_) => {
+            msg!("Account is not already initialized or does not exist");
+            return Err(ProgramError::UninitializedAccount);
+        }
+    };
 
     match &account_data {
         EnumListState::Uninitialized => {
@@ -284,16 +274,16 @@ fn close_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult
             return Err(ProgramError::UninitializedAccount);
         }
         EnumListState::ListStateV1(meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
+            check_auth_freeze(&meta_list, Some(*authority.key()))?;
 
-            let dest_starting_lamports = dest_account.lamports();
-            **dest_account.lamports.borrow_mut() = dest_starting_lamports
-                .checked_add(pda_config_account.lamports())
+            let mut dest_account_lamports = dest_account.try_borrow_mut_lamports()?;
+            let mut pda_config_lamports = pda_config_account.try_borrow_mut_lamports()?;
+            *dest_account_lamports = dest_account_lamports
+                .checked_add(*pda_config_lamports)
                 .unwrap();
-            **pda_config_account.lamports.borrow_mut() = 0;
+            *pda_config_lamports = 0;
 
-            let mut source_data = pda_config_account.data.borrow_mut();
-            source_data.fill(0);
+            pda_config_data.fill(0);
             Ok(())
         }
     }
@@ -312,14 +302,14 @@ fn update_acl_type(
         return Err(ProgramError::AccountNotRentExempt);
     }
 
-    let account_data =
-        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
-            Ok(data) => data,
-            Err(_) => {
-                msg!("Account is not already initialized or does not exist");
-                return Err(ProgramError::UninitializedAccount);
-            }
-        };
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    let account_data = match EnumListState::deserialize(&mut &pda_config_data[..]) {
+        Ok(data) => data,
+        Err(_) => {
+            msg!("Account is not already initialized or does not exist");
+            return Err(ProgramError::UninitializedAccount);
+        }
+    };
 
     match account_data {
         EnumListState::Uninitialized => {
@@ -327,12 +317,13 @@ fn update_acl_type(
             return Err(ProgramError::UninitializedAccount);
         }
         EnumListState::ListStateV1(mut meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
+            check_auth_freeze(&meta_list, Some(*authority.key()))?;
 
             meta_list.acl_type = acl_type;
 
             EnumListState::ListStateV1(meta_list)
-                .serialize(&mut &mut pda_config_account.data.borrow_mut()[..])?;
+                .serialize(&mut &mut pda_config_data[..])
+                .map_err(|_| ProgramError::BorshIoError)?;
 
             Ok(())
         }
@@ -342,14 +333,14 @@ fn update_acl_type(
 fn freeze_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let (_initializer, pda_config_account, _, authority, _) = check_accounts(program_id, accounts)?;
 
-    let account_data =
-        match try_from_slice_unchecked::<EnumListState>(&pda_config_account.data.borrow()[..]) {
-            Ok(data) => data,
-            Err(_) => {
-                msg!("Account is not already initialized or does not exist");
-                return Err(ProgramError::UninitializedAccount);
-            }
-        };
+    let mut pda_config_data = pda_config_account.try_borrow_mut_data()?;
+    let account_data = match EnumListState::deserialize(&mut &pda_config_data[..]) {
+        Ok(data) => data,
+        Err(_) => {
+            msg!("Account is not already initialized or does not exist");
+            return Err(ProgramError::UninitializedAccount);
+        }
+    };
 
     match account_data {
         EnumListState::Uninitialized => {
@@ -357,12 +348,13 @@ fn freeze_account(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
             return Err(ProgramError::UninitializedAccount);
         }
         EnumListState::ListStateV1(mut meta_list) => {
-            check_auth_freeze(&meta_list, Some(*authority.key))?;
+            check_auth_freeze(&meta_list, Some(*authority.key()))?;
 
             meta_list.authority = None;
 
             EnumListState::ListStateV1(meta_list)
-                .serialize(&mut &mut pda_config_account.data.borrow_mut()[..])?;
+                .serialize(&mut &mut pda_config_data[..])
+                .map_err(|_| ProgramError::BorshIoError)?;
 
             Ok(())
         }
@@ -387,55 +379,44 @@ fn check_auth_freeze(meta_list: &MetaList, auth_key: Option<Pubkey>) -> ProgramR
     Ok(())
 }
 
-fn check_accounts<'a, 'b>(
+fn check_accounts<'a>(
     program_id: &Pubkey,
-    accounts: &'a [AccountInfo<'b>],
+    accounts: &'a [AccountInfo],
 ) -> Result<
     (
-        &'a AccountInfo<'b>,
-        &'a AccountInfo<'b>,
-        &'a AccountInfo<'b>,
-        &'a AccountInfo<'b>,
+        &'a AccountInfo,
+        &'a AccountInfo,
+        &'a AccountInfo,
+        &'a AccountInfo,
         u8,
     ),
     ProgramError,
->
-where
-    'b: 'a,
-{
-    let accounts_iter = &mut accounts.iter();
+> {
+    let initializer = get_account_info!(accounts, 0 as usize);
+    let pda_config_account = get_account_info!(accounts, 1 as usize);
+    let system_program_account = get_account_info!(accounts, 2 as usize);
+    let authority = get_account_info!(accounts, 3 as usize);
 
-    let initializer = next_account_info(accounts_iter)?;
-    let pda_config_account = next_account_info(accounts_iter)?;
-    let system_program_account = next_account_info(accounts_iter)?;
-
-    let authority = match next_account_info(accounts_iter) {
-        Ok(val) => {
-            if !val.is_signer {
-                msg!("Missing required signature");
-                return Err(ProgramError::MissingRequiredSignature);
-            }
-            val
-        }
-        Err(ProgramError::NotEnoughAccountKeys) => initializer,
-        Err(rest) => return Err(rest),
-    };
-
-    if system_program_account.key.ne(&system_program::ID) {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    if !initializer.is_signer {
+    if !authority.is_signer() {
         msg!("Missing required signature");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if !pda_config_account.is_writable {
+    if system_program_account.key().ne(&pinocchio_system::id()) {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    if !initializer.is_signer() {
+        msg!("Missing required signature");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if !pda_config_account.is_writable() {
         msg!("PDA account is not writable");
         return Err(ConfigErrors::NotWritableAccount.into());
     }
 
-    let (_, bump_seed) = check_pda(program_id, initializer.key, pda_config_account.key)?;
+    let (_, bump_seed) = check_pda(program_id, initializer.key(), pda_config_account.key())?;
 
     Ok((
         initializer,

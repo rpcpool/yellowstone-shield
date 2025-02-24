@@ -182,11 +182,11 @@ async fn main() -> anyhow::Result<()> {
     let rpc = RpcClient::new(rpc_url);
     let hash = rpc.get_latest_blockhash()?;
 
-    let (pda, _) = find_pda(&program_id, &payer.pubkey());
+    let (pda, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
     let accounts = vec![
         AccountMeta::new(payer.pubkey(), true),
-        AccountMeta::new(pda, false),
+        AccountMeta::new(Pubkey::from(pda), false),
         AccountMeta::new_readonly(system_program::ID, false),
         AccountMeta::new(autho.pubkey(), true),
     ];
@@ -214,13 +214,14 @@ async fn main() -> anyhow::Result<()> {
 
         ActionType::Delete { keys } => {
             let list = identify_string_pubkey(&keys)?;
-            let data = rpc.get_account_data(&pda)?;
-            let state = ListState::deserialize(&data)?;
+            let data = rpc.get_account_data(&Pubkey::from(pda))?;
+            let state = ListState::deserialize(&data)
+                .map_err(|err| anyhow!("Error deserializing account data: {:?}", err))?;
             let mut vec_index: Vec<usize> = vec![];
 
             for (index, state_key) in state.list.iter().enumerate() {
                 for key in list.clone() {
-                    if state_key.eq(&key) {
+                    if state_key.eq(&key.to_bytes()) {
                         vec_index.push(index);
                         break;
                     }
@@ -248,7 +249,7 @@ async fn main() -> anyhow::Result<()> {
 
             let accounts = vec![
                 AccountMeta::new(payer.pubkey(), true),
-                AccountMeta::new(pda, false),
+                AccountMeta::new(Pubkey::from(pda), false),
                 AccountMeta::new(dest_key, false),
                 AccountMeta::new_readonly(system_program::ID, false),
                 AccountMeta::new(autho.pubkey(), true),
@@ -299,17 +300,18 @@ async fn main() -> anyhow::Result<()> {
         }
         ActionType::State { pubkey } => {
             let key = if let Some(key_str) = pubkey {
-                key_str.parse()?
+                identify_string_pubkey(&key_str)?[0]
             } else {
-                pda
+                Pubkey::from(pda)
             };
-            let data = rpc.get_account_data(&key)?;
-            let state = ListState::deserialize(&data)?;
-            let list: Vec<(usize, &Pubkey)> = state
+            let data = rpc.get_account_data(&Pubkey::from(key))?;
+            let state = ListState::deserialize(&data)
+                .map_err(|err| anyhow!("Error deserializing account data: {:?}", err))?;
+            let list: Vec<(usize, &[u8; 32])> = state
                 .list
                 .iter()
                 .enumerate()
-                .filter_map(|(index, item)| (item.to_bytes().ne(&ZEROED)).then(|| (index, item)))
+                .filter_map(|(index, item)| (item.ne(&ZEROED)).then(|| (index, item)))
                 .collect();
             println!(
                 "
@@ -321,7 +323,7 @@ Account List where format is (index, pubkey)",
             );
 
             for (index, pubkey) in list {
-                println!("- Index: {:?}, Pubkey: {:?}", index, pubkey);
+                println!("- Index: {:?}, Pubkey: {:?}", index, Pubkey::from(*pubkey));
             }
 
             return Ok(());
@@ -329,7 +331,7 @@ Account List where format is (index, pubkey)",
         ActionType::Add { keys } => {
             let list_parsed = identify_string_pubkey(&keys)?;
 
-            let list = get_list_add(&rpc, list_parsed, &pda)?;
+            let list = get_list_add(&rpc, list_parsed, &Pubkey::from(pda))?;
             let list_len = list.len();
             if list_len > MAX_PUBKEYS_PER_TRANSACTION {
                 for i in 0..(list_len / MAX_PUBKEYS_PER_TRANSACTION) + 1 {
@@ -448,12 +450,13 @@ fn get_list_add(
     pda: &Pubkey,
 ) -> anyhow::Result<Vec<IndexPubkey>> {
     let data = rpc.get_account_data(pda)?;
-    let state: ListState<'_> = ListState::deserialize(&data)?;
+    let state: ListState<'_> = ListState::deserialize(&data)
+        .map_err(|err| anyhow!("Error deserializing account data: {:?}", err))?;
     let indexes: Vec<usize> = state
         .list
         .iter()
         .enumerate()
-        .filter_map(|(index, key)| (key.to_bytes().eq(&ZEROED)).then(|| index))
+        .filter_map(|(index, key)| (key.eq(&ZEROED)).then(|| index))
         .collect();
 
     let list_len = list_parsed.len();
@@ -465,11 +468,11 @@ fn get_list_add(
         match (it_list.next(), iter_i.next()) {
             (Some(key), Some(index)) => list.push(IndexPubkey {
                 index: *index as u64,
-                key: *key,
+                key: key.to_bytes(),
             }),
             (Some(key), None) => list.push(IndexPubkey {
                 index: (state.meta.list_items + list_len) as _,
-                key: *key,
+                key: key.to_bytes(),
             }),
             (None, Some(_)) => break,
             (None, None) => break,

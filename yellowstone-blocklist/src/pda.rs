@@ -1,8 +1,13 @@
-use solana_program::{msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{
+    msg,
+    program_error::ProgramError,
+    pubkey::{find_program_address, Pubkey},
+};
 
 use crate::error::ConfigErrors;
+
 pub fn find_pda(program_id: &Pubkey, key: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[key.as_ref(), "noneknows".as_bytes()], program_id)
+    find_program_address(&[key.as_ref(), "noneknows".as_bytes()], program_id)
 }
 
 pub fn check_pda(

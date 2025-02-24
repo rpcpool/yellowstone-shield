@@ -9,14 +9,17 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-solana-program = { workspace = true }
+pinocchio = { workspace = true }
+pinocchio-pubkey = { workspace = true }
+pinocchio-system = { workspace = true }
 borsh = { workspace = true }
+borsh-derive = { workspace = true }
 thiserror = { workspace = true }
 bincode = { workspace = true }
 serde_derive = { workspace = true }
 serde = { workspace = true }
 bytemuck = { workspace = true }
-getrandom = { workspace = true, features=["dummy"] }
+getrandom = { workspace = true, features = ["dummy"] }
 
 [dev-dependencies]
 assert_matches = "1.5.0"

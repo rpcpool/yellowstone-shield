@@ -8,10 +8,9 @@ mod tests {
         AclPayload, AddListPayload, DeleteListPayload, IndexPubkey, InitializeListPayload,
     };
     use pda::find_pda;
-    use solana_sdk::signature::Keypair;
+    use solana_sdk::{hash::Hash, signature::Keypair};
     use state::{AclType, EnumListState, ListState, ZEROED};
     use {
-        solana_program::hash::Hash,
         solana_program_test::*,
         solana_sdk::{
             instruction::{AccountMeta, Instruction},
@@ -32,10 +31,10 @@ mod tests {
     async fn test_initialize_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
 
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -54,7 +53,7 @@ mod tests {
 
         // confirm state
         let state = banks_client
-            .get_account_data_with_borsh::<EnumListState>(pda_key)
+            .get_account_data_with_borsh::<EnumListState>(Pubkey::from(pda_key))
             .await
             .unwrap();
 
@@ -69,12 +68,12 @@ mod tests {
     async fn test_initialize_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -93,14 +92,14 @@ mod tests {
         .unwrap();
 
         let state = banks_client
-            .get_account_data_with_borsh::<EnumListState>(pda_key)
+            .get_account_data_with_borsh::<EnumListState>(Pubkey::from(pda_key))
             .await
             .unwrap();
 
         match state {
             EnumListState::Uninitialized => panic!("It should be initialized"),
             EnumListState::ListStateV1(meta_list) => {
-                assert_eq!(meta_list.authority, Some(authority.pubkey()))
+                assert_eq!(meta_list.authority, Some(authority.pubkey().to_bytes()))
             }
         }
     }
@@ -110,11 +109,11 @@ mod tests {
     async fn test_initialize_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer.insecure_clone()];
@@ -155,11 +154,11 @@ mod tests {
     async fn test_extend_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -178,7 +177,7 @@ mod tests {
 
         let mut key_list = vec![];
         for _ in 0..3 {
-            key_list.push(Pubkey::new_unique());
+            key_list.push(Pubkey::new_unique().to_bytes());
         }
 
         let new_list = vec![
@@ -222,7 +221,7 @@ mod tests {
 
         // send tx
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -238,13 +237,13 @@ mod tests {
     async fn test_extend_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -252,7 +251,7 @@ mod tests {
 
         let wrong_accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs_wrong = &[&payer];
@@ -260,11 +259,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
 
@@ -300,13 +299,13 @@ mod tests {
     async fn test_extend_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -315,11 +314,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let res = add_list(
@@ -342,13 +341,13 @@ mod tests {
     async fn test_extend_4() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -382,11 +381,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let res = add_list(
@@ -409,7 +408,7 @@ mod tests {
     async fn test_update_acl_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let update_acl_type = instruction::ConfigInstructions::UpdateAclType(AclPayload {
             acl_type: state::AclType::Allow,
@@ -424,7 +423,7 @@ mod tests {
                 program_id,
                 accounts: vec![
                     AccountMeta::new(payer.pubkey(), true),
-                    AccountMeta::new(pda_key, false),
+                    AccountMeta::new(Pubkey::from(pda_key), false),
                     AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
                 ],
                 data: update_acl_type_data,
@@ -443,11 +442,11 @@ mod tests {
     async fn test_update_acl_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -501,12 +500,12 @@ mod tests {
     async fn test_update_acl_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -514,7 +513,7 @@ mod tests {
 
         let wrong_accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(payer.pubkey(), true),
         ];
@@ -558,12 +557,12 @@ mod tests {
     async fn test_update_acl_4() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -600,7 +599,7 @@ mod tests {
         .unwrap();
 
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -615,12 +614,12 @@ mod tests {
     async fn test_freeze_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -647,7 +646,7 @@ mod tests {
         .await
         .unwrap();
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -663,12 +662,12 @@ mod tests {
     async fn test_freeze_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -676,7 +675,7 @@ mod tests {
 
         let wrong_accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(payer.pubkey(), true),
         ];
@@ -711,12 +710,12 @@ mod tests {
     async fn test_freeze_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -745,12 +744,12 @@ mod tests {
     async fn test_freeze_4() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -798,12 +797,12 @@ mod tests {
     async fn test_close_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let get_pay = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -818,11 +817,14 @@ mod tests {
         )
         .await
         .unwrap();
-        let pda_lamports = banks_client.get_balance(pda_key).await.unwrap();
+        let pda_lamports = banks_client
+            .get_balance(Pubkey::from(pda_key))
+            .await
+            .unwrap();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new(get_pay.pubkey(), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
@@ -849,12 +851,12 @@ mod tests {
     async fn test_close_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let get_pay = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -872,7 +874,7 @@ mod tests {
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new(get_pay.pubkey(), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(get_pay.pubkey(), true),
@@ -898,12 +900,12 @@ mod tests {
     async fn test_close_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let get_pay = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -932,7 +934,7 @@ mod tests {
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new(get_pay.pubkey(), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
@@ -957,12 +959,12 @@ mod tests {
     async fn test_close_4() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
         let get_pay = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new(get_pay.pubkey(), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
@@ -987,11 +989,11 @@ mod tests {
     async fn test_update_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -1015,15 +1017,19 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: key_list[0],
+                key: key_list[0].to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: key_list[1],
+                key: key_list[1].to_bytes(),
             },
         ];
         let update_list = vec![key_list[2], key_list[3]];
-        let cmp_list = vec![key_list[2], key_list[1], key_list[3]];
+        let cmp_list = vec![
+            key_list[2].to_bytes(),
+            key_list[1].to_bytes(),
+            key_list[3].to_bytes(),
+        ];
 
         add_list(
             program_id,
@@ -1052,7 +1058,7 @@ mod tests {
         .unwrap();
 
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -1063,7 +1069,7 @@ mod tests {
             .list
             .iter()
             .enumerate()
-            .filter_map(|(index, key)| (key.to_bytes().eq(&ZEROED)).then(|| index))
+            .filter_map(|(index, key)| (key.eq(&ZEROED)).then(|| index))
             .collect();
 
         let mut list = vec![];
@@ -1073,11 +1079,11 @@ mod tests {
             match (it_list.next(), iter_i.next()) {
                 (Some(key), Some(index)) => list.push(IndexPubkey {
                     index: *index as u64,
-                    key: *key,
+                    key: key.to_bytes(),
                 }),
                 (Some(key), None) => list.push(IndexPubkey {
                     index: (state.meta.list_items + 1) as _,
-                    key: *key,
+                    key: key.to_bytes(),
                 }),
                 (None, Some(_)) => break,
                 (None, None) => break,
@@ -1097,7 +1103,7 @@ mod tests {
         .unwrap();
 
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -1114,11 +1120,11 @@ mod tests {
     async fn test_remove_1() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -1138,15 +1144,18 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let remove = vec![0];
-        let cmp_list = vec![Pubkey::from(ZEROED), new_list[1].key];
+        let cmp_list = vec![
+            Pubkey::from(ZEROED).to_bytes(),
+            Pubkey::from(new_list[1].key).to_bytes(),
+        ];
 
         add_list(
             program_id,
@@ -1173,7 +1182,7 @@ mod tests {
         .unwrap();
 
         let data = banks_client
-            .get_account(pda_key)
+            .get_account(Pubkey::from(pda_key))
             .await
             .unwrap()
             .unwrap()
@@ -1189,11 +1198,11 @@ mod tests {
     async fn test_remove_2() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -1213,11 +1222,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let remove = vec![3];
@@ -1253,13 +1262,13 @@ mod tests {
     async fn test_remove_3() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let authority = Keypair::new();
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new(authority.pubkey(), true),
         ];
@@ -1267,7 +1276,7 @@ mod tests {
 
         let wrong_accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs_wrong = &[&payer];
@@ -1287,11 +1296,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let remove = vec![0];
@@ -1327,11 +1336,11 @@ mod tests {
     async fn test_remove_4() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
@@ -1350,11 +1359,11 @@ mod tests {
         let new_list = vec![
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
             IndexPubkey {
                 index: 2,
-                key: Pubkey::new_unique(),
+                key: Pubkey::new_unique().to_bytes(),
             },
         ];
         let remove = vec![0];
@@ -1402,11 +1411,11 @@ mod tests {
     async fn test_remove_5() {
         let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
-        let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
+        let (pda_key, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
 
         let accounts = vec![
             AccountMeta::new(payer.pubkey(), true),
-            AccountMeta::new(pda_key, false),
+            AccountMeta::new(Pubkey::from(pda_key), false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ];
         let signing_keypairs = &[&payer];
