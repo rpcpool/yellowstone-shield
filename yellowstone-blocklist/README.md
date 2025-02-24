@@ -5,13 +5,13 @@ Smart contract used to store the blocklist created by a client.
 ## How to deploy smart contract
 1. First run
 ```
-    cargo build-bpf
+    cargo build-sbf
 ```
 This command line argument comes with the Solana CLI.
 
 2. After that, you must use
 ```
-cargo solana deploy <PROGRAM_FILEPATH> --keypair <KEYPAIR_FILEPATH>
+solana program deploy <PROGRAM_FILEPATH> --keypair <KEYPAIR_FILEPATH>
 ```
 The keypair will be the owner and authority of the program to update it. In case you want to set another upgrade authority, it is possible to use --upgrade-authority. The keypair must be funded in SOL to pay the transaction and rent-exempt.
 

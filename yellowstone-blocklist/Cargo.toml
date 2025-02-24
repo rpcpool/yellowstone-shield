@@ -20,9 +20,9 @@ getrandom = { workspace = true, features=["dummy"] }
 
 [dev-dependencies]
 assert_matches = "1.5.0"
-solana-logger = "~2.0.14"
-solana-program-test = "~2.0.14"
-solana-sdk = "~2.0.14"
+solana-logger = "~2.1.11"
+solana-program-test = "~2.1.11"
+solana-sdk = "~2.1.11"
 borsh = "1.5.1"
 
 [lib]
