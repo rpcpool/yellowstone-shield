@@ -21,7 +21,6 @@ use {
         instruction::{
             AclPayload, ConfigInstructions, DeleteListPayload, IndexPubkey, InitializeListPayload,
         },
-        pda::find_pda,
         state::{AclType as AclTypeContract, ListState, ZEROED},
     },
 };
@@ -182,7 +181,10 @@ async fn main() -> anyhow::Result<()> {
     let rpc = RpcClient::new(rpc_url);
     let hash = rpc.get_latest_blockhash()?;
 
-    let (pda, _) = find_pda(&program_id.to_bytes(), &payer.pubkey().to_bytes());
+    let (pda, _) = solana_yellowstone_blocklist::pda::BlockList::pda(
+        &program_id.to_bytes(),
+        &payer.pubkey().to_bytes(),
+    );
 
     let accounts = vec![
         AccountMeta::new(payer.pubkey(), true),
