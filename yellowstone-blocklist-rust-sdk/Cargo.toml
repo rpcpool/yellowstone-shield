@@ -1,0 +1,11 @@
+[package]
+name = "yellowstone-blocklist-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "SDK for Yellowstone Blocklist Program"
+license = "MIT"
+
+[dependencies]
+solana-sdk = "~2.1.11"
+thiserror = "2.0.12"
+borsh = "1.5.5"

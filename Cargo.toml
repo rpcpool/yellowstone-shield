@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["yellowstone-blocklist", "yellowstone-blocklist-cli"]
+members = ["yellowstone-blocklist", "yellowstone-blocklist-cli", "yellowstone-blocklist-rust-sdk"]
 
 [workspace.dependencies]
 solana-program = "~2.1.11"
