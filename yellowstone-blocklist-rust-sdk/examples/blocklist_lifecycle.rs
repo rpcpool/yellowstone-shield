@@ -24,7 +24,7 @@ fn main() {
     // Read environment variables
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| {
         println!("Using default RPC URL");
-        "http://localhost:8899".to_string()
+        "https://api.mainnet-beta.solana.com".to_string()
     });
 
     let authority_keypair_path = std::env::var("AUTHORITY_KEYPAIR")
@@ -61,8 +61,7 @@ fn main() {
         &payer_keypair,
         &authority,
         &pda,
-        &test_address1,
-        &test_address2,
+        &vec![test_address1, test_address2],
     );
 
     // Update ACL type
@@ -72,6 +71,7 @@ fn main() {
         &payer_keypair,
         &authority,
         &pda,
+        AclType::Allow,
     );
 
     // Remove an address
@@ -172,30 +172,25 @@ fn add_to_blocklist(
     payer: &Keypair,
     authority: &Keypair,
     pda: &solana_sdk::pubkey::Pubkey,
-    test_address1: &Keypair,
-    test_address2: &Keypair,
+    addresses: &Vec<Keypair>,
 ) -> solana_sdk::signature::Signature {
     println!("\n=== Adding Addresses to Blocklist ===");
-    println!("Adding 2 addresses to the blocklist:");
-    println!("  - Index 0: {}", test_address1.pubkey());
-    println!("  - Index 1: {}", test_address2.pubkey());
+    println!("Adding {} addresses to the blocklist:", addresses.len());
+    addresses.iter().enumerate().for_each(|(i, keypair)| {
+        println!("  - Index {}: {}", i, keypair.pubkey());
+    });
+
+    let indexed_addresses = addresses
+        .iter()
+        .enumerate()
+        .map(|(i, keypair)| IndexPubkey {
+            index: i as u64,
+            key: keypair.pubkey(),
+        })
+        .collect();
 
     let add_ix = blocklist_client
-        .create_add_instruction(
-            &payer.pubkey(),
-            &authority.pubkey(),
-            pda,
-            vec![
-                IndexPubkey {
-                    index: 0,
-                    key: test_address1.pubkey(),
-                },
-                IndexPubkey {
-                    index: 1,
-                    key: test_address2.pubkey(),
-                },
-            ],
-        )
+        .create_add_instruction(&payer.pubkey(), &authority.pubkey(), pda, indexed_addresses)
         .expect("Failed to create add instruction");
 
     let recent_blockhash = rpc_client
@@ -227,17 +222,13 @@ fn update_acl_type(
     payer: &Keypair,
     authority: &Keypair,
     pda: &solana_sdk::pubkey::Pubkey,
+    acl_type: AclType,
 ) -> solana_sdk::signature::Signature {
     println!("\n=== Updating ACL Type ===");
-    println!("Changing ACL type from Deny to Allow");
+    println!("Changing ACL type to {:?}", acl_type);
 
     let update_ix = blocklist_client
-        .create_update_acl_type_instruction(
-            &payer.pubkey(),
-            &authority.pubkey(),
-            pda,
-            AclType::Allow,
-        )
+        .create_update_acl_type_instruction(&payer.pubkey(), &authority.pubkey(), pda, acl_type)
         .expect("Failed to create update ACL type instruction");
 
     let recent_blockhash = rpc_client

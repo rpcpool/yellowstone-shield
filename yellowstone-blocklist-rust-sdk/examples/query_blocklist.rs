@@ -10,7 +10,7 @@ fn main() {
     // Read environment variables
     let rpc_url = std::env::var("RPC_URL").unwrap_or_else(|_| {
         println!("Using default RPC URL");
-        "http://localhost:8899".to_string()
+        "https://api.mainnet-beta.solana.com".to_string()
     });
 
     let blocklist_pda = std::env::var("BLOCKLIST_PDA")
