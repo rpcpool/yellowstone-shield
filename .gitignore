@@ -4,3 +4,4 @@
 */target
 config_list.yaml
 .local
+.env

@@ -11,6 +11,7 @@ pub use client::BlocklistClient;
 pub use error::{BlocklistError, BlocklistResult};
 pub use instruction::{AclPayload, AddListPayload, DeleteListPayload, IndexPubkey};
 pub use state::AclType;
+pub use state::{EnumListState, ListState, MetaList};
 
 // Program ID for Yellowstone Blocklist
 pub const BLOCKLIST_PROGRAM_ID: &str = "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W";

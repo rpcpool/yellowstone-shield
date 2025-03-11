@@ -16,7 +16,6 @@ use crate::{
     BLOCKLIST_PROGRAM_ID,
 };
 
-/// Client for interacting with the Yellowstone Blocklist program
 pub struct BlocklistClient {
     program_id: Pubkey,
 }
@@ -83,18 +82,18 @@ impl BlocklistClient {
     ///
     /// * `payer` - Account paying for transaction fees
     /// * `authority` - The authority of the blocklist
-    /// * `list_pda` - PDA of the blocklist account
+    /// * `pda` - PDA of the blocklist account
     /// * `pubkey_list` - List of pubkeys and their indices to add
     pub fn create_add_instruction(
         &self,
         payer: &Pubkey,
         authority: &Pubkey,
-        list_pda: &Pubkey,
+        pda: &Pubkey,
         pubkey_list: Vec<IndexPubkey>,
     ) -> BlocklistResult<Instruction> {
         let accounts = vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*list_pda, false),
+            AccountMeta::new(*pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
             AccountMeta::new(*authority, true),
         ];
@@ -114,18 +113,18 @@ impl BlocklistClient {
     ///
     /// * `payer` - Account paying for transaction fees
     /// * `authority` - The authority of the blocklist
-    /// * `list_pda` - PDA of the blocklist account
+    /// * `pda` - PDA of the blocklist account
     /// * `indices` - List of indices to remove
     pub fn create_remove_instruction(
         &self,
         payer: &Pubkey,
         authority: &Pubkey,
-        list_pda: &Pubkey,
+        pda: &Pubkey,
         indices: Vec<usize>,
     ) -> BlocklistResult<Instruction> {
         let accounts = vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*list_pda, false),
+            AccountMeta::new(*pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
             AccountMeta::new(*authority, true),
         ];
@@ -145,18 +144,18 @@ impl BlocklistClient {
     ///
     /// * `payer` - Account paying for transaction fees
     /// * `authority` - The authority of the blocklist
-    /// * `list_pda` - PDA of the blocklist account
+    /// * `pda` - PDA of the blocklist account
     /// * `acl_type` - New ACL type (Allow or Deny)
     pub fn create_update_acl_type_instruction(
         &self,
         payer: &Pubkey,
         authority: &Pubkey,
-        list_pda: &Pubkey,
+        pda: &Pubkey,
         acl_type: AclType,
     ) -> BlocklistResult<Instruction> {
         let accounts = vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*list_pda, false),
+            AccountMeta::new(*pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
             AccountMeta::new(*authority, true),
         ];
@@ -176,16 +175,16 @@ impl BlocklistClient {
     ///
     /// * `payer` - Account paying for transaction fees
     /// * `authority` - The authority of the blocklist
-    /// * `list_pda` - PDA of the blocklist account
+    /// * `pda` - PDA of the blocklist account
     pub fn create_freeze_instruction(
         &self,
         payer: &Pubkey,
         authority: &Pubkey,
-        list_pda: &Pubkey,
+        pda: &Pubkey,
     ) -> BlocklistResult<Instruction> {
         let accounts = vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*list_pda, false),
+            AccountMeta::new(*pda, false),
             AccountMeta::new_readonly(system_program::id(), false),
             AccountMeta::new(*authority, true),
         ];
@@ -205,18 +204,18 @@ impl BlocklistClient {
     ///
     /// * `payer` - Account paying for transaction fees
     /// * `authority` - The authority of the blocklist
-    /// * `list_pda` - PDA of the blocklist account
+    /// * `pda` - PDA of the blocklist account
     /// * `destination` - Account to receive the recovered lamports
     pub fn create_close_instruction(
         &self,
         payer: &Pubkey,
         authority: &Pubkey,
-        list_pda: &Pubkey,
+        pda: &Pubkey,
         destination: &Pubkey,
     ) -> BlocklistResult<Instruction> {
         let accounts = vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*list_pda, false),
+            AccountMeta::new(*pda, false),
             AccountMeta::new(*destination, false),
             AccountMeta::new_readonly(system_program::id(), false),
             AccountMeta::new(*authority, true),
