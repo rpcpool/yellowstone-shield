@@ -407,7 +407,7 @@ mod tests {
     // Acl type tests with uninitialized account
     #[tokio::test]
     async fn test_update_acl_1() {
-        let (program_id, mut banks_client, payer, recent_blockhash) = start_program_test().await;
+        let (program_id, banks_client, payer, recent_blockhash) = start_program_test().await;
         // create counter
         let (pda_key, _) = find_pda(&program_id, &payer.pubkey());
 
