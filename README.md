@@ -13,7 +13,7 @@ The program is currently deployed on Solana Mainnet and Solana Devnet with the f
 | Network | Program ID |
 |---------|--------------
 | Mainnet | `b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W` |
-| Devnet | |
+| Devnet | `E47XuTVcCMMYZSmeaybv3BMu6hYktvvFgeZkAJbVgmUx` |
 
 
 ### Why custom program?
