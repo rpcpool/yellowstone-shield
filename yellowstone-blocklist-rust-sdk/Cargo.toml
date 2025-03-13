@@ -5,14 +5,14 @@ edition = "2021"
 description = "SDK for Yellowstone Blocklist Program"
 
 [dependencies]
-solana-sdk = "~2.1.11"
-thiserror = "2.0.12"
-borsh = "1.5.5"
-bytemuck = "1.22.0"
+solana-sdk = { workspace = true }
+thiserror = { workspace = true }
+borsh = { workspace = true }
+bytemuck = { workspace = true }
 
 [dev-dependencies]
-solana-sdk = "~2.1.11"
-solana-client = "~2.1.11"
+solana-sdk = { workspace = true }
+solana-client = { workspace = true }
 dotenvy = "0.15.7"
 
 [[example]]

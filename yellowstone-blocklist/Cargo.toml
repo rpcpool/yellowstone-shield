@@ -16,14 +16,13 @@ bincode = { workspace = true }
 serde_derive = { workspace = true }
 serde = { workspace = true }
 bytemuck = { workspace = true }
-getrandom = { workspace = true, features=["dummy"] }
+getrandom = { workspace = true, features = ["dummy"] }
 
 [dev-dependencies]
 assert_matches = "1.5.0"
 solana-logger = "~2.1.11"
 solana-program-test = "~2.1.11"
 solana-sdk = "~2.1.11"
-borsh = "1.5.1"
 
 [lib]
 crate-type = ["cdylib", "lib"]

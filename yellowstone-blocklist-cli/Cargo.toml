@@ -5,18 +5,18 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.92"
-borsh = {workspace = true}
+borsh = { workspace = true }
 thiserror = { workspace = true }
 bincode = { workspace = true }
 serde_derive = { workspace = true }
 serde = { workspace = true }
 bytemuck = { workspace = true }
-clap = {version="4.5.20", features=["cargo","derive"]}
+clap = { version = "4.5.20", features = ["cargo", "derive"] }
 serde_yml = "0.0.12"
 serde_json = "1.0.132"
-solana-client = "~2.1.11"
-solana-sdk = "~2.1.11"
-solana-yellowstone-blocklist = {path = "../yellowstone-blocklist"}
+solana-client = { workspace = true }
+solana-sdk = { workspace = true }
+solana-yellowstone-blocklist = { workspace = true }
 tokio = "1.41.0"
 
 [[bin]]
