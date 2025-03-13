@@ -1435,7 +1435,7 @@ mod tests {
             "solana_yellowstone_blocklist",
             program_id,
             // shank is incompatible with instantiating the BuiltInFunction
-            None,
+            processor!(processor::process_instruction),
         );
 
         let (banks_client, payer, recent_blockhash) = program_test.start().await;
