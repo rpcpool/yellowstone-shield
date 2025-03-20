@@ -1,29 +1,20 @@
 #![cfg(feature = "test-sbf")]
 use borsh::BorshDeserialize;
 use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::{
-    rent::Rent,
-    signature::{Keypair, Signer},
-    system_instruction,
-    transaction::Transaction,
-};
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
+use solana_sdk::signature::{Keypair, Signer};
 use spl_token_2022::{
-    extension::{metadata_pointer, Extension, ExtensionType},
-    instruction::{initialize_mint, initialize_mint2, mint_to},
-    state::{Account, Mint, PackedSizeOf},
-};
-use spl_token_metadata_interface::{
-    instruction::initialize as initialize_metadata, state::TokenMetadata,
+    extension::ExtensionType,
+    state::{Mint, PackedSizeOf},
 };
 use yellowstone_blocklist_client::{
-    accounts::Policy, instructions::CreatePolicyBuilder, CreateAccountBuilder,
-    InitializeMint2Builder, InitializeTokenExtensionsAccountBuilder,
+    accounts::Policy,
+    instructions::{CreatePolicyBuilder, PushIdentityBuilder},
+    CreateAccountBuilder, InitializeMint2Builder, InitializeTokenExtensionsAccountBuilder,
     MetadataPointerInitializeBuilder, Size, TokenExtensionsMintToBuilder, TransactionBuilder,
 };
 
 #[tokio::test]
-async fn test_create() {
+async fn test_policy_lifecycle() {
     let context = ProgramTest::new(
         "yellowstone_blocklist",
         yellowstone_blocklist_client::ID,
@@ -38,16 +29,6 @@ async fn test_create() {
     let payer_token_account = Keypair::new();
     // Mock the validator identity.
     let validator_identity = Keypair::new();
-
-    let _token_metadata = TokenMetadata {
-        name: "Test".to_string(),
-        symbol: "TEST".to_string(),
-        uri: "https://example.com".to_string(),
-        mint: mint.pubkey(),
-        update_authority: Some(context.payer.pubkey()).try_into().unwrap(),
-        additional_metadata: Vec::new(),
-    };
-
     // Calculate the space required for the mint account with extensions.
     let space = ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])
         .unwrap();
@@ -81,19 +62,6 @@ async fn test_create() {
         .validator_identities(vec![validator_identity.pubkey()])
         .strategy(yellowstone_blocklist_client::types::PermissionStrategy::Allow)
         .instruction();
-
-    // TODO: Figure out spacing to be able to create the metadata in same transaction.
-    // Create metadata.
-    let _create_metadata_ix = initialize_metadata(
-        &spl_token_2022::id(),
-        &mint.pubkey(),
-        &context.payer.pubkey(),
-        &mint.pubkey(),
-        &context.payer.pubkey(),
-        "Test".to_string(),
-        "TEST".to_string(),
-        "https://example.com".to_string(),
-    );
 
     // Create a token account for the payer.
     let create_payer_token_account_ix = CreateAccountBuilder::build()
@@ -166,4 +134,37 @@ async fn test_create() {
         .await
         .unwrap();
     assert!(payer_token_account_data.is_some());
+
+    let another_identity = Keypair::new();
+
+    let push_identity_ix = PushIdentityBuilder::new()
+        .policy(address)
+        .mint(mint.pubkey())
+        .payer(context.payer.pubkey())
+        .token_account(payer_token_account.pubkey())
+        .validator_identity(another_identity.pubkey())
+        .instruction();
+
+    let tx = TransactionBuilder::build()
+        .instruction(push_identity_ix)
+        .signer(&context.payer)
+        .payer(&context.payer.pubkey())
+        .recent_blockhash(context.last_blockhash)
+        .transaction();
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let policy_account = context.banks_client.get_account(address).await.unwrap();
+    assert!(policy_account.is_some());
+
+    let policy_account = policy_account.unwrap();
+    let mut policy_account_data = policy_account.data.as_ref();
+
+    let policy = Policy::deserialize(&mut policy_account_data).unwrap();
+
+    assert_eq!(policy_account.data.len(), policy.size());
+    assert_eq!(
+        policy.validator_identities,
+        vec![validator_identity.pubkey(), another_identity.pubkey()]
+    );
 }
