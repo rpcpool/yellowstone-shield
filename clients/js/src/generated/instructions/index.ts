@@ -6,6 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './addIdentity';
 export * from './createPolicy';
-export * from './popIdentity';
-export * from './pushIdentity';
+export * from './removeIdentity';

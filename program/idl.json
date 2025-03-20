@@ -74,7 +74,7 @@
       }
     },
     {
-      "name": "PushIdentity",
+      "name": "AddIdentity",
       "accounts": [
         {
           "name": "mint",
@@ -129,7 +129,7 @@
       }
     },
     {
-      "name": "PopIdentity",
+      "name": "RemoveIdentity",
       "accounts": [
         {
           "name": "mint",
@@ -309,6 +309,11 @@
       "code": 13,
       "name": "MistmatchMint",
       "msg": "Mismatching mint"
+    },
+    {
+      "code": 14,
+      "name": "ValidatorIdentityNotFound",
+      "msg": "Validator Identity not found"
     }
   ],
   "metadata": {

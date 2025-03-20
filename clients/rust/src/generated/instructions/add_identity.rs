@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct PushIdentity {
+pub struct AddIdentity {
     /// The token extensions mint account linked to the policy
     pub mint: solana_program::pubkey::Pubkey,
     /// The authority over the policy based on token onwership of the mint
@@ -23,17 +23,17 @@ pub struct PushIdentity {
     pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl PushIdentity {
+impl AddIdentity {
     pub fn instruction(
         &self,
-        args: PushIdentityInstructionArgs,
+        args: AddIdentityInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: PushIdentityInstructionArgs,
+        args: AddIdentityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
@@ -56,7 +56,7 @@ impl PushIdentity {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = PushIdentityInstructionData::new().try_to_vec().unwrap();
+        let mut data = AddIdentityInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -69,17 +69,17 @@ impl PushIdentity {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct PushIdentityInstructionData {
+pub struct AddIdentityInstructionData {
     discriminator: u8,
 }
 
-impl PushIdentityInstructionData {
+impl AddIdentityInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 1 }
     }
 }
 
-impl Default for PushIdentityInstructionData {
+impl Default for AddIdentityInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -87,11 +87,11 @@ impl Default for PushIdentityInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PushIdentityInstructionArgs {
+pub struct AddIdentityInstructionArgs {
     pub validator_identity: Pubkey,
 }
 
-/// Instruction builder for `PushIdentity`.
+/// Instruction builder for `AddIdentity`.
 ///
 /// ### Accounts:
 ///
@@ -101,7 +101,7 @@ pub struct PushIdentityInstructionArgs {
 ///   3. `[writable, signer]` payer
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct PushIdentityBuilder {
+pub struct AddIdentityBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
@@ -111,7 +111,7 @@ pub struct PushIdentityBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl PushIdentityBuilder {
+impl AddIdentityBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -171,7 +171,7 @@ impl PushIdentityBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = PushIdentity {
+        let accounts = AddIdentity {
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
@@ -180,7 +180,7 @@ impl PushIdentityBuilder {
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = PushIdentityInstructionArgs {
+        let args = AddIdentityInstructionArgs {
             validator_identity: self
                 .validator_identity
                 .clone()
@@ -191,8 +191,8 @@ impl PushIdentityBuilder {
     }
 }
 
-/// `push_identity` CPI accounts.
-pub struct PushIdentityCpiAccounts<'a, 'b> {
+/// `add_identity` CPI accounts.
+pub struct AddIdentityCpiAccounts<'a, 'b> {
     /// The token extensions mint account linked to the policy
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The authority over the policy based on token onwership of the mint
@@ -205,8 +205,8 @@ pub struct PushIdentityCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `push_identity` CPI instruction.
-pub struct PushIdentityCpi<'a, 'b> {
+/// `add_identity` CPI instruction.
+pub struct AddIdentityCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token extensions mint account linked to the policy
@@ -220,14 +220,14 @@ pub struct PushIdentityCpi<'a, 'b> {
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: PushIdentityInstructionArgs,
+    pub __args: AddIdentityInstructionArgs,
 }
 
-impl<'a, 'b> PushIdentityCpi<'a, 'b> {
+impl<'a, 'b> AddIdentityCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: PushIdentityCpiAccounts<'a, 'b>,
-        args: PushIdentityInstructionArgs,
+        accounts: AddIdentityCpiAccounts<'a, 'b>,
+        args: AddIdentityInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -300,7 +300,7 @@ impl<'a, 'b> PushIdentityCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = PushIdentityInstructionData::new().try_to_vec().unwrap();
+        let mut data = AddIdentityInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -328,7 +328,7 @@ impl<'a, 'b> PushIdentityCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `PushIdentity` via CPI.
+/// Instruction builder for `AddIdentity` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -338,13 +338,13 @@ impl<'a, 'b> PushIdentityCpi<'a, 'b> {
 ///   3. `[writable, signer]` payer
 ///   4. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct PushIdentityCpiBuilder<'a, 'b> {
-    instruction: Box<PushIdentityCpiBuilderInstruction<'a, 'b>>,
+pub struct AddIdentityCpiBuilder<'a, 'b> {
+    instruction: Box<AddIdentityCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> PushIdentityCpiBuilder<'a, 'b> {
+impl<'a, 'b> AddIdentityCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(PushIdentityCpiBuilderInstruction {
+        let instruction = Box::new(AddIdentityCpiBuilderInstruction {
             __program: program,
             mint: None,
             token_account: None,
@@ -441,14 +441,14 @@ impl<'a, 'b> PushIdentityCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = PushIdentityInstructionArgs {
+        let args = AddIdentityInstructionArgs {
             validator_identity: self
                 .instruction
                 .validator_identity
                 .clone()
                 .expect("validator_identity is not set"),
         };
-        let instruction = PushIdentityCpi {
+        let instruction = AddIdentityCpi {
             __program: self.instruction.__program,
 
             mint: self.instruction.mint.expect("mint is not set"),
@@ -476,7 +476,7 @@ impl<'a, 'b> PushIdentityCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct PushIdentityCpiBuilderInstruction<'a, 'b> {
+struct AddIdentityCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,

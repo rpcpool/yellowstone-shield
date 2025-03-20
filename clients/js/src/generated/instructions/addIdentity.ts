@@ -32,13 +32,13 @@ import {
 import { BLOCKLIST_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const PUSH_IDENTITY_DISCRIMINATOR = 1;
+export const ADD_IDENTITY_DISCRIMINATOR = 1;
 
-export function getPushIdentityDiscriminatorBytes() {
-  return getU8Encoder().encode(PUSH_IDENTITY_DISCRIMINATOR);
+export function getAddIdentityDiscriminatorBytes() {
+  return getU8Encoder().encode(ADD_IDENTITY_DISCRIMINATOR);
 }
 
-export type PushIdentityInstruction<
+export type AddIdentityInstruction<
   TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
@@ -72,41 +72,41 @@ export type PushIdentityInstruction<
     ]
   >;
 
-export type PushIdentityInstructionData = {
+export type AddIdentityInstructionData = {
   discriminator: number;
   validatorIdentity: Address;
 };
 
-export type PushIdentityInstructionDataArgs = { validatorIdentity: Address };
+export type AddIdentityInstructionDataArgs = { validatorIdentity: Address };
 
-export function getPushIdentityInstructionDataEncoder(): Encoder<PushIdentityInstructionDataArgs> {
+export function getAddIdentityInstructionDataEncoder(): Encoder<AddIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['validatorIdentity', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: PUSH_IDENTITY_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ADD_IDENTITY_DISCRIMINATOR })
   );
 }
 
-export function getPushIdentityInstructionDataDecoder(): Decoder<PushIdentityInstructionData> {
+export function getAddIdentityInstructionDataDecoder(): Decoder<AddIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['validatorIdentity', getAddressDecoder()],
   ]);
 }
 
-export function getPushIdentityInstructionDataCodec(): Codec<
-  PushIdentityInstructionDataArgs,
-  PushIdentityInstructionData
+export function getAddIdentityInstructionDataCodec(): Codec<
+  AddIdentityInstructionDataArgs,
+  AddIdentityInstructionData
 > {
   return combineCodec(
-    getPushIdentityInstructionDataEncoder(),
-    getPushIdentityInstructionDataDecoder()
+    getAddIdentityInstructionDataEncoder(),
+    getAddIdentityInstructionDataDecoder()
   );
 }
 
-export type PushIdentityInput<
+export type AddIdentityInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
@@ -123,10 +123,10 @@ export type PushIdentityInput<
   payer: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  validatorIdentity: PushIdentityInstructionDataArgs['validatorIdentity'];
+  validatorIdentity: AddIdentityInstructionDataArgs['validatorIdentity'];
 };
 
-export function getPushIdentityInstruction<
+export function getAddIdentityInstruction<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
@@ -134,7 +134,7 @@ export function getPushIdentityInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof BLOCKLIST_PROGRAM_ADDRESS,
 >(
-  input: PushIdentityInput<
+  input: AddIdentityInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
@@ -142,7 +142,7 @@ export function getPushIdentityInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): PushIdentityInstruction<
+): AddIdentityInstruction<
   TProgramAddress,
   TAccountMint,
   TAccountTokenAccount,
@@ -185,10 +185,10 @@ export function getPushIdentityInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getPushIdentityInstructionDataEncoder().encode(
-      args as PushIdentityInstructionDataArgs
+    data: getAddIdentityInstructionDataEncoder().encode(
+      args as AddIdentityInstructionDataArgs
     ),
-  } as PushIdentityInstruction<
+  } as AddIdentityInstruction<
     TProgramAddress,
     TAccountMint,
     TAccountTokenAccount,
@@ -200,7 +200,7 @@ export function getPushIdentityInstruction<
   return instruction;
 }
 
-export type ParsedPushIdentityInstruction<
+export type ParsedAddIdentityInstruction<
   TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -217,17 +217,17 @@ export type ParsedPushIdentityInstruction<
     /** The system program */
     systemProgram: TAccountMetas[4];
   };
-  data: PushIdentityInstructionData;
+  data: AddIdentityInstructionData;
 };
 
-export function parsePushIdentityInstruction<
+export function parseAddIdentityInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedPushIdentityInstruction<TProgram, TAccountMetas> {
+): ParsedAddIdentityInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -247,6 +247,6 @@ export function parsePushIdentityInstruction<
       payer: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getPushIdentityInstructionDataDecoder().decode(instruction.data),
+    data: getAddIdentityInstructionDataDecoder().decode(instruction.data),
   };
 }

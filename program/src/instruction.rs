@@ -19,22 +19,22 @@ pub enum BlockListInstruction {
         strategy: PermissionStrategy,
         validator_identities: Vec<Pubkey>,
     },
-    /// Pushes a new validator identity to the blocklist policy.
+    /// Add a new validator identity to the blocklist policy.
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token onwership of the mint")]
     #[account(2, writable, name="policy", desc = "The blocklist policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
     #[account(4, name="system_program", desc = "The system program")]
-    PushIdentity {
+    AddIdentity {
         validator_identity: Pubkey,
     },
-    /// Pops a validator identity from the blocklist policy.
+    /// Remove a validator identity from the blocklist policy.
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token onwership of the mint")]
     #[account(2, writable, name="policy", desc = "The blocklist policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
     #[account(4, name="system_program", desc = "The system program")]
-    PopIdentity {
+    RemoveIdentity {
         validator_identity: Pubkey,
     },
 }

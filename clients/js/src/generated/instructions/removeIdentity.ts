@@ -32,13 +32,13 @@ import {
 import { BLOCKLIST_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const POP_IDENTITY_DISCRIMINATOR = 2;
+export const REMOVE_IDENTITY_DISCRIMINATOR = 2;
 
-export function getPopIdentityDiscriminatorBytes() {
-  return getU8Encoder().encode(POP_IDENTITY_DISCRIMINATOR);
+export function getRemoveIdentityDiscriminatorBytes() {
+  return getU8Encoder().encode(REMOVE_IDENTITY_DISCRIMINATOR);
 }
 
-export type PopIdentityInstruction<
+export type RemoveIdentityInstruction<
   TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
@@ -72,41 +72,41 @@ export type PopIdentityInstruction<
     ]
   >;
 
-export type PopIdentityInstructionData = {
+export type RemoveIdentityInstructionData = {
   discriminator: number;
   validatorIdentity: Address;
 };
 
-export type PopIdentityInstructionDataArgs = { validatorIdentity: Address };
+export type RemoveIdentityInstructionDataArgs = { validatorIdentity: Address };
 
-export function getPopIdentityInstructionDataEncoder(): Encoder<PopIdentityInstructionDataArgs> {
+export function getRemoveIdentityInstructionDataEncoder(): Encoder<RemoveIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['validatorIdentity', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: POP_IDENTITY_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: REMOVE_IDENTITY_DISCRIMINATOR })
   );
 }
 
-export function getPopIdentityInstructionDataDecoder(): Decoder<PopIdentityInstructionData> {
+export function getRemoveIdentityInstructionDataDecoder(): Decoder<RemoveIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['validatorIdentity', getAddressDecoder()],
   ]);
 }
 
-export function getPopIdentityInstructionDataCodec(): Codec<
-  PopIdentityInstructionDataArgs,
-  PopIdentityInstructionData
+export function getRemoveIdentityInstructionDataCodec(): Codec<
+  RemoveIdentityInstructionDataArgs,
+  RemoveIdentityInstructionData
 > {
   return combineCodec(
-    getPopIdentityInstructionDataEncoder(),
-    getPopIdentityInstructionDataDecoder()
+    getRemoveIdentityInstructionDataEncoder(),
+    getRemoveIdentityInstructionDataDecoder()
   );
 }
 
-export type PopIdentityInput<
+export type RemoveIdentityInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
@@ -123,10 +123,10 @@ export type PopIdentityInput<
   payer: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  validatorIdentity: PopIdentityInstructionDataArgs['validatorIdentity'];
+  validatorIdentity: RemoveIdentityInstructionDataArgs['validatorIdentity'];
 };
 
-export function getPopIdentityInstruction<
+export function getRemoveIdentityInstruction<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
@@ -134,7 +134,7 @@ export function getPopIdentityInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof BLOCKLIST_PROGRAM_ADDRESS,
 >(
-  input: PopIdentityInput<
+  input: RemoveIdentityInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
@@ -142,7 +142,7 @@ export function getPopIdentityInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): PopIdentityInstruction<
+): RemoveIdentityInstruction<
   TProgramAddress,
   TAccountMint,
   TAccountTokenAccount,
@@ -185,10 +185,10 @@ export function getPopIdentityInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getPopIdentityInstructionDataEncoder().encode(
-      args as PopIdentityInstructionDataArgs
+    data: getRemoveIdentityInstructionDataEncoder().encode(
+      args as RemoveIdentityInstructionDataArgs
     ),
-  } as PopIdentityInstruction<
+  } as RemoveIdentityInstruction<
     TProgramAddress,
     TAccountMint,
     TAccountTokenAccount,
@@ -200,7 +200,7 @@ export function getPopIdentityInstruction<
   return instruction;
 }
 
-export type ParsedPopIdentityInstruction<
+export type ParsedRemoveIdentityInstruction<
   TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -217,17 +217,17 @@ export type ParsedPopIdentityInstruction<
     /** The system program */
     systemProgram: TAccountMetas[4];
   };
-  data: PopIdentityInstructionData;
+  data: RemoveIdentityInstructionData;
 };
 
-export function parsePopIdentityInstruction<
+export function parseRemoveIdentityInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedPopIdentityInstruction<TProgram, TAccountMetas> {
+): ParsedRemoveIdentityInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -247,6 +247,6 @@ export function parsePopIdentityInstruction<
       payer: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getPopIdentityInstructionDataDecoder().decode(instruction.data),
+    data: getRemoveIdentityInstructionDataDecoder().decode(instruction.data),
   };
 }

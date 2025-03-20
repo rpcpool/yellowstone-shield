@@ -13,9 +13,9 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/web3.js';
 import {
+  type ParsedAddIdentityInstruction,
   type ParsedCreatePolicyInstruction,
-  type ParsedPopIdentityInstruction,
-  type ParsedPushIdentityInstruction,
+  type ParsedRemoveIdentityInstruction,
 } from '../instructions';
 import { Kind, getKindEncoder } from '../types';
 
@@ -40,8 +40,8 @@ export function identifyBlocklistAccount(
 
 export enum BlocklistInstruction {
   CreatePolicy,
-  PushIdentity,
-  PopIdentity,
+  AddIdentity,
+  RemoveIdentity,
 }
 
 export function identifyBlocklistInstruction(
@@ -52,10 +52,10 @@ export function identifyBlocklistInstruction(
     return BlocklistInstruction.CreatePolicy;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return BlocklistInstruction.PushIdentity;
+    return BlocklistInstruction.AddIdentity;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return BlocklistInstruction.PopIdentity;
+    return BlocklistInstruction.RemoveIdentity;
   }
   throw new Error(
     'The provided instruction could not be identified as a blocklist instruction.'
@@ -69,8 +69,8 @@ export type ParsedBlocklistInstruction<
       instructionType: BlocklistInstruction.CreatePolicy;
     } & ParsedCreatePolicyInstruction<TProgram>)
   | ({
-      instructionType: BlocklistInstruction.PushIdentity;
-    } & ParsedPushIdentityInstruction<TProgram>)
+      instructionType: BlocklistInstruction.AddIdentity;
+    } & ParsedAddIdentityInstruction<TProgram>)
   | ({
-      instructionType: BlocklistInstruction.PopIdentity;
-    } & ParsedPopIdentityInstruction<TProgram>);
+      instructionType: BlocklistInstruction.RemoveIdentity;
+    } & ParsedRemoveIdentityInstruction<TProgram>);

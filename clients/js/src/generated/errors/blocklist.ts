@@ -42,6 +42,8 @@ export const BLOCKLIST_ERROR__EXPECTED_POSITIVE_AMOUNT = 0xb; // 11
 export const BLOCKLIST_ERROR__INCORRECT_TOKEN_OWNER = 0xc; // 12
 /** MistmatchMint: Mismatching mint */
 export const BLOCKLIST_ERROR__MISTMATCH_MINT = 0xd; // 13
+/** ValidatorIdentityNotFound: Validator Identity not found */
+export const BLOCKLIST_ERROR__VALIDATOR_IDENTITY_NOT_FOUND = 0xe; // 14
 
 export type BlocklistError =
   | typeof BLOCKLIST_ERROR__ACCOUNT_MISMATCH
@@ -57,7 +59,8 @@ export type BlocklistError =
   | typeof BLOCKLIST_ERROR__INVALID_PROGRAM_OWNER
   | typeof BLOCKLIST_ERROR__MISTMATCH_MINT
   | typeof BLOCKLIST_ERROR__NUMERICAL_OVERFLOW
-  | typeof BLOCKLIST_ERROR__SERIALIZATION_ERROR;
+  | typeof BLOCKLIST_ERROR__SERIALIZATION_ERROR
+  | typeof BLOCKLIST_ERROR__VALIDATOR_IDENTITY_NOT_FOUND;
 
 let blocklistErrorMessages: Record<BlocklistError, string> | undefined;
 if (process.env.NODE_ENV !== 'production') {
@@ -76,6 +79,7 @@ if (process.env.NODE_ENV !== 'production') {
     [BLOCKLIST_ERROR__MISTMATCH_MINT]: `Mismatching mint`,
     [BLOCKLIST_ERROR__NUMERICAL_OVERFLOW]: `Numerical overflow`,
     [BLOCKLIST_ERROR__SERIALIZATION_ERROR]: `Error serializing an account`,
+    [BLOCKLIST_ERROR__VALIDATOR_IDENTITY_NOT_FOUND]: `Validator Identity not found`,
   };
 }
 

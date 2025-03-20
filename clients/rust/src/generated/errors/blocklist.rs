@@ -52,6 +52,9 @@ pub enum BlocklistError {
     /// 13 - Mismatching mint
     #[error("Mismatching mint")]
     MistmatchMint = 0xD,
+    /// 14 - Validator Identity not found
+    #[error("Validator Identity not found")]
+    ValidatorIdentityNotFound = 0xE,
 }
 
 impl solana_program::program_error::PrintProgramError for BlocklistError {

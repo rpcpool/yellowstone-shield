@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct PopIdentity {
+pub struct RemoveIdentity {
     /// The token extensions mint account linked to the policy
     pub mint: solana_program::pubkey::Pubkey,
     /// The authority over the policy based on token onwership of the mint
@@ -23,17 +23,17 @@ pub struct PopIdentity {
     pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl PopIdentity {
+impl RemoveIdentity {
     pub fn instruction(
         &self,
-        args: PopIdentityInstructionArgs,
+        args: RemoveIdentityInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: PopIdentityInstructionArgs,
+        args: RemoveIdentityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
@@ -56,7 +56,7 @@ impl PopIdentity {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = PopIdentityInstructionData::new().try_to_vec().unwrap();
+        let mut data = RemoveIdentityInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -69,17 +69,17 @@ impl PopIdentity {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct PopIdentityInstructionData {
+pub struct RemoveIdentityInstructionData {
     discriminator: u8,
 }
 
-impl PopIdentityInstructionData {
+impl RemoveIdentityInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 2 }
     }
 }
 
-impl Default for PopIdentityInstructionData {
+impl Default for RemoveIdentityInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -87,11 +87,11 @@ impl Default for PopIdentityInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PopIdentityInstructionArgs {
+pub struct RemoveIdentityInstructionArgs {
     pub validator_identity: Pubkey,
 }
 
-/// Instruction builder for `PopIdentity`.
+/// Instruction builder for `RemoveIdentity`.
 ///
 /// ### Accounts:
 ///
@@ -101,7 +101,7 @@ pub struct PopIdentityInstructionArgs {
 ///   3. `[writable, signer]` payer
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct PopIdentityBuilder {
+pub struct RemoveIdentityBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
@@ -111,7 +111,7 @@ pub struct PopIdentityBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl PopIdentityBuilder {
+impl RemoveIdentityBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -171,7 +171,7 @@ impl PopIdentityBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = PopIdentity {
+        let accounts = RemoveIdentity {
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
@@ -180,7 +180,7 @@ impl PopIdentityBuilder {
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = PopIdentityInstructionArgs {
+        let args = RemoveIdentityInstructionArgs {
             validator_identity: self
                 .validator_identity
                 .clone()
@@ -191,8 +191,8 @@ impl PopIdentityBuilder {
     }
 }
 
-/// `pop_identity` CPI accounts.
-pub struct PopIdentityCpiAccounts<'a, 'b> {
+/// `remove_identity` CPI accounts.
+pub struct RemoveIdentityCpiAccounts<'a, 'b> {
     /// The token extensions mint account linked to the policy
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The authority over the policy based on token onwership of the mint
@@ -205,8 +205,8 @@ pub struct PopIdentityCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `pop_identity` CPI instruction.
-pub struct PopIdentityCpi<'a, 'b> {
+/// `remove_identity` CPI instruction.
+pub struct RemoveIdentityCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token extensions mint account linked to the policy
@@ -220,14 +220,14 @@ pub struct PopIdentityCpi<'a, 'b> {
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: PopIdentityInstructionArgs,
+    pub __args: RemoveIdentityInstructionArgs,
 }
 
-impl<'a, 'b> PopIdentityCpi<'a, 'b> {
+impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: PopIdentityCpiAccounts<'a, 'b>,
-        args: PopIdentityInstructionArgs,
+        accounts: RemoveIdentityCpiAccounts<'a, 'b>,
+        args: RemoveIdentityInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -300,7 +300,7 @@ impl<'a, 'b> PopIdentityCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = PopIdentityInstructionData::new().try_to_vec().unwrap();
+        let mut data = RemoveIdentityInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -328,7 +328,7 @@ impl<'a, 'b> PopIdentityCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `PopIdentity` via CPI.
+/// Instruction builder for `RemoveIdentity` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -338,13 +338,13 @@ impl<'a, 'b> PopIdentityCpi<'a, 'b> {
 ///   3. `[writable, signer]` payer
 ///   4. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct PopIdentityCpiBuilder<'a, 'b> {
-    instruction: Box<PopIdentityCpiBuilderInstruction<'a, 'b>>,
+pub struct RemoveIdentityCpiBuilder<'a, 'b> {
+    instruction: Box<RemoveIdentityCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> PopIdentityCpiBuilder<'a, 'b> {
+impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(PopIdentityCpiBuilderInstruction {
+        let instruction = Box::new(RemoveIdentityCpiBuilderInstruction {
             __program: program,
             mint: None,
             token_account: None,
@@ -441,14 +441,14 @@ impl<'a, 'b> PopIdentityCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = PopIdentityInstructionArgs {
+        let args = RemoveIdentityInstructionArgs {
             validator_identity: self
                 .instruction
                 .validator_identity
                 .clone()
                 .expect("validator_identity is not set"),
         };
-        let instruction = PopIdentityCpi {
+        let instruction = RemoveIdentityCpi {
             __program: self.instruction.__program,
 
             mint: self.instruction.mint.expect("mint is not set"),
@@ -476,7 +476,7 @@ impl<'a, 'b> PopIdentityCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct PopIdentityCpiBuilderInstruction<'a, 'b> {
+struct RemoveIdentityCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,

@@ -50,6 +50,9 @@ pub enum BlocklistError {
     /// 13 - Mismatching mint
     #[error("Mismatching mint")]
     MistmatchMint,
+    /// 14 - Validator Identity not found
+    #[error("Validator Identity not found")]
+    ValidatorIdentityNotFound,
 }
 
 impl PrintProgramError for BlocklistError {

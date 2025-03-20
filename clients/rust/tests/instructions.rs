@@ -1,4 +1,5 @@
 #![cfg(feature = "test-sbf")]
+
 use borsh::BorshDeserialize;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::signature::{Keypair, Signer};
@@ -8,7 +9,7 @@ use spl_token_2022::{
 };
 use yellowstone_blocklist_client::{
     accounts::Policy,
-    instructions::{CreatePolicyBuilder, PushIdentityBuilder},
+    instructions::{AddIdentityBuilder, CreatePolicyBuilder, RemoveIdentityBuilder},
     CreateAccountBuilder, InitializeMint2Builder, InitializeTokenExtensionsAccountBuilder,
     MetadataPointerInitializeBuilder, Size, TokenExtensionsMintToBuilder, TransactionBuilder,
 };
@@ -137,7 +138,7 @@ async fn test_policy_lifecycle() {
 
     let another_identity = Keypair::new();
 
-    let push_identity_ix = PushIdentityBuilder::new()
+    let push_identity_ix = AddIdentityBuilder::new()
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
@@ -167,4 +168,32 @@ async fn test_policy_lifecycle() {
         policy.validator_identities,
         vec![validator_identity.pubkey(), another_identity.pubkey()]
     );
+
+    let pop_identity_ix = RemoveIdentityBuilder::new()
+        .policy(address)
+        .mint(mint.pubkey())
+        .payer(context.payer.pubkey())
+        .token_account(payer_token_account.pubkey())
+        .validator_identity(validator_identity.pubkey())
+        .instruction();
+
+    let tx = TransactionBuilder::build()
+        .instruction(pop_identity_ix)
+        .signer(&context.payer)
+        .payer(&context.payer.pubkey())
+        .recent_blockhash(context.last_blockhash)
+        .transaction();
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let policy_account = context.banks_client.get_account(address).await.unwrap();
+    assert!(policy_account.is_some());
+
+    let policy_account = policy_account.unwrap();
+    let mut policy_account_data = policy_account.data.as_ref();
+
+    let policy = Policy::deserialize(&mut policy_account_data).unwrap();
+
+    assert_eq!(policy_account.data.len(), policy.size());
+    assert_eq!(policy.validator_identities, vec![another_identity.pubkey()]);
 }

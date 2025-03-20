@@ -5,10 +5,10 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+pub(crate) mod r#add_identity;
 pub(crate) mod r#create_policy;
-pub(crate) mod r#pop_identity;
-pub(crate) mod r#push_identity;
+pub(crate) mod r#remove_identity;
 
+pub use self::r#add_identity::*;
 pub use self::r#create_policy::*;
-pub use self::r#pop_identity::*;
-pub use self::r#push_identity::*;
+pub use self::r#remove_identity::*;
