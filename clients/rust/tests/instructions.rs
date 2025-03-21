@@ -3,6 +3,7 @@
 use borsh::BorshDeserialize;
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::signature::{Keypair, Signer};
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::{
     extension::ExtensionType,
     state::{Mint, PackedSizeOf},
@@ -10,7 +11,7 @@ use spl_token_2022::{
 use yellowstone_blocklist_client::{
     accounts::Policy,
     instructions::{AddIdentityBuilder, CreatePolicyBuilder, RemoveIdentityBuilder},
-    CreateAccountBuilder, InitializeMint2Builder, InitializeTokenExtensionsAccountBuilder,
+    CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMint2Builder,
     MetadataPointerInitializeBuilder, Size, TokenExtensionsMintToBuilder, TransactionBuilder,
 };
 
@@ -26,10 +27,13 @@ async fn test_policy_lifecycle() {
 
     // Given a PDA derived from the payer's public key.
     let mint = Keypair::new();
-    // Create a token account for the payer.
-    let payer_token_account = Keypair::new();
     // Mock the validator identity.
     let validator_identity = Keypair::new();
+    let payer_token_account = get_associated_token_address_with_program_id(
+        &context.payer.pubkey(),
+        &mint.pubkey(),
+        &spl_token_2022::ID,
+    );
     // Calculate the space required for the mint account with extensions.
     let space = ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])
         .unwrap();
@@ -59,30 +63,22 @@ async fn test_policy_lifecycle() {
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
-        .token_account(payer_token_account.pubkey())
+        .token_account(payer_token_account)
         .validator_identities(vec![validator_identity.pubkey()])
         .strategy(yellowstone_blocklist_client::types::PermissionStrategy::Allow)
         .instruction();
 
-    // Create a token account for the payer.
-    let create_payer_token_account_ix = CreateAccountBuilder::build()
-        .payer(&context.payer.pubkey())
-        .account(&payer_token_account.pubkey())
-        .space(spl_token_2022::state::Account::SIZE_OF)
-        .owner(&spl_token_2022::id())
-        .instruction();
-
     // Initialize the payer's token account.
-    let init_payer_token_account_ix = InitializeTokenExtensionsAccountBuilder::build()
-        .account(&payer_token_account.pubkey())
+    let create_payer_token_account_ix = CreateAsscoiatedTokenAccountBuilder::build()
         .mint(&mint.pubkey())
         .owner(&context.payer.pubkey())
+        .payer(&context.payer.pubkey())
         .instruction();
 
     // Mint 1 token to the payer's token account.
     let mint_to_payer_ix = TokenExtensionsMintToBuilder::build()
         .mint(&mint.pubkey())
-        .account(&payer_token_account.pubkey())
+        .account(&payer_token_account)
         .owner(&context.payer.pubkey())
         .amount(1)
         .instruction();
@@ -92,12 +88,10 @@ async fn test_policy_lifecycle() {
         .instruction(init_metadata_pointer_ix)
         .instruction(init_mint_ix)
         .instruction(create_payer_token_account_ix)
-        .instruction(init_payer_token_account_ix)
         .instruction(mint_to_payer_ix)
         .instruction(create_policy_ix)
         .signer(&context.payer)
         .signer(&mint)
-        .signer(&payer_token_account)
         .payer(&context.payer.pubkey())
         .recent_blockhash(context.last_blockhash)
         .transaction();
@@ -131,10 +125,13 @@ async fn test_policy_lifecycle() {
 
     let payer_token_account_data = context
         .banks_client
-        .get_account(payer_token_account.pubkey())
+        .get_account(payer_token_account)
         .await
         .unwrap();
     assert!(payer_token_account_data.is_some());
+
+    let payer_token_account_data = payer_token_account_data.unwrap();
+    assert_eq!(payer_token_account_data.owner, spl_token_2022::ID);
 
     let another_identity = Keypair::new();
 
@@ -142,7 +139,7 @@ async fn test_policy_lifecycle() {
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
-        .token_account(payer_token_account.pubkey())
+        .token_account(payer_token_account)
         .validator_identity(another_identity.pubkey())
         .instruction();
 
@@ -173,7 +170,7 @@ async fn test_policy_lifecycle() {
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
-        .token_account(payer_token_account.pubkey())
+        .token_account(payer_token_account)
         .validator_identity(validator_identity.pubkey())
         .instruction();
 

@@ -1,10 +1,10 @@
 use borsh::BorshDeserialize;
 use solana_program::program_pack::Pack;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
-use spl_token_2022::state::Account;
+use spl_token::state::Account;
 
 use crate::assertions::{
-    assert_empty, assert_mint_association, assert_pda, assert_positive_amount,
+    assert_ata, assert_empty, assert_mint_association, assert_pda, assert_positive_amount,
     assert_program_owner, assert_signer, assert_token_owner, assert_writable,
 };
 use crate::instruction::accounts::{
@@ -56,6 +56,12 @@ fn create_policy<'a>(
     assert_signer("payer", ctx.accounts.payer)?;
     assert_writable("payer", ctx.accounts.payer)?;
     assert_writable("policy", ctx.accounts.policy)?;
+    assert_ata(
+        "token_account",
+        ctx.accounts.token_account,
+        ctx.accounts.payer.key,
+        ctx.accounts.mint.key,
+    )?;
     assert_program_owner("mint", ctx.accounts.mint, &spl_token_2022::id())?;
     assert_program_owner(
         "token_account",
@@ -64,7 +70,9 @@ fn create_policy<'a>(
     )?;
 
     let token_account_data = &ctx.accounts.token_account.try_borrow_data()?;
-    let token_account = Account::unpack(token_account_data)?;
+    let token_account = spl_token_2022::extension::StateWithExtensions::<
+        spl_token_2022::state::Account,
+    >::unpack(token_account_data)?;
 
     assert_positive_amount("token_account", &token_account)?;
     assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
@@ -107,11 +115,18 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], validator_identity: Pubkey)
         ctx.accounts.token_account,
         &spl_token_2022::id(),
     )?;
-
     let token_account_data = &ctx.accounts.token_account.try_borrow_data()?;
-    let token_account = Account::unpack(token_account_data)?;
+    let token_account = spl_token_2022::extension::StateWithExtensions::<
+        spl_token_2022::state::Account,
+    >::unpack(token_account_data)?;
 
     assert_positive_amount("token_account", &token_account)?;
+    assert_ata(
+        "token_account",
+        ctx.accounts.token_account,
+        ctx.accounts.payer.key,
+        ctx.accounts.mint.key,
+    )?;
     assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
@@ -152,9 +167,17 @@ fn remove_identity<'a>(
     )?;
 
     let token_account_data = &ctx.accounts.token_account.try_borrow_data()?;
-    let token_account = Account::unpack(token_account_data)?;
+    let token_account = spl_token_2022::extension::StateWithExtensions::<
+        spl_token_2022::state::Account,
+    >::unpack(token_account_data)?;
 
     assert_positive_amount("token_account", &token_account)?;
+    assert_ata(
+        "token_account",
+        ctx.accounts.token_account,
+        ctx.accounts.payer.key,
+        ctx.accounts.mint.key,
+    )?;
     assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 

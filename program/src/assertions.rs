@@ -3,6 +3,7 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
 };
+use spl_token_2022::extension::StateWithExtensions;
 
 /// Assert that the given account is owned by the given program or one of the given owners.
 /// Useful for dealing with program interfaces.
@@ -163,9 +164,9 @@ pub fn assert_same_pubkeys(
 // Assert that the given amount is positive.
 pub fn assert_positive_amount(
     account_name: &str,
-    account: &spl_token_2022::state::Account,
+    account: &StateWithExtensions<spl_token_2022::state::Account>,
 ) -> ProgramResult {
-    if account.amount == 0 {
+    if account.base.amount == 0 {
         msg!("Account \"{}\" must have a positive amount", account_name,);
         Err(BlocklistError::ExpectedPositiveAmount.into())
     } else {
@@ -177,9 +178,9 @@ pub fn assert_positive_amount(
 pub fn assert_token_owner(
     account_name: &str,
     expected: &Pubkey,
-    account: &spl_token_2022::state::Account,
+    account: &StateWithExtensions<spl_token_2022::state::Account>,
 ) -> ProgramResult {
-    if &account.owner != expected {
+    if &account.base.owner != expected {
         msg!(
             "Account \"{}\" owner must match the expected owner [{}]",
             account_name,
@@ -195,15 +196,39 @@ pub fn assert_token_owner(
 pub fn assert_mint_association(
     account_name: &str,
     expected: &Pubkey,
-    account: &spl_token_2022::state::Account,
+    account: &StateWithExtensions<spl_token_2022::state::Account>,
 ) -> ProgramResult {
-    if &account.mint != expected {
+    if &account.base.mint != expected {
         msg!(
             "Account \"{}\" mint must match the expected mint [{}]",
             account_name,
             expected
         );
         Err(BlocklistError::MistmatchMint.into())
+    } else {
+        Ok(())
+    }
+}
+
+pub fn assert_ata(
+    account_name: &str,
+    account: &AccountInfo,
+    owner: &Pubkey,
+    mint: &Pubkey,
+) -> ProgramResult {
+    let ata = spl_associated_token_account::get_associated_token_address_with_program_id(
+        owner,
+        mint,
+        &spl_token_2022::ID,
+    );
+    if account.key != &ata {
+        msg!(
+            "Account \"{}\" [{}] must be the associated token account for [{}]",
+            account_name,
+            account.key,
+            ata
+        );
+        Err(BlocklistError::InvalidAssociatedTokenAccount.into())
     } else {
         Ok(())
     }

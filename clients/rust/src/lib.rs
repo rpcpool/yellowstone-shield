@@ -4,7 +4,12 @@ pub use generated::programs::BLOCKLIST_ID as ID;
 pub use generated::*;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
+use spl_associated_token_account::{
+    get_associated_token_address, instruction::create_associated_token_account,
+};
 use spl_token_2022::{extension::metadata_pointer, instruction::mint_to};
+use std::str::FromStr;
+use thiserror::Error;
 
 pub trait Size {
     const BASE_SIZE: usize;
@@ -17,6 +22,24 @@ impl Size for generated::accounts::Policy {
 
     fn size(&self) -> usize {
         Self::BASE_SIZE + (self.validator_identities.len() * std::mem::size_of::<Pubkey>())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum ParsePermissionStrategyError {
+    #[error("Invalid permission strategy")]
+    InvalidStrategy,
+}
+
+impl FromStr for generated::types::PermissionStrategy {
+    type Err = ParsePermissionStrategyError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "allow" => Ok(generated::types::PermissionStrategy::Allow),
+            "deny" => Ok(generated::types::PermissionStrategy::Deny),
+            _ => Err(ParsePermissionStrategyError::InvalidStrategy),
+        }
     }
 }
 
@@ -205,34 +228,33 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
     }
 }
 
-pub struct InitializeTokenExtensionsAccountBuilder<'a> {
+pub struct CreateAsscoiatedTokenAccountBuilder<'a> {
     token_program: Option<&'a Pubkey>,
-    account: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
     owner: Option<&'a Pubkey>,
+    payer: Option<&'a Pubkey>,
 }
 
-impl<'a> InitializeTokenExtensionsAccountBuilder<'a> {
+impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
     pub fn build() -> Self {
         Self {
             token_program: None,
-            account: None,
             mint: None,
             owner: None,
+            payer: None,
         }
+    }
+
+    #[inline(always)]
+    pub fn payer(&mut self, payer: &'a Pubkey) -> &mut Self {
+        self.payer = Some(payer);
+        self
     }
 
     /// The token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: &'a Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
-        self
-    }
-
-    /// The account to initialize
-    #[inline(always)]
-    pub fn account(&mut self, account: &'a Pubkey) -> &mut Self {
-        self.account = Some(account);
         self
     }
 
@@ -251,13 +273,12 @@ impl<'a> InitializeTokenExtensionsAccountBuilder<'a> {
     }
 
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        spl_token_2022::instruction::initialize_account(
-            self.token_program.unwrap_or(&spl_token_2022::id()),
-            self.account.expect("account is not set"),
-            self.mint.expect("mint is not set"),
-            self.owner.expect("owner is not set"),
-        )
-        .expect("Failed to create initialize account instruction")
+        let owner = self.owner.expect("owner is not set");
+        let mint = self.mint.expect("mint is not set");
+        let payer = self.payer.expect("payer is not set");
+        let token_program = self.token_program.unwrap_or(&spl_token_2022::ID);
+
+        create_associated_token_account(&payer, owner, mint, token_program)
     }
 }
 

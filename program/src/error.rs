@@ -53,6 +53,9 @@ pub enum BlocklistError {
     /// 14 - Validator Identity not found
     #[error("Validator Identity not found")]
     ValidatorIdentityNotFound,
+    /// 15 - Invalid associated token account
+    #[error("Invalid associated token account")]
+    InvalidAssociatedTokenAccount,
 }
 
 impl PrintProgramError for BlocklistError {

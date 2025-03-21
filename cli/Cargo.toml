@@ -1,0 +1,25 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4.5.32"
+clap_derive = "4.5.32"
+yellowstone-blocklist-client = { workspace = true }
+solana-sdk = "2.1.11"
+solana-cli = "2.1.11"
+solana-cli-config = "2.1.11"
+solana-client = "2.1.11"
+env_logger = "0.11.3"
+log = "0.4.21"
+serde_json = "1.0.117"
+bs58 = "0.5.1"
+async-trait = "0.1.88"
+tokio = { version = "1.37.0", features = ["full"] }
+thiserror = "1.0.69"
+ed25519-dalek = "2.1.1"
+anyhow = { workspace = true }
+spl-token-2022 = { version = "6", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "6", features = ["no-entrypoint"] }
+borsh = "^0.10"

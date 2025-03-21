@@ -1,3 +1,9 @@
+
 [workspace]
 resolver = "2"
-members = ["clients/rust", "program"]
+members = ["cli", "clients/rust", "program"]
+
+[workspace.dependencies]
+yellowstone-blocklist-client = { path = "clients/rust" }
+yellowstone-blocklist = { path = "program" }
+anyhow = "1.0.97"
