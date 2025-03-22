@@ -31,8 +31,7 @@ impl Policy {
     ///   0. `Policy::PREFIX.0`
     ///   1. `Policy::PREFIX.1`
     ///   2. mint (`Pubkey`)
-    pub const PREFIX: (&'static [u8], &'static [u8]) =
-        ("blocklist".as_bytes(), "policy".as_bytes());
+    pub const PREFIX: (&'static [u8], &'static [u8]) = ("shield".as_bytes(), "policy".as_bytes());
 
     pub fn create_pda(
         mint: Pubkey,
@@ -40,19 +39,19 @@ impl Policy {
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &[
-                "blocklist".as_bytes(),
+                "shield".as_bytes(),
                 "policy".as_bytes(),
                 mint.as_ref(),
                 &[bump],
             ],
-            &crate::BLOCKLIST_ID,
+            &crate::SHIELD_ID,
         )
     }
 
     pub fn find_pda(mint: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["blocklist".as_bytes(), "policy".as_bytes(), mint.as_ref()],
-            &crate::BLOCKLIST_ID,
+            &["shield".as_bytes(), "policy".as_bytes(), mint.as_ref()],
+            &crate::SHIELD_ID,
         )
     }
 
@@ -87,7 +86,7 @@ impl anchor_lang::AccountSerialize for Policy {}
 #[cfg(feature = "anchor")]
 impl anchor_lang::Owner for Policy {
     fn owner() -> Pubkey {
-        crate::BLOCKLIST_ID
+        crate::SHIELD_ID
     }
 }
 

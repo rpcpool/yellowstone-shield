@@ -1,13 +1,19 @@
 mod generated;
 
-pub use generated::programs::BLOCKLIST_ID as ID;
+pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
 use spl_associated_token_account::{
-    get_associated_token_address, instruction::create_associated_token_account,
+    get_associated_token_address, get_associated_token_address_with_program_id,
+    instruction::create_associated_token_account,
 };
-use spl_token_2022::{extension::metadata_pointer, instruction::mint_to};
+use spl_token_2022::{
+    extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer,
+    instruction::{initialize_mint2, mint_to},
+    ID as TOKEN_22_PROGRAM_ID,
+};
+use spl_token_metadata_interface::instruction::initialize as initialize_metadata;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -56,6 +62,7 @@ pub struct CreateAccountBuilder<'a> {
     account: Option<&'a Pubkey>,
     space: Option<usize>,
     owner: Option<&'a Pubkey>,
+    rent: Option<usize>,
 }
 
 impl<'a> CreateAccountBuilder<'a> {
@@ -91,12 +98,18 @@ impl<'a> CreateAccountBuilder<'a> {
         self
     }
 
-    #[allow(clippy::clone_on_copy)]
+    /// The rent to be paid for the account
+    #[inline(always)]
+    pub fn rent(&mut self, rent: usize) -> &mut Self {
+        self.rent = Some(rent);
+        self
+    }
+
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let space = self.space.expect("space is not set");
-        let lamports = Rent::default().minimum_balance(space);
+        let lamports = Rent::default().minimum_balance(self.rent.expect("rent is not set"));
 
-        solana_program::system_instruction::create_account(
+        solana_sdk::system_instruction::create_account(
             self.payer.expect("payer is not set"),
             self.account.expect("mint is not set"),
             lamports,
@@ -152,8 +165,8 @@ impl<'a> InitializeMint2Builder<'a> {
     }
 
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        spl_token_2022::instruction::initialize_mint2(
-            self.token_program.unwrap_or(&spl_token_2022::ID),
+        initialize_mint2(
+            self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
             self.mint_authority.expect("mint_authority is not set"),
             self.freeze_authority,
@@ -166,7 +179,6 @@ impl<'a> InitializeMint2Builder<'a> {
 pub struct MetadataPointerInitializeBuilder<'a> {
     token_program: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
-    payer: Option<&'a Pubkey>,
     metadata: Option<Pubkey>,
     authority: Option<Pubkey>,
 }
@@ -176,7 +188,6 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
         Self {
             token_program: None,
             mint: None,
-            payer: None,
             metadata: None,
             authority: None,
         }
@@ -196,13 +207,6 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
         self
     }
 
-    /// The payer account
-    #[inline(always)]
-    pub fn payer(&mut self, payer: &'a Pubkey) -> &mut Self {
-        self.payer = Some(payer);
-        self
-    }
-
     /// The metadata account
     #[inline(always)]
     pub fn metadata(&mut self, metadata: Pubkey) -> &mut Self {
@@ -218,8 +222,8 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
     }
 
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        metadata_pointer::instruction::initialize(
-            self.token_program.unwrap_or(&spl_token_2022::ID),
+        initialize_metadata_pointer(
+            self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
             self.authority,
             self.metadata,
@@ -276,7 +280,7 @@ impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
         let owner = self.owner.expect("owner is not set");
         let mint = self.mint.expect("mint is not set");
         let payer = self.payer.expect("payer is not set");
-        let token_program = self.token_program.unwrap_or(&spl_token_2022::ID);
+        let token_program = self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID);
 
         create_associated_token_account(&payer, owner, mint, token_program)
     }
@@ -347,7 +351,7 @@ impl<'a> TokenExtensionsMintToBuilder<'a> {
 
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         mint_to(
-            self.token_program.unwrap_or(&spl_token_2022::id()),
+            self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
             self.account.expect("account is not set"),
             self.owner.expect("owner is not set"),
@@ -413,6 +417,86 @@ impl<'a> TransactionBuilder<'a> {
             self.payer,
             &self.signers,
             self.recent_blockhash.expect("recent blockhash is not set"),
+        )
+    }
+}
+
+pub struct InitializeMetadataBuilder<'a> {
+    token_program: Option<&'a Pubkey>,
+    mint: Option<&'a Pubkey>,
+    owner: Option<&'a Pubkey>,
+    update_authority: Option<&'a Pubkey>,
+    mint_authority: Option<&'a Pubkey>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
+}
+
+impl<'a> InitializeMetadataBuilder<'a> {
+    pub fn new() -> Self {
+        Self {
+            token_program: None,
+            mint: None,
+            owner: None,
+            update_authority: None,
+            mint_authority: None,
+            name: None,
+            symbol: None,
+            uri: None,
+        }
+    }
+
+    pub fn token_program(&mut self, token_program: &'a Pubkey) -> &mut Self {
+        self.token_program = Some(token_program);
+        self
+    }
+
+    pub fn mint(&mut self, mint: &'a Pubkey) -> &mut Self {
+        self.mint = Some(mint);
+        self
+    }
+
+    pub fn owner(&mut self, owner: &'a Pubkey) -> &mut Self {
+        self.owner = Some(owner);
+        self
+    }
+
+    pub fn update_authority(&mut self, update_authority: &'a Pubkey) -> &mut Self {
+        self.update_authority = Some(update_authority);
+        self
+    }
+
+    pub fn mint_authority(&mut self, mint_authority: &'a Pubkey) -> &mut Self {
+        self.mint_authority = Some(mint_authority);
+        self
+    }
+
+    pub fn name(&mut self, name: String) -> &mut Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn symbol(&mut self, symbol: String) -> &mut Self {
+        self.symbol = Some(symbol);
+        self
+    }
+
+    pub fn uri(&mut self, uri: String) -> &mut Self {
+        self.uri = Some(uri);
+        self
+    }
+
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        initialize_metadata(
+            self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
+            self.mint.expect("mint_pubkey is not set"),
+            self.update_authority
+                .expect("update_authority_pubkey is not set"),
+            self.mint.expect("mint_pubkey is not set"),
+            self.mint_authority.expect("mint_authority is not set"),
+            self.name.as_ref().expect("name is not set").clone(),
+            self.symbol.as_ref().expect("symbol is not set").clone(),
+            self.uri.as_ref().expect("uri is not set").clone(),
         )
     }
 }

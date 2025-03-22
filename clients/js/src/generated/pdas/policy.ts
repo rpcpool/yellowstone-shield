@@ -29,7 +29,7 @@ export async function findPolicyPda(
   return await getProgramDerivedAddress({
     programAddress,
     seeds: [
-      getUtf8Encoder().encode('blocklist'),
+      getUtf8Encoder().encode('shield'),
       getUtf8Encoder().encode('policy'),
       getAddressEncoder().encode(seeds.mint),
     ],

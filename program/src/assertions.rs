@@ -1,4 +1,4 @@
-use crate::error::BlocklistError;
+use crate::error::ShieldError;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
@@ -19,7 +19,7 @@ pub fn assert_program_owner_either(
             account.key,
             owners
         );
-        Err(BlocklistError::InvalidProgramOwner.into())
+        Err(ShieldError::InvalidProgramOwner.into())
     } else {
         Ok(())
     }
@@ -39,7 +39,7 @@ pub fn assert_program_owner(
             owner,
             account.owner
         );
-        Err(BlocklistError::InvalidProgramOwner.into())
+        Err(ShieldError::InvalidProgramOwner.into())
     } else {
         Ok(())
     }
@@ -60,7 +60,7 @@ pub fn assert_pda(
             account.key,
             key,
         );
-        return Err(BlocklistError::InvalidPda.into());
+        return Err(ShieldError::InvalidPda.into());
     }
     Ok(bump)
 }
@@ -80,7 +80,7 @@ pub fn assert_pda_with_bump(
             account.key,
             key,
         );
-        Err(BlocklistError::InvalidPda.into())
+        Err(ShieldError::InvalidPda.into())
     } else {
         Ok(())
     }
@@ -94,7 +94,7 @@ pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult 
             account_name,
             account.key,
         );
-        Err(BlocklistError::ExpectedEmptyAccount.into())
+        Err(ShieldError::ExpectedEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -108,7 +108,7 @@ pub fn assert_non_empty(account_name: &str, account: &AccountInfo) -> ProgramRes
             account_name,
             account.key,
         );
-        Err(BlocklistError::ExpectedNonEmptyAccount.into())
+        Err(ShieldError::ExpectedNonEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -122,7 +122,7 @@ pub fn assert_signer(account_name: &str, account: &AccountInfo) -> ProgramResult
             account_name,
             account.key,
         );
-        Err(BlocklistError::ExpectedSignerAccount.into())
+        Err(ShieldError::ExpectedSignerAccount.into())
     } else {
         Ok(())
     }
@@ -136,7 +136,7 @@ pub fn assert_writable(account_name: &str, account: &AccountInfo) -> ProgramResu
             account_name,
             account.key,
         );
-        Err(BlocklistError::ExpectedWritableAccount.into())
+        Err(ShieldError::ExpectedWritableAccount.into())
     } else {
         Ok(())
     }
@@ -155,7 +155,7 @@ pub fn assert_same_pubkeys(
             account.key,
             expected
         );
-        Err(BlocklistError::AccountMismatch.into())
+        Err(ShieldError::AccountMismatch.into())
     } else {
         Ok(())
     }
@@ -168,7 +168,7 @@ pub fn assert_positive_amount(
 ) -> ProgramResult {
     if account.base.amount == 0 {
         msg!("Account \"{}\" must have a positive amount", account_name,);
-        Err(BlocklistError::ExpectedPositiveAmount.into())
+        Err(ShieldError::ExpectedPositiveAmount.into())
     } else {
         Ok(())
     }
@@ -186,7 +186,7 @@ pub fn assert_token_owner(
             account_name,
             expected
         );
-        Err(BlocklistError::IncorrectTokenOwner.into())
+        Err(ShieldError::IncorrectTokenOwner.into())
     } else {
         Ok(())
     }
@@ -204,7 +204,7 @@ pub fn assert_mint_association(
             account_name,
             expected
         );
-        Err(BlocklistError::MistmatchMint.into())
+        Err(ShieldError::MistmatchMint.into())
     } else {
         Ok(())
     }
@@ -228,7 +228,7 @@ pub fn assert_ata(
             account.key,
             ata
         );
-        Err(BlocklistError::InvalidAssociatedTokenAccount.into())
+        Err(ShieldError::InvalidAssociatedTokenAccount.into())
     } else {
         Ok(())
     }

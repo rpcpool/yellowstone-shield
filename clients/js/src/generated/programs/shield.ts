@@ -19,58 +19,58 @@ import {
 } from '../instructions';
 import { Kind, getKindEncoder } from '../types';
 
-export const BLOCKLIST_PROGRAM_ADDRESS =
+export const SHIELD_PROGRAM_ADDRESS =
   'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr' as Address<'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr'>;
 
-export enum BlocklistAccount {
+export enum ShieldAccount {
   Policy,
 }
 
-export function identifyBlocklistAccount(
+export function identifyShieldAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
-): BlocklistAccount {
+): ShieldAccount {
   const data = 'data' in account ? account.data : account;
   if (containsBytes(data, getKindEncoder().encode(Kind.Policy), 0)) {
-    return BlocklistAccount.Policy;
+    return ShieldAccount.Policy;
   }
   throw new Error(
-    'The provided account could not be identified as a blocklist account.'
+    'The provided account could not be identified as a shield account.'
   );
 }
 
-export enum BlocklistInstruction {
+export enum ShieldInstruction {
   CreatePolicy,
   AddIdentity,
   RemoveIdentity,
 }
 
-export function identifyBlocklistInstruction(
+export function identifyShieldInstruction(
   instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
-): BlocklistInstruction {
+): ShieldInstruction {
   const data = 'data' in instruction ? instruction.data : instruction;
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
-    return BlocklistInstruction.CreatePolicy;
+    return ShieldInstruction.CreatePolicy;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return BlocklistInstruction.AddIdentity;
+    return ShieldInstruction.AddIdentity;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return BlocklistInstruction.RemoveIdentity;
+    return ShieldInstruction.RemoveIdentity;
   }
   throw new Error(
-    'The provided instruction could not be identified as a blocklist instruction.'
+    'The provided instruction could not be identified as a shield instruction.'
   );
 }
 
-export type ParsedBlocklistInstruction<
+export type ParsedShieldInstruction<
   TProgram extends string = 'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr',
 > =
   | ({
-      instructionType: BlocklistInstruction.CreatePolicy;
+      instructionType: ShieldInstruction.CreatePolicy;
     } & ParsedCreatePolicyInstruction<TProgram>)
   | ({
-      instructionType: BlocklistInstruction.AddIdentity;
+      instructionType: ShieldInstruction.AddIdentity;
     } & ParsedAddIdentityInstruction<TProgram>)
   | ({
-      instructionType: BlocklistInstruction.RemoveIdentity;
+      instructionType: ShieldInstruction.RemoveIdentity;
     } & ParsedRemoveIdentityInstruction<TProgram>);

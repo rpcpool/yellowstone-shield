@@ -7,7 +7,7 @@ use solana_program::{
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, Eq, PartialEq, FromPrimitive)]
-pub enum BlocklistError {
+pub enum ShieldError {
     /// 0 - Error deserializing an account
     #[error("Error deserializing an account")]
     DeserializationError,
@@ -58,20 +58,20 @@ pub enum BlocklistError {
     InvalidAssociatedTokenAccount,
 }
 
-impl PrintProgramError for BlocklistError {
+impl PrintProgramError for ShieldError {
     fn print<E>(&self) {
         msg!(&self.to_string());
     }
 }
 
-impl From<BlocklistError> for ProgramError {
-    fn from(e: BlocklistError) -> Self {
+impl From<ShieldError> for ProgramError {
+    fn from(e: ShieldError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
 
-impl<T> DecodeError<T> for BlocklistError {
+impl<T> DecodeError<T> for ShieldError {
     fn type_of() -> &'static str {
-        "Yellowstone Blocklist Error"
+        "Yellowstone Shield Error"
     }
 }

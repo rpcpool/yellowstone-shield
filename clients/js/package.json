@@ -1,7 +1,7 @@
 {
-  "name": "@triton-one/yellowstone-blocklist",
+  "name": "@triton-one/yellowstone-shield",
   "version": "0.0.0",
-  "description": "JavaScript client for the Blocklist program",
+  "description": "JavaScript client for the Shield program",
   "sideEffects": false,
   "module": "./dist/src/index.mjs",
   "main": "./dist/src/index.js",
@@ -34,12 +34,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yellowstone/blocklist.git"
+    "url": "git+https://github.com/rpcpool/yellowstone-shield.git"
   },
   "bugs": {
-    "url": "https://github.com/yellowstone/blocklist/issues"
+    "url": "https://github.com/rpcpool/yellowstone-shield/issues"
   },
-  "homepage": "https://github.com/yellowstone/blocklist#readme",
+  "homepage": "https://github.com/rpcpool/yellowstone-shield#readme",
   "license": "MIT",
   "peerDependencies": {
     "@solana/web3.js": "^2.0.0"

@@ -5,6 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod blocklist;
+pub(crate) mod shield;
 
-pub use self::blocklist::BlocklistError;
+pub use self::shield::ShieldError;

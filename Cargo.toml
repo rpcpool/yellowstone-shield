@@ -4,6 +4,6 @@ resolver = "2"
 members = ["cli", "clients/rust", "program"]
 
 [workspace.dependencies]
-yellowstone-blocklist-client = { path = "clients/rust" }
-yellowstone-blocklist = { path = "program" }
+yellowstone-shield-client = { path = "clients/rust" }
+yellowstone-shield = { path = "program" }
 anyhow = "1.0.97"

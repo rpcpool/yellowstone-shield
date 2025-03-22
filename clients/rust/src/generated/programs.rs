@@ -7,5 +7,5 @@
 
 use solana_program::{pubkey, pubkey::Pubkey};
 
-/// `blocklist` program ID.
-pub const BLOCKLIST_ID: Pubkey = pubkey!("F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr");
+/// `shield` program ID.
+pub const SHIELD_ID: Pubkey = pubkey!("F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr");

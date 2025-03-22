@@ -15,7 +15,7 @@ const codama = c.createFromRoot(idl, additionalIdls);
 // Update programs.
 codama.update(
   c.updateProgramsVisitor({
-    yellowstoneBlocklist: { name: 'blocklist' },
+    yellowstoneShield: { name: 'shield' },
   })
 );
 
@@ -24,7 +24,7 @@ codama.update(
   c.updateAccountsVisitor({
     policy: {
       seeds: [
-        c.constantPdaSeedNodeFromString('utf8', 'blocklist'),
+        c.constantPdaSeedNodeFromString('utf8', 'shield'),
         c.constantPdaSeedNodeFromString('utf8', 'policy'),
         c.variablePdaSeedNode(
           'mint',

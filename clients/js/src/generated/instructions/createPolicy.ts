@@ -34,7 +34,7 @@ import {
 } from '@solana/web3.js';
 import { getPolicySize } from '../accounts';
 import { findPolicyPda } from '../pdas';
-import { BLOCKLIST_PROGRAM_ADDRESS } from '../programs';
+import { SHIELD_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
   getAccountMetaFactory,
@@ -55,7 +55,7 @@ export function getCreatePolicyDiscriminatorBytes() {
 }
 
 export type CreatePolicyInstruction<
-  TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
@@ -144,9 +144,9 @@ export type CreatePolicyAsyncInput<
 > = {
   /** The token extensions mint account linked to the policy */
   mint: Address<TAccountMint>;
-  /** The authority over the policy based on token onwership of the mint */
+  /** The authority over the policy based on token ownership of the mint */
   tokenAccount: Address<TAccountTokenAccount>;
-  /** The blocklist policy account */
+  /** The shield policy account */
   policy?: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
@@ -165,7 +165,7 @@ export async function getCreatePolicyInstructionAsync<
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
   input: CreatePolicyAsyncInput<
     TAccountMint,
@@ -189,7 +189,7 @@ export async function getCreatePolicyInstructionAsync<
     IInstructionWithByteDelta
 > {
   // Program address.
-  const programAddress = config?.programAddress ?? BLOCKLIST_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -266,9 +266,9 @@ export type CreatePolicyInput<
 > = {
   /** The token extensions mint account linked to the policy */
   mint: Address<TAccountMint>;
-  /** The authority over the policy based on token onwership of the mint */
+  /** The authority over the policy based on token ownership of the mint */
   tokenAccount: Address<TAccountTokenAccount>;
-  /** The blocklist policy account */
+  /** The shield policy account */
   policy: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
@@ -287,7 +287,7 @@ export function getCreatePolicyInstruction<
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
   input: CreatePolicyInput<
     TAccountMint,
@@ -309,7 +309,7 @@ export function getCreatePolicyInstruction<
 > &
   IInstructionWithByteDelta {
   // Program address.
-  const programAddress = config?.programAddress ?? BLOCKLIST_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -372,16 +372,16 @@ export function getCreatePolicyInstruction<
 }
 
 export type ParsedCreatePolicyInstruction<
-  TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     /** The token extensions mint account linked to the policy */
     mint: TAccountMetas[0];
-    /** The authority over the policy based on token onwership of the mint */
+    /** The authority over the policy based on token ownership of the mint */
     tokenAccount: TAccountMetas[1];
-    /** The blocklist policy account */
+    /** The shield policy account */
     policy: TAccountMetas[2];
     /** The account paying for the storage fees */
     payer: TAccountMetas[3];

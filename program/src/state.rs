@@ -55,7 +55,7 @@ impl Policy {
     }
 
     pub fn seeds(mint_key: &Pubkey) -> Vec<&[u8]> {
-        vec![b"blocklist", b"policy", mint_key.as_ref()]
+        vec![b"shield", b"policy", mint_key.as_ref()]
     }
 
     pub fn find_policy_program_address(mint: &Pubkey) -> (Pubkey, u8) {

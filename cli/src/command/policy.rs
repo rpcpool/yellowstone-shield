@@ -2,6 +2,8 @@ use anyhow::Result;
 use log::info;
 use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_pod::optional_keys::OptionalNonZeroPubkey;
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use crate::CommandContext;
 
@@ -9,15 +11,20 @@ use super::RunCommand;
 use borsh::BorshDeserialize;
 use solana_sdk::signature::{Keypair, Signer};
 use spl_token_2022::{extension::ExtensionType, state::Mint};
-use yellowstone_blocklist_client::{
+use yellowstone_shield_client::{
     accounts::Policy, instructions::CreatePolicyBuilder, types::PermissionStrategy,
-    CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMint2Builder,
-    MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder, TransactionBuilder,
+    CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
+    InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
+    TransactionBuilder,
 };
+
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder<'a> {
     strategy: Option<&'a PermissionStrategy>,
     validator_identities: Option<&'a Vec<Pubkey>>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
 }
 
 impl<'a> CreateCommandBuilder<'a> {
@@ -26,6 +33,9 @@ impl<'a> CreateCommandBuilder<'a> {
         Self {
             strategy: None,
             validator_identities: None,
+            name: None,
+            symbol: None,
+            uri: None,
         }
     }
 
@@ -38,6 +48,24 @@ impl<'a> CreateCommandBuilder<'a> {
     /// Add a validator identity to the policy
     pub fn validator_identities(mut self, validator_identities: &'a Vec<Pubkey>) -> Self {
         self.validator_identities = Some(validator_identities);
+        self
+    }
+
+    /// Set the name for the token metadata
+    pub fn name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    /// Set the symbol for the token metadata
+    pub fn symbol(mut self, symbol: String) -> Self {
+        self.symbol = Some(symbol);
+        self
+    }
+
+    /// Set the URI for the token metadata
+    pub fn uri(mut self, uri: String) -> Self {
+        self.uri = Some(uri);
         self
     }
 }
@@ -61,16 +89,29 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .validator_identities
             .expect("validator identities must be set");
         // Calculate the space required for the mint account with extensions.
-        let space =
+        let mint_size =
             ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])
                 .unwrap();
+
+        let token_metadata = TokenMetadata {
+            update_authority: OptionalNonZeroPubkey::try_from(Some(keypair.pubkey())).unwrap(),
+            mint: mint.pubkey(),
+            name: self.name.clone().expect("name must be set"),
+            symbol: self.symbol.clone().expect("symbol must be set"),
+            uri: self.uri.clone().expect("uri must be set"),
+            additional_metadata: Vec::<(String, String)>::new(),
+        };
+
+        let rent = mint_size + token_metadata.tlv_size_of().unwrap();
 
         let create_mint_ix = CreateAccountBuilder::build()
             .payer(&keypair.pubkey())
             .account(&mint.pubkey())
-            .space(space)
+            .space(mint_size)
+            .rent(rent)
             .owner(&spl_token_2022::id())
             .instruction();
+
         // Initialize metadata pointer extension.
         let init_metadata_pointer_ix = MetadataPointerInitializeBuilder::build()
             .mint(&mint.pubkey())
@@ -83,6 +124,16 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .mint_authority(&keypair.pubkey())
             .instruction();
 
+        let init_metadata_ix = InitializeMetadataBuilder::new()
+            .mint(&mint.pubkey())
+            .owner(&keypair.pubkey())
+            .update_authority(&keypair.pubkey())
+            .mint_authority(&keypair.pubkey())
+            .name(token_metadata.name)
+            .symbol(token_metadata.symbol)
+            .uri(token_metadata.uri)
+            .instruction();
+
         // Create the policy account.
         let (address, _) = Policy::find_pda(&mint.pubkey());
         let create_policy_ix = CreatePolicyBuilder::new()
@@ -91,7 +142,7 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .payer(keypair.pubkey())
             .token_account(payer_token_account)
             .validator_identities(validator_identities.to_vec())
-            .strategy(yellowstone_blocklist_client::types::PermissionStrategy::Allow)
+            .strategy(yellowstone_shield_client::types::PermissionStrategy::Allow)
             .instruction();
 
         // Initialize the payer's token account.
@@ -115,6 +166,7 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .instruction(create_mint_ix)
             .instruction(init_metadata_pointer_ix)
             .instruction(init_mint_ix)
+            .instruction(init_metadata_ix)
             .instruction(init_payer_token_account_ix)
             .instruction(mint_to_payer_ix)
             .instruction(create_policy_ix)

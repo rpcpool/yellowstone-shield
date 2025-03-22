@@ -29,7 +29,7 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { BLOCKLIST_PROGRAM_ADDRESS } from '../programs';
+import { SHIELD_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const ADD_IDENTITY_DISCRIMINATOR = 1;
@@ -39,7 +39,7 @@ export function getAddIdentityDiscriminatorBytes() {
 }
 
 export type AddIdentityInstruction<
-  TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
@@ -115,9 +115,9 @@ export type AddIdentityInput<
 > = {
   /** The token extensions mint account linked to the policy */
   mint: Address<TAccountMint>;
-  /** The authority over the policy based on token onwership of the mint */
+  /** The authority over the policy based on token ownership of the mint */
   tokenAccount: Address<TAccountTokenAccount>;
-  /** The blocklist policy account */
+  /** The shield policy account */
   policy: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
@@ -132,7 +132,7 @@ export function getAddIdentityInstruction<
   TAccountPolicy extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
   input: AddIdentityInput<
     TAccountMint,
@@ -151,7 +151,7 @@ export function getAddIdentityInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = config?.programAddress ?? BLOCKLIST_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -201,16 +201,16 @@ export function getAddIdentityInstruction<
 }
 
 export type ParsedAddIdentityInstruction<
-  TProgram extends string = typeof BLOCKLIST_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     /** The token extensions mint account linked to the policy */
     mint: TAccountMetas[0];
-    /** The authority over the policy based on token onwership of the mint */
+    /** The authority over the policy based on token ownership of the mint */
     tokenAccount: TAccountMetas[1];
-    /** The blocklist policy account */
+    /** The shield policy account */
     policy: TAccountMetas[2];
     /** The account paying for the storage fees */
     payer: TAccountMetas[3];

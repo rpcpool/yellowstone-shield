@@ -1,6 +1,6 @@
 # JavaScript client
 
-A generated JavaScript library for the Blocklist program.
+A generated JavaScript library for the Shield program.
 
 ## Getting started
 

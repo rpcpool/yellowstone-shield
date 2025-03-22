@@ -6,8 +6,8 @@ use log::info;
 use solana_sdk::signature::Signer;
 use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use yellowstone_blocklist_client::accounts::Policy;
-use yellowstone_blocklist_client::{
+use yellowstone_shield_client::accounts::Policy;
+use yellowstone_shield_client::{
     instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
     TransactionBuilder,
 };

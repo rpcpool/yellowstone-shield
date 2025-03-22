@@ -13,9 +13,9 @@ use solana_program::pubkey::Pubkey;
 pub struct AddIdentity {
     /// The token extensions mint account linked to the policy
     pub mint: solana_program::pubkey::Pubkey,
-    /// The authority over the policy based on token onwership of the mint
+    /// The authority over the policy based on token ownership of the mint
     pub token_account: solana_program::pubkey::Pubkey,
-    /// The blocklist policy account
+    /// The shield policy account
     pub policy: solana_program::pubkey::Pubkey,
     /// The account paying for the storage fees
     pub payer: solana_program::pubkey::Pubkey,
@@ -61,7 +61,7 @@ impl AddIdentity {
         data.append(&mut args);
 
         solana_program::instruction::Instruction {
-            program_id: crate::BLOCKLIST_ID,
+            program_id: crate::SHIELD_ID,
             accounts,
             data,
         }
@@ -121,13 +121,13 @@ impl AddIdentityBuilder {
         self.mint = Some(mint);
         self
     }
-    /// The authority over the policy based on token onwership of the mint
+    /// The authority over the policy based on token ownership of the mint
     #[inline(always)]
     pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_account = Some(token_account);
         self
     }
-    /// The blocklist policy account
+    /// The shield policy account
     #[inline(always)]
     pub fn policy(&mut self, policy: solana_program::pubkey::Pubkey) -> &mut Self {
         self.policy = Some(policy);
@@ -195,9 +195,9 @@ impl AddIdentityBuilder {
 pub struct AddIdentityCpiAccounts<'a, 'b> {
     /// The token extensions mint account linked to the policy
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority over the policy based on token onwership of the mint
+    /// The authority over the policy based on token ownership of the mint
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The blocklist policy account
+    /// The shield policy account
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
@@ -211,9 +211,9 @@ pub struct AddIdentityCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token extensions mint account linked to the policy
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority over the policy based on token onwership of the mint
+    /// The authority over the policy based on token ownership of the mint
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The blocklist policy account
+    /// The shield policy account
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
@@ -305,7 +305,7 @@ impl<'a, 'b> AddIdentityCpi<'a, 'b> {
         data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::BLOCKLIST_ID,
+            program_id: crate::SHIELD_ID,
             accounts,
             data,
         };
@@ -362,7 +362,7 @@ impl<'a, 'b> AddIdentityCpiBuilder<'a, 'b> {
         self.instruction.mint = Some(mint);
         self
     }
-    /// The authority over the policy based on token onwership of the mint
+    /// The authority over the policy based on token ownership of the mint
     #[inline(always)]
     pub fn token_account(
         &mut self,
@@ -371,7 +371,7 @@ impl<'a, 'b> AddIdentityCpiBuilder<'a, 'b> {
         self.instruction.token_account = Some(token_account);
         self
     }
-    /// The blocklist policy account
+    /// The shield policy account
     #[inline(always)]
     pub fn policy(
         &mut self,

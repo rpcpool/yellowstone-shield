@@ -1,6 +1,6 @@
 # Rust client
 
-A generated Rust library for the Blocklist program.
+A generated Rust library for the Shield program.
 
 ## Getting started
 

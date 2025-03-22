@@ -1,12 +1,11 @@
 mod command;
 
 use crate::command::RunCommand;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use bs58::decode;
 use clap::Parser;
 use clap_derive::{Parser, Subcommand};
 use command::{policy, validator};
-use ed25519_dalek::ed25519::signature;
 use serde_json::from_str as parse_json_str;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -15,14 +14,14 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use std::fs::read_to_string as read_path;
 use std::{str::FromStr, time::Duration};
-use yellowstone_blocklist_client::types::PermissionStrategy;
+use yellowstone_shield_client::types::PermissionStrategy;
 
 #[derive(Debug, Parser)]
 #[command(
     author,
     version,
-    name = "Yellowstone blocklist CLI",
-    about = "CLI for managing Yellowstone blocklist policies"
+    name = "Yellowstone Shield CLI",
+    about = "CLI for managing Yellowstone shield policies"
 )]
 pub struct Args {
     /// RPC endpoint url to override using the Solana config
@@ -71,9 +70,22 @@ pub enum PolicyAction {
         /// The strategy to use for the policy
         #[arg(long)]
         strategy: PermissionStrategy,
+
         /// The validator identities to add to the policy
         #[arg(long, value_delimiter = ',')]
         validator_identities: Vec<Pubkey>,
+
+        /// The name of the policy
+        #[arg(long)]
+        name: String,
+
+        /// The symbol of the policy
+        #[arg(long)]
+        symbol: String,
+
+        /// The URI of the policy
+        #[arg(long)]
+        uri: String,
     },
 }
 
@@ -153,9 +165,15 @@ async fn main() -> Result<(), CliError> {
             PolicyAction::Create {
                 strategy,
                 validator_identities,
+                name,
+                symbol,
+                uri,
             } => policy::CreateCommandBuilder::new()
                 .strategy(strategy)
                 .validator_identities(validator_identities)
+                .name(name.clone())
+                .symbol(symbol.clone())
+                .uri(uri.clone())
                 .run(context)
                 .await
                 .map_err(Into::into),

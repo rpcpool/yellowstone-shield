@@ -1,6 +1,6 @@
 {
   "version": "0.0.0",
-  "name": "yellowstone_blocklist",
+  "name": "yellowstone_shield",
   "instructions": [
     {
       "name": "CreatePolicy",
@@ -18,7 +18,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "The authority over the policy based on token onwership of the mint"
+            "The authority over the policy based on token ownership of the mint"
           ]
         },
         {
@@ -26,7 +26,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The blocklist policy account"
+            "The shield policy account"
           ]
         },
         {
@@ -89,7 +89,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "The authority over the policy based on token onwership of the mint"
+            "The authority over the policy based on token ownership of the mint"
           ]
         },
         {
@@ -97,7 +97,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The blocklist policy account"
+            "The shield policy account"
           ]
         },
         {
@@ -144,7 +144,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "The authority over the policy based on token onwership of the mint"
+            "The authority over the policy based on token ownership of the mint"
           ]
         },
         {
@@ -152,7 +152,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The blocklist policy account"
+            "The shield policy account"
           ]
         },
         {
@@ -314,6 +314,11 @@
       "code": 14,
       "name": "ValidatorIdentityNotFound",
       "msg": "Validator Identity not found"
+    },
+    {
+      "code": 15,
+      "name": "InvalidAssociatedTokenAccount",
+      "msg": "Invalid associated token account"
     }
   ],
   "metadata": {

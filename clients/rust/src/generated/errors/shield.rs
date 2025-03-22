@@ -9,7 +9,7 @@ use num_derive::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum BlocklistError {
+pub enum ShieldError {
     /// 0 - Error deserializing an account
     #[error("Error deserializing an account")]
     DeserializationError = 0x0,
@@ -55,9 +55,12 @@ pub enum BlocklistError {
     /// 14 - Validator Identity not found
     #[error("Validator Identity not found")]
     ValidatorIdentityNotFound = 0xE,
+    /// 15 - Invalid associated token account
+    #[error("Invalid associated token account")]
+    InvalidAssociatedTokenAccount = 0xF,
 }
 
-impl solana_program::program_error::PrintProgramError for BlocklistError {
+impl solana_program::program_error::PrintProgramError for ShieldError {
     fn print<E>(&self) {
         solana_program::msg!(&self.to_string());
     }
