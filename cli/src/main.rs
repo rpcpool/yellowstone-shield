@@ -93,9 +93,6 @@ pub enum PolicyAction {
 pub enum ValidatorAction {
     /// Add a validator to a policy
     Add {
-        /// The policy to which the validator will be added
-        #[arg(long)]
-        policy: Pubkey,
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
@@ -104,9 +101,6 @@ pub enum ValidatorAction {
     },
     /// Remove a validator from a policy
     Remove {
-        /// The policy from which the validator will be removed
-        #[arg(long)]
-        policy: Pubkey,
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
@@ -180,13 +174,11 @@ async fn main() -> Result<(), CliError> {
         },
         Command::Validator { action } => match action {
             ValidatorAction::Add {
-                policy,
                 mint,
                 validator_identity,
             } => {
                 // Add logic to add a validator
                 validator::AddCommandBuilder::new()
-                    .policy(policy)
                     .mint(mint)
                     .validator_identity(validator_identity)
                     .run(context)
@@ -194,11 +186,9 @@ async fn main() -> Result<(), CliError> {
                     .map_err(Into::into)
             }
             ValidatorAction::Remove {
-                policy,
                 mint,
                 validator_identity,
             } => validator::RemoveCommandBuilder::new()
-                .policy(policy)
                 .mint(mint)
                 .validator_identity(validator_identity)
                 .run(context)

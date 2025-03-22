@@ -1,22 +1,30 @@
 use anyhow::Result;
 use log::info;
-use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
+use solana_sdk::{
+    account::WritableAccount,
+    pubkey::Pubkey,
+    signature::{Keypair, Signer},
+};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_metadata_interface::state::TokenMetadata;
-
-use crate::CommandContext;
-
-use super::RunCommand;
-use borsh::BorshDeserialize;
-use solana_sdk::signature::{Keypair, Signer};
-use spl_token_2022::{extension::ExtensionType, state::Mint};
+use spl_token_2022::{
+    extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
+    pod::PodMint,
+    state::Mint,
+};
+use spl_token_metadata_interface::{
+    borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
+};
 use yellowstone_shield_client::{
     accounts::Policy, instructions::CreatePolicyBuilder, types::PermissionStrategy,
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
     InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
     TransactionBuilder,
 };
+
+use super::RunCommand;
+use crate::CommandContext;
+use borsh::BorshDeserialize;
 
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder<'a> {
@@ -185,16 +193,31 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
 
         let policy = Policy::deserialize(&mut account_data)?;
 
+        let mut mint_data = client.get_account(&mint.pubkey()).await?;
+        let account_data: &[u8] = mint_data.data_as_mut_slice();
+
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
+        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+
         info!("🎉 Policy successfully created! 🎉");
         info!("--------------------------------");
-        info!("📜 Policy Details:");
-        info!("  📬 Policy Address: {}", address);
-        info!("  🪙 Mint Address: {}", mint.pubkey());
-        info!("  📈 Strategy: {:?}", policy.strategy);
+        info!("🏠 Addresses:");
+        info!("  📜 Policy: {}", address);
+        info!("  🔑 Mint: {}", mint.pubkey());
+        info!("--------------------------------");
+        info!("🔍 Details:");
+        match policy.strategy {
+            PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
+            PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
+        }
         info!(
             "  🛡️ Validator Identities: {:?}",
             policy.validator_identities
         );
+        info!("  🏷️ Name: {}", token_metadata.name);
+        info!("  🔖 Symbol: {}", token_metadata.symbol);
+        info!("  🌐 URI: {}", token_metadata.uri);
         info!("--------------------------------");
 
         Ok(())
