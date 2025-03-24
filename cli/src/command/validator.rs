@@ -1,11 +1,21 @@
-use super::RunCommand;
-use crate::CommandContext;
+use super::{CommandComplete, RunCommand, RunResult, SolanaAccount};
+use crate::command::CommandContext;
 use anyhow::Result;
 use borsh::BorshDeserialize;
 use log::info;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signer;
 use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_pod::optional_keys::OptionalNonZeroPubkey;
+use spl_token_2022::{
+    extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
+    pod::PodMint,
+    state::Mint,
+};
+use spl_token_metadata_interface::{
+    borsh::BorshDeserialize as TokenBorshDeserialize, state::TokenMetadata,
+};
 use yellowstone_shield_client::accounts::Policy;
 use yellowstone_shield_client::types::PermissionStrategy;
 use yellowstone_shield_client::{
@@ -44,11 +54,11 @@ impl<'a> AddCommandBuilder<'a> {
 #[async_trait::async_trait]
 impl<'a> RunCommand for AddCommandBuilder<'a> {
     /// Execute the addition of a validator identity to the policy
-    async fn run(&self, context: CommandContext) -> Result<()> {
+    async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (policy, _) = Policy::find_pda(mint);
+        let (address, _) = Policy::find_pda(mint);
         let validator_identity = self
             .validator_identity
             .expect("validator identity must be set");
@@ -59,7 +69,7 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
         );
 
         let add_identity_ix = AddIdentityBuilder::new()
-            .policy(policy.clone())
+            .policy(address.clone())
             .mint(mint.clone())
             .token_account(token_account)
             .payer(keypair.pubkey())
@@ -76,32 +86,28 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
             .transaction();
 
         client
-            .send_and_confirm_transaction_with_spinner(&tx)
+            .send_and_confirm_transaction_with_spinner_and_commitment(
+                &tx,
+                CommitmentConfig::confirmed(),
+            )
             .await?;
 
-        let mut account_data = client.get_account(&policy).await?;
+        let mut account_data = client.get_account(&address).await?;
         let mut account_data: &[u8] = account_data.data_as_mut_slice();
 
-        let policy_data = Policy::deserialize(&mut account_data)?;
+        let policy = Policy::deserialize(&mut account_data)?;
 
-        info!("🎉 Validator identity added successfully! 🎉");
-        info!("--------------------------------");
-        info!("🏠 Addresses:");
-        info!("  📜 Policy: {}", policy);
-        info!("  🔑 Mint: {}", mint);
-        info!("--------------------------------");
-        info!("🔍 Details:");
-        match policy_data.strategy {
-            PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
-            PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
-        }
-        info!(
-            "  🛡️ Validator Identities: {:?}",
-            policy_data.validator_identities
-        );
-        info!("--------------------------------");
+        let mut mint_data = client.get_account(&mint).await?;
+        let account_data: &[u8] = mint_data.data_as_mut_slice();
 
-        Ok(())
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
+        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+
+        Ok(CommandComplete(
+            SolanaAccount(*mint, token_metadata),
+            SolanaAccount(address, policy),
+        ))
     }
 }
 
@@ -136,11 +142,11 @@ impl<'a> RemoveCommandBuilder<'a> {
 #[async_trait::async_trait]
 impl<'a> RunCommand for RemoveCommandBuilder<'a> {
     /// Execute the removal of a validator identity from the policy
-    async fn run(&self, context: CommandContext) -> Result<()> {
+    async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (policy, _) = Policy::find_pda(mint);
+        let (address, _) = Policy::find_pda(mint);
         let validator_identity = self
             .validator_identity
             .expect("validator identity must be set");
@@ -152,7 +158,7 @@ impl<'a> RunCommand for RemoveCommandBuilder<'a> {
         );
 
         let remove_identity_ix = RemoveIdentityBuilder::new()
-            .policy(policy)
+            .policy(address)
             .mint(*mint)
             .payer(keypair.pubkey())
             .token_account(token_account)
@@ -169,31 +175,27 @@ impl<'a> RunCommand for RemoveCommandBuilder<'a> {
             .transaction();
 
         client
-            .send_and_confirm_transaction_with_spinner(&tx)
+            .send_and_confirm_transaction_with_spinner_and_commitment(
+                &tx,
+                CommitmentConfig::confirmed(),
+            )
             .await?;
 
-        let mut account_data = client.get_account(&policy).await?;
+        let mut account_data = client.get_account(&address).await?;
         let mut account_data: &[u8] = account_data.data_as_mut_slice();
 
-        let policy_data = Policy::deserialize(&mut account_data)?;
+        let policy = Policy::deserialize(&mut account_data)?;
 
-        info!("🎉 Validator identity removed successfully! 🎉");
-        info!("--------------------------------");
-        info!("🏠 Addresses:");
-        info!("  📜 Policy: {}", policy);
-        info!("  🔑 Mint: {}", mint);
-        info!("--------------------------------");
-        info!("🔍 Details:");
-        match policy_data.strategy {
-            PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
-            PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
-        }
-        info!(
-            "  🛡️ Validator Identities: {:?}",
-            policy_data.validator_identities
-        );
-        info!("--------------------------------");
+        let mut mint_data = client.get_account(&mint).await?;
+        let account_data: &[u8] = mint_data.data_as_mut_slice();
 
-        Ok(())
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
+        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+
+        Ok(CommandComplete(
+            SolanaAccount(*mint, token_metadata),
+            SolanaAccount(address, policy),
+        ))
     }
 }

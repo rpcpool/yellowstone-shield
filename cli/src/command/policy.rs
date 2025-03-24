@@ -2,6 +2,8 @@ use anyhow::Result;
 use log::info;
 use solana_sdk::{
     account::WritableAccount,
+    commitment_config::CommitmentConfig,
+    native_token::Sol,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
 };
@@ -22,13 +24,13 @@ use yellowstone_shield_client::{
     TransactionBuilder,
 };
 
-use super::RunCommand;
-use crate::CommandContext;
+use super::{RunCommand, RunResult};
+use crate::command::{CommandComplete, CommandContext, SolanaAccount};
 use borsh::BorshDeserialize;
 
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder<'a> {
-    strategy: Option<&'a PermissionStrategy>,
+    strategy: Option<PermissionStrategy>,
     validator_identities: Option<&'a Vec<Pubkey>>,
     name: Option<String>,
     symbol: Option<String>,
@@ -48,7 +50,7 @@ impl<'a> CreateCommandBuilder<'a> {
     }
 
     /// Set the strategy for the policy
-    pub fn strategy(mut self, strategy: &'a PermissionStrategy) -> Self {
+    pub fn strategy(mut self, strategy: PermissionStrategy) -> Self {
         self.strategy = Some(strategy);
         self
     }
@@ -81,7 +83,7 @@ impl<'a> CreateCommandBuilder<'a> {
 #[async_trait::async_trait]
 impl<'a> RunCommand for CreateCommandBuilder<'a> {
     /// Execute the creation of the policy
-    async fn run(&self, context: CommandContext) -> Result<()> {
+    async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
 
         // Given a PDA derived from the payer's public key.
@@ -150,7 +152,7 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .payer(keypair.pubkey())
             .token_account(payer_token_account)
             .validator_identities(validator_identities.to_vec())
-            .strategy(yellowstone_shield_client::types::PermissionStrategy::Allow)
+            .strategy(self.strategy.expect("strategy must be set"))
             .instruction();
 
         // Initialize the payer's token account.
@@ -185,7 +187,10 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .transaction();
 
         client
-            .send_and_confirm_transaction_with_spinner(&tx)
+            .send_and_confirm_transaction_with_spinner_and_commitment(
+                &tx,
+                CommitmentConfig::confirmed(),
+            )
             .await?;
 
         let mut account_data = client.get_account(&address).await?;
@@ -200,26 +205,9 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
         let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
 
-        info!("🎉 Policy successfully created! 🎉");
-        info!("--------------------------------");
-        info!("🏠 Addresses:");
-        info!("  📜 Policy: {}", address);
-        info!("  🔑 Mint: {}", mint.pubkey());
-        info!("--------------------------------");
-        info!("🔍 Details:");
-        match policy.strategy {
-            PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
-            PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
-        }
-        info!(
-            "  🛡️ Validator Identities: {:?}",
-            policy.validator_identities
-        );
-        info!("  🏷️ Name: {}", token_metadata.name);
-        info!("  🔖 Symbol: {}", token_metadata.symbol);
-        info!("  🌐 URI: {}", token_metadata.uri);
-        info!("--------------------------------");
-
-        Ok(())
+        Ok(CommandComplete(
+            SolanaAccount(mint.pubkey(), token_metadata),
+            SolanaAccount(address, policy),
+        ))
     }
 }

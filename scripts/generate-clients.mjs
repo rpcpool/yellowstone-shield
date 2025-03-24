@@ -4,6 +4,7 @@ import * as c from 'codama';
 import { rootNodeFromAnchor } from '@codama/nodes-from-anchor';
 import { renderVisitor as renderJavaScriptVisitor } from '@codama/renderers-js';
 import { renderVisitor as renderRustVisitor } from '@codama/renderers-rust';
+import { renderVisitor as renderParserVisitor } from '@codama/renderers-vixen-parser';
 import { getAllProgramIdls } from './utils.mjs';
 
 // Instanciate Codama.
@@ -70,5 +71,15 @@ codama.accept(
   renderRustVisitor(path.join(rustClient, 'src', 'generated'), {
     formatCode: true,
     crateFolder: rustClient,
+  })
+);
+
+// Render parser.
+const parser = path.join(__dirname, '..', 'parser');
+codama.accept(
+  renderParserVisitor(path.join(parser, 'src', 'generated'), {
+    sdkName: 'yellowstone_shield_client',
+    formatCode: true,
+    crateFolder: parser,
   })
 );

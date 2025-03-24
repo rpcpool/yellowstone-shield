@@ -1,12 +1,14 @@
 [package]
-name = "cli"
+name = "yellowstone-shield-cli"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 clap = "4.5.32"
 clap_derive = "4.5.32"
-yellowstone-shield-client = { workspace = true }
+yellowstone-shield-client = { workspace = true, features = [
+  "token-extensions",
+] }
 solana-sdk = "2.1.11"
 solana-cli = "2.1.11"
 solana-cli-config = "2.1.11"

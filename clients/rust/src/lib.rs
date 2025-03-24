@@ -4,18 +4,24 @@ pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
+use std::str::FromStr;
+use thiserror::Error;
+
+#[cfg(feature = "token-extensions")]
 use spl_associated_token_account::{
     get_associated_token_address, get_associated_token_address_with_program_id,
     instruction::create_associated_token_account,
 };
+
+#[cfg(feature = "token-extensions")]
 use spl_token_2022::{
     extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer,
     instruction::{initialize_mint2, mint_to},
     ID as TOKEN_22_PROGRAM_ID,
 };
+
+#[cfg(feature = "token-extensions")]
 use spl_token_metadata_interface::instruction::initialize as initialize_metadata;
-use std::str::FromStr;
-use thiserror::Error;
 
 pub trait Size {
     const BASE_SIZE: usize;
@@ -119,6 +125,7 @@ impl<'a> CreateAccountBuilder<'a> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 pub struct InitializeMint2Builder<'a> {
     mint: Option<&'a Pubkey>,
     mint_authority: Option<&'a Pubkey>,
@@ -126,6 +133,7 @@ pub struct InitializeMint2Builder<'a> {
     token_program: Option<&'a Pubkey>,
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> InitializeMint2Builder<'a> {
     pub fn build() -> Self {
         Self {
@@ -176,6 +184,7 @@ impl<'a> InitializeMint2Builder<'a> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 pub struct MetadataPointerInitializeBuilder<'a> {
     token_program: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
@@ -183,6 +192,7 @@ pub struct MetadataPointerInitializeBuilder<'a> {
     authority: Option<Pubkey>,
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> MetadataPointerInitializeBuilder<'a> {
     pub fn build() -> Self {
         Self {
@@ -232,6 +242,7 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 pub struct CreateAsscoiatedTokenAccountBuilder<'a> {
     token_program: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
@@ -239,6 +250,7 @@ pub struct CreateAsscoiatedTokenAccountBuilder<'a> {
     payer: Option<&'a Pubkey>,
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
     pub fn build() -> Self {
         Self {
@@ -286,6 +298,7 @@ impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 pub struct TokenExtensionsMintToBuilder<'a> {
     token_program: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
@@ -295,6 +308,7 @@ pub struct TokenExtensionsMintToBuilder<'a> {
     amount: u64,
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> TokenExtensionsMintToBuilder<'a> {
     pub fn build() -> Self {
         Self {
@@ -421,6 +435,7 @@ impl<'a> TransactionBuilder<'a> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 pub struct InitializeMetadataBuilder<'a> {
     token_program: Option<&'a Pubkey>,
     mint: Option<&'a Pubkey>,
@@ -432,6 +447,7 @@ pub struct InitializeMetadataBuilder<'a> {
     uri: Option<String>,
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> InitializeMetadataBuilder<'a> {
     pub fn new() -> Self {
         Self {

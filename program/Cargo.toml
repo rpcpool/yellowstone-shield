@@ -25,7 +25,7 @@ borsh = { version = "1.5.1", features = ["derive"] }
 shank = "^0.4.2"
 num-derive = "^0.3"
 num-traits = "^0.2"
-solana-program = "2.1.11"
+solana-program = { workspace = true }
 thiserror = "^1.0"
 spl-associated-token-account = { version = "6", features = ["no-entrypoint"] }
 spl-token = { version = "7", features = ["no-entrypoint"] }

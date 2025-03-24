@@ -58,6 +58,7 @@ accounts.forEach(({ account, deployPath }) => {
   args.push(/* Load account */ '--account', account, deployPath);
 });
 
+args.push('--geyser-plugin-config', './yellowstone-dragon.json');
 // Start the validator in detached mode.
 const cliLogs = path.join(os.tmpdir(), 'validator-cli.log');
 fs.writeFileSync(cliLogs, '', () => {});

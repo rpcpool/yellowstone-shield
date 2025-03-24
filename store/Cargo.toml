@@ -1,0 +1,28 @@
+[package]
+name = "yellowstone-shield-store"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+arc-swap = "1.6"
+hashbrown = "0.14"
+parking_lot = "0.12"
+yellowstone-shield-client = { workspace = true }
+solana-sdk = { workspace = true }
+solana-client = "~2.1.11"
+log = "0.4.21"
+tokio = { version = "1.37.0", features = ["full"] }
+thiserror = "1.0.69"
+anyhow = { workspace = true }
+borsh_0_10 = { version = "^0.10", package = "borsh" }
+yellowstone-vixen = "0.1.0"
+yellowstone-shield-parser = { workspace = true, features = [] }
+
+[dev-dependencies]
+toml = "0.8.2"
+clap = "4.5.32"
+clap_derive = "4.5.32"
+yellowstone-shield-cli = { workspace = true }
+env_logger = "0.11.3"
+solana-cli = "~2.1.11"
+solana-cli-config = "~2.1.11"

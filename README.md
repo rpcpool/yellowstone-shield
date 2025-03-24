@@ -19,7 +19,7 @@ Yellowstone Shield is a Solana program designed to manage allowlists and blockli
 - Supports updates via websocket/gRPC.
 - Overcomes limitations of Solana's ALTs and Config programs.
 
-## Integration
+## Solana RPC Integration
 
 Yellowstone Shield integrates with Solana RPC by introducing:
 
@@ -47,6 +47,10 @@ A CLI tool is provided for convenient management of Yellowstone Shield policies,
 
 This CLI allows creating policies, adding or removing validators, and managing configurations directly via terminal commands.
 
+## Rust Policy Store
+
+The Rust Policy Store provides efficient caching and quick retrieval of Yellowstone Shield policies, enabling real-time validator permission checks in transaction forwarders and RPC services. It ensures thread-safe access and updates with atomic snapshots. See the [Policy Store README](./policy-store/README.md) for detailed integration and usage instructions.
+
 ## Policy Bound to Token Extensions Asset
 
 Policies are bound to a Token Extensions (TE) asset. Token holders can update validator identities tracked by the policy. The TE asset also contains metadata describing the policy:
@@ -55,91 +59,13 @@ Policies are bound to a Token Extensions (TE) asset. Token holders can update va
 - **Symbol**: Short representation of the policy.
 - **URI**: Link to additional policy information.
 
-### Binding Policy to Token Extensions Asset
-
 The policy account uses a Program Derived Address (PDA), derived with the seed:
 
 ```
 ["shield", "policy", {mint_address}]
 ```
 
-Here, `{mint_address}` is the mint address of the associated Token Extensions asset.
-
----
-
-## Program State
-
-### Policy Account
-
-Each policy account stores:
-
-- `kind`: Always set to `Policy`.
-- `strategy`: Either `Allow` or `Deny`.
-- `validatorIdentities`: Validator public keys.
-
-## Instructions
-
-### CreatePolicy
-
-Creates a policy account.
-
-**Accounts:**
-
-- `mint`: Token mint for policy management.
-- `tokenAccount`: Authority token account.
-- `policy`: Policy account (mutable).
-- `payer`: Fee-paying account (mutable, signer).
-- `systemProgram`: System program.
-- `tokenProgram`: SPL token program.
-
-**Arguments:**
-
-- `strategy`: `Allow` or `Deny`.
-- `validatorIdentities`: Validator public keys.
-
-### AddIdentity
-
-Adds a validator to a policy.
-
-**Accounts:**
-
-- `mint`: Token mint.
-- `tokenAccount`: Authority account.
-- `policy`: Policy account (mutable).
-- `payer`: Fee-paying account (mutable, signer).
-- `systemProgram`: System program.
-
-**Arguments:**
-
-- `validatorIdentity`: Validator public key.
-
-### RemoveIdentity
-
-Removes a validator from a policy.
-
-**Accounts:**
-
-- `mint`: Token mint.
-- `tokenAccount`: Authority account.
-- `policy`: Policy account (mutable).
-- `payer`: Fee-paying account (mutable, signer).
-- `systemProgram`: System program.
-
-**Arguments:**
-
-- `validatorIdentity`: Validator public key.
-
-## Errors
-
-Common errors:
-
-- `DeserializationError`
-- `SerializationError`
-- `InvalidPda`
-- `ValidatorIdentityNotFound`
-- `InvalidAssociatedTokenAccount`
-
-## Development Setup
+## Development
 
 Install dependencies:
 
@@ -177,4 +103,4 @@ AGPL-3.0
 
 ## Developers
 
-This project is developded by [Triton One](https://triton.one/).
+This project is developed by [Triton One](https://triton.one/).
