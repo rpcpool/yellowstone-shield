@@ -8,4 +8,4 @@
 use solana_program::{pubkey, pubkey::Pubkey};
 
 /// `shield` program ID.
-pub const SHIELD_ID: Pubkey = pubkey!("F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr");
+pub const SHIELD_ID: Pubkey = pubkey!("b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W");

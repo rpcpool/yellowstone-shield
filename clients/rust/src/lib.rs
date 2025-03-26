@@ -8,10 +8,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 #[cfg(feature = "token-extensions")]
-use spl_associated_token_account::{
-    get_associated_token_address, get_associated_token_address_with_program_id,
-    instruction::create_associated_token_account,
-};
+use spl_associated_token_account::instruction::create_associated_token_account;
 
 #[cfg(feature = "token-extensions")]
 use spl_token_2022::{
@@ -22,6 +19,43 @@ use spl_token_2022::{
 
 #[cfg(feature = "token-extensions")]
 use spl_token_metadata_interface::instruction::initialize as initialize_metadata;
+
+impl std::fmt::Debug for generated::instructions::CreatePolicy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CreatePolicy")
+            .field("mint", &self.mint)
+            .field("token_account", &self.token_account)
+            .field("policy", &self.policy)
+            .field("payer", &self.payer)
+            .field("system_program", &self.system_program)
+            .field("token_program", &self.token_program)
+            .finish()
+    }
+}
+
+impl std::fmt::Debug for generated::instructions::AddIdentity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AddIdentity")
+            .field("mint", &self.mint)
+            .field("token_account", &self.token_account)
+            .field("policy", &self.policy)
+            .field("payer", &self.payer)
+            .field("system_program", &self.system_program)
+            .finish()
+    }
+}
+
+impl std::fmt::Debug for generated::instructions::RemoveIdentity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RemoveIdentity")
+            .field("mint", &self.mint)
+            .field("token_account", &self.token_account)
+            .field("policy", &self.policy)
+            .field("payer", &self.payer)
+            .field("system_program", &self.system_program)
+            .finish()
+    }
+}
 
 pub trait Size {
     const BASE_SIZE: usize;

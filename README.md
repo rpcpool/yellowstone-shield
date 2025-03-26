@@ -8,10 +8,10 @@ Yellowstone Shield is a Solana program designed to manage allowlists and blockli
 
 ## Deployments
 
-| Network | Program ID                                     |
-| ------- | ---------------------------------------------- |
-| Mainnet | `b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W`  |
-| Devnet  | `E47XuTVcCMMYZSmeaybv3BMu6hYktvvFgeZkAJbVgmUx` |
+| Network | Program ID                                    |
+| ------- | --------------------------------------------- |
+| Mainnet | `b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W` |
+| Devnet  | `b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W` |
 
 ## Why Use Yellowstone Shield?
 

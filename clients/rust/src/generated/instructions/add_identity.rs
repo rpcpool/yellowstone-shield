@@ -10,7 +10,6 @@ use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-#[derive(Debug)]
 pub struct AddIdentity {
     /// The token extensions mint account linked to the policy
     pub mint: solana_program::pubkey::Pubkey,

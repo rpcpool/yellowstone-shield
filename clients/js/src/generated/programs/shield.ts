@@ -20,7 +20,7 @@ import {
 import { Kind, getKindEncoder } from '../types';
 
 export const SHIELD_PROGRAM_ADDRESS =
-  'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr' as Address<'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr'>;
+  'b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W' as Address<'b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W'>;
 
 export enum ShieldAccount {
   Policy,
@@ -63,7 +63,7 @@ export function identifyShieldInstruction(
 }
 
 export type ParsedShieldInstruction<
-  TProgram extends string = 'F3m9yDRsqMeHmi2h2wrSB8UprqnnuUsvkAhDZ23T9kNr',
+  TProgram extends string = 'b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W',
 > =
   | ({
       instructionType: ShieldInstruction.CreatePolicy;
