@@ -8764,6 +8764,7 @@ dependencies = [
  "spl-token-2022 7.0.0",
  "spl-token-metadata-interface 0.6.0",
  "thiserror 1.0.69",
+ "yellowstone-shield",
  "yellowstone-shield-client",
 ]
 

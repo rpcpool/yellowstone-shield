@@ -91,7 +91,7 @@ jobs:
           path: |
             ./**/*.so
             ./target/deploy/*.json
-          key: ${{ runner.os }}-builds-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
 
   test_programs:
     name: Test Programs
@@ -173,7 +173,7 @@ jobs:
           path: |
             ./**/*.so
             ./target/deploy/*.json
-          key: ${{ runner.os }}-builds-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
 
       - name: Test Client JS
         run: pnpm clients:js:test
@@ -195,8 +195,10 @@ jobs:
       - name: Restore Program Builds
         uses: actions/cache/restore@v4
         with:
-          path: ./**/*.so
-          key: ${{ runner.os }}-builds-${{ github.sha }}
+          path: |
+            ./**/*.so
+            ./target/deploy/*.json
+          key: ${{ runner.os }}-build-${{ github.sha }}
 
       - name: Test Client Rust
         run: pnpm clients:rust:test

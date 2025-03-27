@@ -30,7 +30,7 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
-} from '@solana/web3.js';
+} from '@solana/kit';
 import { PolicySeeds, findPolicyPda } from '../pdas';
 import {
   Kind,
@@ -133,6 +133,10 @@ export async function fetchAllMaybePolicy(
 ): Promise<MaybeAccount<Policy>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodePolicy(maybeAccount));
+}
+
+export function getPolicySize(): number {
+  return 6;
 }
 
 export async function fetchPolicyFromSeeds(

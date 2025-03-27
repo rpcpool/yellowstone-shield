@@ -1,7 +1,5 @@
 use borsh::BorshDeserialize;
-use solana_program::program_pack::Pack;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
-use spl_token::state::Account;
 
 use crate::assertions::{
     assert_ata, assert_empty, assert_mint_association, assert_pda, assert_positive_amount,

@@ -495,6 +495,7 @@ mod tests {
 
         let deny = Pubkey::new_unique();
         let allow = Pubkey::new_unique();
+        let missing = Pubkey::new_unique();
 
         let good = Pubkey::new_unique();
         let other = Pubkey::new_unique();

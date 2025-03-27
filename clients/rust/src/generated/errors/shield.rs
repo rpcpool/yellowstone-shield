@@ -65,3 +65,9 @@ impl solana_program::program_error::PrintProgramError for ShieldError {
         solana_program::msg!(&self.to_string());
     }
 }
+
+impl<T> solana_program::decode_error::DecodeError<T> for ShieldError {
+    fn type_of() -> &'static str {
+        "ShieldError"
+    }
+}

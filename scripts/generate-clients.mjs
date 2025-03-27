@@ -24,6 +24,7 @@ codama.update(
 codama.update(
   c.updateAccountsVisitor({
     policy: {
+      size: 6,
       seeds: [
         c.constantPdaSeedNodeFromString('utf8', 'shield'),
         c.constantPdaSeedNodeFromString('utf8', 'policy'),
@@ -71,15 +72,5 @@ codama.accept(
   renderRustVisitor(path.join(rustClient, 'src', 'generated'), {
     formatCode: true,
     crateFolder: rustClient,
-  })
-);
-
-// Render parser.
-const parser = path.join(__dirname, '..', 'parser');
-codama.accept(
-  renderParserVisitor(path.join(parser, 'src', 'generated'), {
-    sdkName: 'yellowstone_shield_client',
-    formatCode: true,
-    crateFolder: parser,
   })
 );
