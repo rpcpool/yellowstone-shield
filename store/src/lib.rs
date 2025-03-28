@@ -106,6 +106,12 @@ impl PolicyCache {
     }
 }
 
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum CheckError {
+    #[error("Policy not found")]
+    PolicyNotFound,
+}
+
 /// permission strategies for specific identities.
 ///
 /// The `Snapshot` struct is designed to facilitate quick lookups of permission strategies
@@ -177,7 +183,7 @@ impl Snapshot {
     /// # Returns
     ///
     /// `true` if the identity is allowed by any of the specified policies, `false` otherwise.
-    pub fn is_allowed(&self, policies: &[Pubkey], identity: &Pubkey) -> bool {
+    pub fn is_allowed(&self, policies: &[Pubkey], identity: &Pubkey) -> Result<bool, CheckError> {
         let mut not_found = true;
 
         for address in policies.iter() {
@@ -185,21 +191,21 @@ impl Snapshot {
                 if self.lookup.contains(&(*address, *identity)) {
                     match strategy {
                         PermissionStrategy::Deny => {
-                            return false;
+                            return Ok(false);
                         }
                         PermissionStrategy::Allow => {
-                            return true;
+                            return Ok(true);
                         }
                     }
                 } else if let PermissionStrategy::Allow = strategy {
                     not_found = false;
                 }
             } else {
-                return false;
+                return Err(CheckError::PolicyNotFound);
             }
         }
 
-        not_found
+        Ok(not_found)
     }
 }
 
@@ -525,28 +531,37 @@ mod tests {
         }
         let snapshot = Snapshot::new(&cache);
 
-        assert_eq!(snapshot.is_allowed(&[missing], &good), false);
-        assert_eq!(snapshot.is_allowed(&[missing, allow], &good), false);
-        assert_eq!(snapshot.is_allowed(&[allow, missing], &good), true);
-        assert_eq!(snapshot.is_allowed(&[deny, missing], &good), false);
+        assert_eq!(
+            snapshot.is_allowed(&[missing], &good),
+            Err(CheckError::PolicyNotFound)
+        );
+        assert_eq!(
+            snapshot.is_allowed(&[missing, allow], &good),
+            Err(CheckError::PolicyNotFound)
+        );
+        assert_eq!(snapshot.is_allowed(&[allow, missing], &good), Ok(true));
+        assert_eq!(
+            snapshot.is_allowed(&[deny, missing], &good),
+            Err(CheckError::PolicyNotFound)
+        );
 
-        assert_eq!(snapshot.is_allowed(&[deny], &sanctioned), false);
-        assert_eq!(snapshot.is_allowed(&[deny], &sandwich), false);
-        assert_eq!(snapshot.is_allowed(&[deny], &good), true);
-        assert_eq!(snapshot.is_allowed(&[deny], &other), true);
+        assert_eq!(snapshot.is_allowed(&[deny], &sanctioned), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[deny], &sandwich), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[deny], &good), Ok(true));
+        assert_eq!(snapshot.is_allowed(&[deny], &other), Ok(true));
 
-        assert_eq!(snapshot.is_allowed(&[allow], &good), true);
-        assert_eq!(snapshot.is_allowed(&[allow], &sanctioned), false);
-        assert_eq!(snapshot.is_allowed(&[allow], &sandwich), false);
-        assert_eq!(snapshot.is_allowed(&[allow], &other), false);
+        assert_eq!(snapshot.is_allowed(&[allow], &good), Ok(true));
+        assert_eq!(snapshot.is_allowed(&[allow], &sanctioned), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[allow], &sandwich), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[allow], &other), Ok(false));
 
-        assert_eq!(snapshot.is_allowed(&[allow, deny], &other), false);
-        assert_eq!(snapshot.is_allowed(&[allow, deny], &good), true);
-        assert_eq!(snapshot.is_allowed(&[allow, deny], &sandwich), false);
+        assert_eq!(snapshot.is_allowed(&[allow, deny], &other), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[allow, deny], &good), Ok(true));
+        assert_eq!(snapshot.is_allowed(&[allow, deny], &sandwich), Ok(false));
 
-        assert_eq!(snapshot.is_allowed(&[deny, allow], &other), false);
-        assert_eq!(snapshot.is_allowed(&[deny, allow], &good), true);
-        assert_eq!(snapshot.is_allowed(&[deny, allow], &sandwich), false)
+        assert_eq!(snapshot.is_allowed(&[deny, allow], &other), Ok(false));
+        assert_eq!(snapshot.is_allowed(&[deny, allow], &good), Ok(true));
+        assert_eq!(snapshot.is_allowed(&[deny, allow], &sandwich), Ok(false));
     }
 
     #[test]

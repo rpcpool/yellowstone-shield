@@ -53,10 +53,10 @@ let rpc = RpcClient::new("https://api.mainnet-beta.solana.com".to_string());
             let policy = Pubkey::new_unique();
 
             // Check if the validator is allowed by the policy
-            if snapshot.is_allowed(&[policy], &validator) {
-                println!("Validator is allowed.");
-            } else {
-                println!("Validator is denied.");
+            match snapshot.is_allowed(&[policy], &validator) {
+                Ok(true) => println!("Validator is allowed."),
+                Ok(false) => println!("Validator is denied."),
+                Err(e) => println!("Error checking policy: {:?}", e),
             }
 
             Ok(())

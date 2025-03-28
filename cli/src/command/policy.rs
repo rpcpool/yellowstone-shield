@@ -1,9 +1,6 @@
-use anyhow::Result;
-use log::info;
 use solana_sdk::{
     account::WritableAccount,
     commitment_config::CommitmentConfig,
-    native_token::Sol,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
 };

@@ -90,15 +90,15 @@ async fn main() {
 
             let CommandComplete(_, SolanaAccount(address, _)) = deny;
 
-            assert_eq!(snapshot.is_allowed(&[address], &good), true);
-            assert_eq!(snapshot.is_allowed(&[address], &other), true);
-            assert_eq!(snapshot.is_allowed(&[address], &bad), false);
+            assert_eq!(snapshot.is_allowed(&[address], &good), Ok(true));
+            assert_eq!(snapshot.is_allowed(&[address], &other), Ok(true));
+            assert_eq!(snapshot.is_allowed(&[address], &bad), Ok(false));
 
             let CommandComplete(_, SolanaAccount(address, _)) = allow;
 
-            assert_eq!(snapshot.is_allowed(&[address], &good), true);
-            assert_eq!(snapshot.is_allowed(&[address], &other), false);
-            assert_eq!(snapshot.is_allowed(&[address], &bad), false);
+            assert_eq!(snapshot.is_allowed(&[address], &good), Ok(true));
+            assert_eq!(snapshot.is_allowed(&[address], &other), Ok(false));
+            assert_eq!(snapshot.is_allowed(&[address], &bad), Ok(false));
         })
         .await;
 }

@@ -1,8 +1,6 @@
 use super::{CommandComplete, RunCommand, RunResult, SolanaAccount};
 use crate::command::CommandContext;
-use anyhow::Result;
 use borsh::BorshDeserialize;
-use log::info;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signer;
 use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
