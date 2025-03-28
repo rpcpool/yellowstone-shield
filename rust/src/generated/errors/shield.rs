@@ -52,9 +52,9 @@ pub enum ShieldError {
     /// 13 - Mismatching mint
     #[error("Mismatching mint")]
     MistmatchMint = 0xD,
-    /// 14 - Validator Identity not found
-    #[error("Validator Identity not found")]
-    ValidatorIdentityNotFound = 0xE,
+    /// 14 - identity not found
+    #[error("identity not found")]
+    IdentityNotFound = 0xE,
     /// 15 - Invalid associated token account
     #[error("Invalid associated token account")]
     InvalidAssociatedTokenAccount = 0xF,
@@ -65,4 +65,3 @@ impl solana_program::program_error::PrintProgramError for ShieldError {
         solana_program::msg!(&self.to_string());
     }
 }
-

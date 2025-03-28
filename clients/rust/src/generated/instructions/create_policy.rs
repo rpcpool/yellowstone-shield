@@ -99,7 +99,7 @@ impl Default for CreatePolicyInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreatePolicyInstructionArgs {
     pub strategy: PermissionStrategy,
-    pub validator_identities: Vec<Pubkey>,
+    pub identities: Vec<Pubkey>,
 }
 
 /// Instruction builder for `CreatePolicy`.
@@ -121,7 +121,7 @@ pub struct CreatePolicyBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     strategy: Option<PermissionStrategy>,
-    validator_identities: Option<Vec<Pubkey>>,
+    identities: Option<Vec<Pubkey>>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -173,8 +173,8 @@ impl CreatePolicyBuilder {
         self
     }
     #[inline(always)]
-    pub fn validator_identities(&mut self, validator_identities: Vec<Pubkey>) -> &mut Self {
-        self.validator_identities = Some(validator_identities);
+    pub fn identities(&mut self, identities: Vec<Pubkey>) -> &mut Self {
+        self.identities = Some(identities);
         self
     }
     /// Add an additional account to the instruction.
@@ -211,10 +211,7 @@ impl CreatePolicyBuilder {
         };
         let args = CreatePolicyInstructionArgs {
             strategy: self.strategy.clone().expect("strategy is not set"),
-            validator_identities: self
-                .validator_identities
-                .clone()
-                .expect("validator_identities is not set"),
+            identities: self.identities.clone().expect("identities is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -395,7 +392,7 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
             system_program: None,
             token_program: None,
             strategy: None,
-            validator_identities: None,
+            identities: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -454,8 +451,8 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn validator_identities(&mut self, validator_identities: Vec<Pubkey>) -> &mut Self {
-        self.instruction.validator_identities = Some(validator_identities);
+    pub fn identities(&mut self, identities: Vec<Pubkey>) -> &mut Self {
+        self.instruction.identities = Some(identities);
         self
     }
     /// Add an additional account to the instruction.
@@ -505,11 +502,11 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
                 .strategy
                 .clone()
                 .expect("strategy is not set"),
-            validator_identities: self
+            identities: self
                 .instruction
-                .validator_identities
+                .identities
                 .clone()
-                .expect("validator_identities is not set"),
+                .expect("identities is not set"),
         };
         let instruction = CreatePolicyCpi {
             __program: self.instruction.__program,
@@ -553,7 +550,7 @@ struct CreatePolicyCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     strategy: Option<PermissionStrategy>,
-    validator_identities: Option<Vec<Pubkey>>,
+    identities: Option<Vec<Pubkey>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

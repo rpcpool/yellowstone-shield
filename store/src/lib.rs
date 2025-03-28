@@ -106,15 +106,15 @@ impl PolicyCache {
     }
 }
 
-/// permission strategies for specific validator identities.
+/// permission strategies for specific identities.
 ///
 /// The `Snapshot` struct is designed to facilitate quick lookups of permission strategies
-/// associated with a combination of policy and validator public keys. It is particularly
-/// useful for determining whether a specific validator is allowed or denied by a set of
+/// associated with a combination of policy and identity public keys. It is particularly
+/// useful for determining whether a specific identity is allowed or denied by a set of
 /// policies.
 #[derive(Default)]
 pub struct Snapshot {
-    /// A hash set that stores tuples of policy and validator public keys for quick lookup.
+    /// A hash set that stores tuples of policy and identity public keys for quick lookup.
     lookup: HashSet<(Pubkey, Pubkey)>,
     strategies: HashMap<Pubkey, PermissionStrategy>,
 }
@@ -136,32 +136,32 @@ impl Snapshot {
 
         for (address, policy) in cache.all().iter() {
             strategies.insert(address.clone(), policy.strategy.clone());
-            for validator in &policy.validator_identities {
-                lookup.insert((address.clone(), validator.clone()));
+            for identity in &policy.identities {
+                lookup.insert((address.clone(), identity.clone()));
             }
         }
 
         Self { lookup, strategies }
     }
 
-    /// Determines if a validator is allowed by any of the specified policy pubkey.
+    /// Determines if a identity is allowed by any of the specified policy pubkey.
     ///
     /// This function iterates over a list of policy public keys and checks if a given validator
     /// is allowed according to the permission strategies associated with those policies.
     ///
     /// The function maintains a boolean flag `not_found` initialized to `true`. This flag is used
     /// to track whether any policy with an `Allow` strategy has been encountered that does not
-    /// explicitly deny the validator.
+    /// explicitly deny the identity.
     ///
     /// For each policy public key in the provided slice:
     /// - It retrieves the associated permission strategy from the `strategies` map.
-    /// - It checks if the combination of the policy public key and the validator public key exists
+    /// - It checks if the combination of the policy public key and the identity public key exists
     ///   in the `lookup` set.
     ///   - If the combination exists, it evaluates the permission strategy:
     ///     - If the strategy is `Deny`, the function immediately returns `false`, indicating the
-    ///       validator is not allowed.
+    ///       identity is not allowed.
     ///     - If the strategy is `Allow`, the function immediately returns `true`, indicating the
-    ///       validator is allowed.
+    ///       identity is allowed.
     ///   - If the combination does not exist and the strategy is `Allow`, it sets `not_found` to `false`,
     ///     indicating that there is at least one policy that could potentially allow the validator.
     ///
@@ -172,17 +172,17 @@ impl Snapshot {
     /// # Arguments
     ///
     /// * `policies` - A slice of policy public keys to check against.
-    /// * `validator` - The validator public key.
+    /// * `identity` - The identity public key.
     ///
     /// # Returns
     ///
-    /// `true` if the validator is allowed by any of the specified policies, `false` otherwise.
-    pub fn is_allowed(&self, policies: &[Pubkey], validator: &Pubkey) -> bool {
+    /// `true` if the identity is allowed by any of the specified policies, `false` otherwise.
+    pub fn is_allowed(&self, policies: &[Pubkey], identity: &Pubkey) -> bool {
         let mut not_found = true;
 
         for address in policies.iter() {
             if let Some(strategy) = self.strategies.get(address) {
-                if self.lookup.contains(&(*address, *validator)) {
+                if self.lookup.contains(&(*address, *identity)) {
                     match strategy {
                         PermissionStrategy::Deny => {
                             return false;
@@ -194,6 +194,8 @@ impl Snapshot {
                 } else if let PermissionStrategy::Allow = strategy {
                     not_found = false;
                 }
+            } else {
+                return false;
             }
         }
 
@@ -284,7 +286,7 @@ pub trait PolicyStoreTrait {
     fn snapshot(&self) -> Arc<Snapshot>;
 }
 
-/// A structure that manages the caching and synchronization of validator policies.
+/// A structure that manages the caching and synchronization of identity policies.
 pub struct PolicyStore {
     /// An atomic reference-counted snapshot of the current state of policies.
     snapshot: Arc<ArcSwap<Snapshot>>,
@@ -427,17 +429,14 @@ mod tests {
         let policy = Policy {
             kind: yellowstone_shield_client::types::Kind::Policy,
             strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-            validator_identities: vec![validator],
+            identities: vec![validator],
         };
 
         cache.insert(address, 1, policy.clone());
         let retrieved_policy = cache.get(&address).unwrap();
 
         assert_eq!(retrieved_policy.strategy, policy.strategy);
-        assert_eq!(
-            retrieved_policy.validator_identities,
-            policy.validator_identities
-        );
+        assert_eq!(retrieved_policy.identities, policy.identities);
     }
 
     #[test]
@@ -451,7 +450,7 @@ mod tests {
                 Policy {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    validator_identities: vec![validator],
+                    identities: vec![validator],
                 },
             ),
             (
@@ -459,7 +458,7 @@ mod tests {
                 Policy {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    validator_identities: vec![validator],
+                    identities: vec![validator],
                 },
             ),
         ];
@@ -480,7 +479,7 @@ mod tests {
         let policy = Policy {
             kind: yellowstone_shield_client::types::Kind::Policy,
             strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-            validator_identities: vec![validator],
+            identities: vec![validator],
         };
 
         cache.insert(address, 1, policy.clone());
@@ -508,7 +507,7 @@ mod tests {
                 Policy {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    validator_identities: vec![good],
+                    identities: vec![good],
                 },
             ),
             (
@@ -516,7 +515,7 @@ mod tests {
                 Policy {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    validator_identities: vec![sanctioned, sandwich],
+                    identities: vec![sanctioned, sandwich],
                 },
             ),
         ];
@@ -525,6 +524,11 @@ mod tests {
             cache.insert(address, 1, policy.clone());
         }
         let snapshot = Snapshot::new(&cache);
+
+        assert_eq!(snapshot.is_allowed(&[missing], &good), false);
+        assert_eq!(snapshot.is_allowed(&[missing, allow], &good), false);
+        assert_eq!(snapshot.is_allowed(&[allow, missing], &good), true);
+        assert_eq!(snapshot.is_allowed(&[deny, missing], &good), false);
 
         assert_eq!(snapshot.is_allowed(&[deny], &sanctioned), false);
         assert_eq!(snapshot.is_allowed(&[deny], &sandwich), false);

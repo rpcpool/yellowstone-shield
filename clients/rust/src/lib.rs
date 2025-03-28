@@ -30,7 +30,7 @@ impl Size for generated::accounts::Policy {
     const BASE_SIZE: usize = 6;
 
     fn size(&self) -> usize {
-        Self::BASE_SIZE + (self.validator_identities.len() * std::mem::size_of::<Pubkey>())
+        Self::BASE_SIZE + (self.identities.len() * std::mem::size_of::<Pubkey>())
     }
 }
 

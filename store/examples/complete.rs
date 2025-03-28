@@ -62,7 +62,7 @@ async fn main() {
                 Command::Policy {
                     action: PolicyAction::Create {
                         strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                        validator_identities: vec![good],
+                        identities: vec![good],
                         name: "Good".to_string(),
                         symbol: "G".to_string(),
                         uri: "https://test.com/good.json".to_string(),
@@ -76,7 +76,7 @@ async fn main() {
                 Command::Policy {
                     action: PolicyAction::Create {
                         strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                        validator_identities: vec![bad],
+                        identities: vec![bad],
                         name: "Bad".to_string(),
                         symbol: "B".to_string(),
                         uri: "https://test.com/bad.json".to_string(),

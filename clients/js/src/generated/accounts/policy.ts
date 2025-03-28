@@ -51,12 +51,12 @@ export function getPolicyKindBytes() {
 export type Policy = {
   kind: Kind;
   strategy: PermissionStrategy;
-  validatorIdentities: Array<Address>;
+  identities: Array<Address>;
 };
 
 export type PolicyArgs = {
   strategy: PermissionStrategyArgs;
-  validatorIdentities: Array<Address>;
+  identities: Array<Address>;
 };
 
 export function getPolicyEncoder(): Encoder<PolicyArgs> {
@@ -64,7 +64,7 @@ export function getPolicyEncoder(): Encoder<PolicyArgs> {
     getStructEncoder([
       ['kind', getKindEncoder()],
       ['strategy', getPermissionStrategyEncoder()],
-      ['validatorIdentities', getArrayEncoder(getAddressEncoder())],
+      ['identities', getArrayEncoder(getAddressEncoder())],
     ]),
     (value) => ({ ...value, kind: POLICY_KIND })
   );
@@ -74,7 +74,7 @@ export function getPolicyDecoder(): Decoder<Policy> {
   return getStructDecoder([
     ['kind', getKindDecoder()],
     ['strategy', getPermissionStrategyDecoder()],
-    ['validatorIdentities', getArrayDecoder(getAddressDecoder())],
+    ['identities', getArrayDecoder(getAddressDecoder())],
   ]);
 }
 

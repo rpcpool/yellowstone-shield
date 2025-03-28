@@ -62,7 +62,7 @@
           }
         },
         {
-          "name": "validatorIdentities",
+          "name": "identities",
           "type": {
             "vec": "publicKey"
           }
@@ -119,7 +119,7 @@
       ],
       "args": [
         {
-          "name": "validatorIdentity",
+          "name": "identity",
           "type": "publicKey"
         }
       ],
@@ -174,7 +174,7 @@
       ],
       "args": [
         {
-          "name": "validatorIdentity",
+          "name": "identity",
           "type": "publicKey"
         }
       ],
@@ -203,7 +203,7 @@
             }
           },
           {
-            "name": "validatorIdentities",
+            "name": "identities",
             "type": {
               "vec": "publicKey"
             }
@@ -312,8 +312,8 @@
     },
     {
       "code": 14,
-      "name": "ValidatorIdentityNotFound",
-      "msg": "Validator Identity not found"
+      "name": "IdentityNotFound",
+      "msg": "identity not found"
     },
     {
       "code": 15,

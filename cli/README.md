@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Yellowstone Shield CLI is a command-line tool for managing access policies for Solana validators. It allows users to create and manage policies, add or remove validators, and configure various settings related to the policy.
+The Yellowstone Shield CLI is a command-line tool for managing access policies for Solana identities, such as validators, wallets, or programs. It allows users to create and manage policies, add or remove identites, and configure various settings related to the policy.
 
 ## Installation
 
@@ -16,7 +16,7 @@ cargo build --release --bin cli
 
 ## Usage
 
-The CLI provides several commands to interact with the shield policies and validators. Below are the available commands and their options:
+The CLI provides several commands to interact with the shield policies and identities. Below are the available commands and their options:
 
 ### General Options
 
@@ -32,33 +32,32 @@ The CLI provides several commands to interact with the shield policies and valid
 - **Create a Policy**
 
   ```bash
-  yellowstone-shield policy create --strategy <STRATEGY> --validator-identities <IDENTITIES>
+  yellowstone-shield policy create --strategy <STRATEGY> --identities <IDENTITIES>
   ```
 
   - `--strategy <STRATEGY>`: The strategy to use for the policy.
-  - `--validator-identities <IDENTITIES>`: Comma-separated list of validator identities to add to the policy.
+  - `--identities <IDENTITIES>`: Comma-separated list of identities to add to the policy.
 
-#### Validator Management
+#### Identity Management
 
-- **Add a Validator**
-
-  ```bash
-  yellowstone-shield validator add --policy <POLICY> --mint <MINT> --validator-identity <IDENTITY>
-  ```
-
-  - `--policy <POLICY>`: The policy to which the validator will be added.
-  - `--mint <MINT>`: The mint address associated with the policy.
-  - `--validator-identity <IDENTITY>`: The validator to add to the policy.
-
-- **Remove a Validator**
+- **Add a Identity**
 
   ```bash
-  yellowstone-shield validator remove --policy <POLICY> --mint <MINT> --validator-identity <IDENTITY>
+  yellowstone-shield identity add --mint <MINT> --identity <IDENTITY>
   ```
 
-  - `--policy <POLICY>`: The policy from which the validator will be removed.
   - `--mint <MINT>`: The mint address associated with the policy.
-  - `--validator-identity <IDENTITY>`: The validator to remove from the policy.
+  - `--identity <IDENTITY>`: The identity to add to the policy.
+
+- **Remove a Identity**
+
+  ```bash
+  yellowstone-shield identity remove --mint <MINT> --identity <IDENTITY>
+  ```
+
+  - `--policy <POLICY>`: The policy from which the identity will be removed.
+  - `--mint <MINT>`: The mint address associated with the policy.
+  - `--identity <IDENTITY>`: The identity to remove from the policy.
 
 ## Configuration
 

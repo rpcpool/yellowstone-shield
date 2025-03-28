@@ -48,10 +48,7 @@ async fn main() -> Result<(), CliError> {
         PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
         PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
     }
-    info!(
-        "  🛡️ Validator Identities: {:?}",
-        policy.validator_identities
-    );
+    info!("  🛡️ Identities: {:?}", policy.identities);
     info!("  🏷️ Name: {}", token_metadata.name);
     info!("  🔖 Symbol: {}", token_metadata.symbol);
     info!("  🌐 URI: {}", token_metadata.uri);

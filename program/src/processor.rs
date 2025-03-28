@@ -22,18 +22,18 @@ pub fn process_instruction<'a>(
     match instruction {
         BlockListInstruction::CreatePolicy {
             strategy,
-            validator_identities,
+            identities,
         } => {
             msg!("Instruction: Create Policy");
-            create_policy(accounts, strategy, validator_identities)
+            create_policy(accounts, strategy, identities)
         }
-        BlockListInstruction::AddIdentity { validator_identity } => {
+        BlockListInstruction::AddIdentity { identity } => {
             msg!("Instruction: Add Identity");
-            add_identity(accounts, validator_identity)
+            add_identity(accounts, identity)
         }
-        BlockListInstruction::RemoveIdentity { validator_identity } => {
+        BlockListInstruction::RemoveIdentity { identity } => {
             msg!("Instruction: Remove Identity");
-            remove_identity(accounts, validator_identity)
+            remove_identity(accounts, identity)
         }
     }
 }
@@ -41,7 +41,7 @@ pub fn process_instruction<'a>(
 fn create_policy<'a>(
     accounts: &'a [AccountInfo<'a>],
     strategy: PermissionStrategy,
-    validator_identities: Vec<Pubkey>,
+    identities: Vec<Pubkey>,
 ) -> ProgramResult {
     let ctx = CreatePolicyAccounts::context(accounts)?;
 
@@ -77,7 +77,7 @@ fn create_policy<'a>(
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
     assert_empty("policy", ctx.accounts.policy)?;
 
-    let policy = Policy::new(strategy, validator_identities);
+    let policy = Policy::new(strategy, identities);
 
     let mut seeds = Policy::seeds(ctx.accounts.mint.key);
     let bump = [policy_bump];
@@ -95,7 +95,7 @@ fn create_policy<'a>(
     policy.save(ctx.accounts.policy)
 }
 
-fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], validator_identity: Pubkey) -> ProgramResult {
+fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> ProgramResult {
     let ctx = AddIdentityAccounts::context(accounts)?;
 
     assert_pda(
@@ -129,7 +129,7 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], validator_identity: Pubkey)
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
     let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
-    policy.validator_identities.push(validator_identity);
+    policy.identities.push(identity);
 
     realloc_account(
         ctx.accounts.policy,
@@ -142,10 +142,7 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], validator_identity: Pubkey)
     policy.save(ctx.accounts.policy)
 }
 
-fn remove_identity<'a>(
-    accounts: &'a [AccountInfo<'a>],
-    validator_identity: Pubkey,
-) -> ProgramResult {
+fn remove_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> ProgramResult {
     let ctx = RemoveIdentityAccounts::context(accounts)?;
 
     assert_pda(
@@ -180,12 +177,8 @@ fn remove_identity<'a>(
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
     let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
-    if let Some(pos) = policy
-        .validator_identities
-        .iter()
-        .position(|id| id == &validator_identity)
-    {
-        policy.validator_identities.remove(pos);
+    if let Some(pos) = policy.identities.iter().position(|id| id == &identity) {
+        policy.identities.remove(pos);
     }
 
     realloc_account(

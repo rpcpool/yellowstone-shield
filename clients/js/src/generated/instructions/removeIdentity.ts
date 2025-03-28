@@ -74,16 +74,16 @@ export type RemoveIdentityInstruction<
 
 export type RemoveIdentityInstructionData = {
   discriminator: number;
-  validatorIdentity: Address;
+  identity: Address;
 };
 
-export type RemoveIdentityInstructionDataArgs = { validatorIdentity: Address };
+export type RemoveIdentityInstructionDataArgs = { identity: Address };
 
 export function getRemoveIdentityInstructionDataEncoder(): Encoder<RemoveIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['validatorIdentity', getAddressEncoder()],
+      ['identity', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: REMOVE_IDENTITY_DISCRIMINATOR })
   );
@@ -92,7 +92,7 @@ export function getRemoveIdentityInstructionDataEncoder(): Encoder<RemoveIdentit
 export function getRemoveIdentityInstructionDataDecoder(): Decoder<RemoveIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['validatorIdentity', getAddressDecoder()],
+    ['identity', getAddressDecoder()],
   ]);
 }
 
@@ -123,7 +123,7 @@ export type RemoveIdentityInput<
   payer: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  validatorIdentity: RemoveIdentityInstructionDataArgs['validatorIdentity'];
+  identity: RemoveIdentityInstructionDataArgs['identity'];
 };
 
 export function getRemoveIdentityInstruction<

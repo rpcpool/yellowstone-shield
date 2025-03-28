@@ -18,7 +18,7 @@ pub struct Policy {
 pub kind: Kind,
 pub strategy: PermissionStrategy,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>"))]
-pub validator_identities: Vec<Pubkey>,
+pub identities: Vec<Pubkey>,
 }
 
 

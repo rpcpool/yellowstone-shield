@@ -47,10 +47,10 @@ pub enum Command {
         #[command(subcommand)]
         action: PolicyAction,
     },
-    /// Manage validators
-    Validator {
+    /// Manage identities
+    Identity {
         #[command(subcommand)]
-        action: ValidatorAction,
+        action: IdentityAction,
     },
 }
 
@@ -62,9 +62,9 @@ pub enum PolicyAction {
         #[arg(long)]
         strategy: PermissionStrategy,
 
-        /// The validator identities to add to the policy
+        /// The identities to add to the policy
         #[arg(long, value_delimiter = ',')]
-        validator_identities: Vec<Pubkey>,
+        identities: Vec<Pubkey>,
 
         /// The name of the policy
         #[arg(long)]
@@ -81,22 +81,22 @@ pub enum PolicyAction {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ValidatorAction {
-    /// Add a validator to a policy
+pub enum IdentityAction {
+    /// Add a identity to a policy
     Add {
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
-        /// The validator to add to the policy
-        validator_identity: Pubkey,
+        /// The identity to add to the policy
+        identity: Pubkey,
     },
-    /// Remove a validator from a policy
+    /// Remove a identity from a policy
     Remove {
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
-        /// The validator to remove from the policy
-        validator_identity: Pubkey,
+        /// The identity to remove from the policy
+        identity: Pubkey,
     },
 }
 
@@ -127,13 +127,13 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
         Command::Policy { action } => match action {
             PolicyAction::Create {
                 strategy,
-                validator_identities,
+                identities,
                 name,
                 symbol,
                 uri,
             } => policy::CreateCommandBuilder::new()
                 .strategy(strategy.clone())
-                .validator_identities(validator_identities)
+                .identities(identities)
                 .name(name.clone())
                 .symbol(symbol.clone())
                 .uri(uri.clone())
@@ -141,25 +141,19 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
                 .await
                 .map_err(Into::into),
         },
-        Command::Validator { action } => match action {
-            ValidatorAction::Add {
-                mint,
-                validator_identity,
-            } => {
-                // Add logic to add a validator
-                validator::AddCommandBuilder::new()
+        Command::Identity { action } => match action {
+            IdentityAction::Add { mint, identity } => {
+                // Add logic to add an identity
+                identity::AddCommandBuilder::new()
                     .mint(mint)
-                    .validator_identity(validator_identity)
+                    .identity(identity)
                     .run(context)
                     .await
                     .map_err(Into::into)
             }
-            ValidatorAction::Remove {
-                mint,
-                validator_identity,
-            } => validator::RemoveCommandBuilder::new()
+            IdentityAction::Remove { mint, identity } => identity::RemoveCommandBuilder::new()
                 .mint(mint)
-                .validator_identity(validator_identity)
+                .identity(identity)
                 .run(context)
                 .await
                 .map_err(Into::into),

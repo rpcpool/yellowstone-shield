@@ -31,7 +31,7 @@ use borsh::BorshDeserialize;
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder<'a> {
     strategy: Option<PermissionStrategy>,
-    validator_identities: Option<&'a Vec<Pubkey>>,
+    identities: Option<&'a Vec<Pubkey>>,
     name: Option<String>,
     symbol: Option<String>,
     uri: Option<String>,
@@ -42,7 +42,7 @@ impl<'a> CreateCommandBuilder<'a> {
     pub fn new() -> Self {
         Self {
             strategy: None,
-            validator_identities: None,
+            identities: None,
             name: None,
             symbol: None,
             uri: None,
@@ -55,9 +55,9 @@ impl<'a> CreateCommandBuilder<'a> {
         self
     }
 
-    /// Add a validator identity to the policy
-    pub fn validator_identities(mut self, validator_identities: &'a Vec<Pubkey>) -> Self {
-        self.validator_identities = Some(validator_identities);
+    /// Add a identity to the policy
+    pub fn identities(mut self, identities: &'a Vec<Pubkey>) -> Self {
+        self.identities = Some(identities);
         self
     }
 
@@ -94,10 +94,8 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             &mint.pubkey(),
             &spl_token_2022::ID,
         );
-        // Mock the validator identity.
-        let validator_identities = self
-            .validator_identities
-            .expect("validator identities must be set");
+        // Mock the identity.
+        let identities = self.identities.expect("identities must be set");
         // Calculate the space required for the mint account with extensions.
         let mint_size =
             ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])
@@ -151,7 +149,7 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
             .mint(mint.pubkey())
             .payer(keypair.pubkey())
             .token_account(payer_token_account)
-            .validator_identities(validator_identities.to_vec())
+            .identities(identities.to_vec())
             .strategy(self.strategy.expect("strategy must be set"))
             .instruction();
 
@@ -189,7 +187,7 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
         client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
-                CommitmentConfig::confirmed(),
+                CommitmentConfig::finalized(),
             )
             .await?;
 

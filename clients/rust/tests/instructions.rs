@@ -28,7 +28,7 @@ async fn test_policy_lifecycle() {
 
     // Given a PDA derived from the payer's public key.
     let mint = Keypair::new();
-    // Mock the validator identity.
+    // Mock the identity.
     let validator_identity = Keypair::new();
     let payer_token_account = get_associated_token_address_with_program_id(
         &context.payer.pubkey(),
@@ -88,7 +88,7 @@ async fn test_policy_lifecycle() {
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .token_account(payer_token_account)
-        .validator_identities(vec![validator_identity.pubkey()])
+        .identities(vec![validator_identity.pubkey()])
         .strategy(yellowstone_shield_client::types::PermissionStrategy::Allow)
         .instruction();
 
@@ -132,10 +132,7 @@ async fn test_policy_lifecycle() {
     let policy = Policy::deserialize(&mut policy_account_data).unwrap();
 
     assert_eq!(policy_account.data.len(), policy.size());
-    assert_eq!(
-        policy.validator_identities,
-        vec![validator_identity.pubkey()]
-    );
+    assert_eq!(policy.identities, vec![validator_identity.pubkey()]);
     assert_eq!(
         policy.strategy,
         yellowstone_shield_client::types::PermissionStrategy::Allow
@@ -165,7 +162,7 @@ async fn test_policy_lifecycle() {
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .token_account(payer_token_account)
-        .validator_identity(another_identity.pubkey())
+        .identity(another_identity.pubkey())
         .instruction();
 
     let tx = TransactionBuilder::build()
@@ -187,7 +184,7 @@ async fn test_policy_lifecycle() {
 
     assert_eq!(policy_account.data.len(), policy.size());
     assert_eq!(
-        policy.validator_identities,
+        policy.identities,
         vec![validator_identity.pubkey(), another_identity.pubkey()]
     );
 
@@ -196,7 +193,7 @@ async fn test_policy_lifecycle() {
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .token_account(payer_token_account)
-        .validator_identity(validator_identity.pubkey())
+        .identity(validator_identity.pubkey())
         .instruction();
 
     let tx = TransactionBuilder::build()
@@ -218,7 +215,7 @@ async fn test_policy_lifecycle() {
     let policy = Policy::deserialize(&mut policy_account_data).unwrap();
 
     assert_eq!(policy_account.data.len(), policy.size());
-    assert_eq!(policy.validator_identities, vec![another_identity.pubkey()]);
+    assert_eq!(policy.identities, vec![another_identity.pubkey()]);
 
     // Test the mint account and token metadata
     let mint_account = context

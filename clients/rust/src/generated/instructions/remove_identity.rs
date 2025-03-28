@@ -91,7 +91,7 @@ impl Default for RemoveIdentityInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RemoveIdentityInstructionArgs {
-    pub validator_identity: Pubkey,
+    pub identity: Pubkey,
 }
 
 /// Instruction builder for `RemoveIdentity`.
@@ -110,7 +110,7 @@ pub struct RemoveIdentityBuilder {
     policy: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    validator_identity: Option<Pubkey>,
+    identity: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -150,8 +150,8 @@ impl RemoveIdentityBuilder {
         self
     }
     #[inline(always)]
-    pub fn validator_identity(&mut self, validator_identity: Pubkey) -> &mut Self {
-        self.validator_identity = Some(validator_identity);
+    pub fn identity(&mut self, identity: Pubkey) -> &mut Self {
+        self.identity = Some(identity);
         self
     }
     /// Add an additional account to the instruction.
@@ -184,10 +184,7 @@ impl RemoveIdentityBuilder {
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = RemoveIdentityInstructionArgs {
-            validator_identity: self
-                .validator_identity
-                .clone()
-                .expect("validator_identity is not set"),
+            identity: self.identity.clone().expect("identity is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -355,7 +352,7 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
             policy: None,
             payer: None,
             system_program: None,
-            validator_identity: None,
+            identity: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -400,8 +397,8 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn validator_identity(&mut self, validator_identity: Pubkey) -> &mut Self {
-        self.instruction.validator_identity = Some(validator_identity);
+    pub fn identity(&mut self, identity: Pubkey) -> &mut Self {
+        self.instruction.identity = Some(identity);
         self
     }
     /// Add an additional account to the instruction.
@@ -446,11 +443,11 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = RemoveIdentityInstructionArgs {
-            validator_identity: self
+            identity: self
                 .instruction
-                .validator_identity
+                .identity
                 .clone()
-                .expect("validator_identity is not set"),
+                .expect("identity is not set"),
         };
         let instruction = RemoveIdentityCpi {
             __program: self.instruction.__program,
@@ -487,7 +484,7 @@ struct RemoveIdentityCpiBuilderInstruction<'a, 'b> {
     policy: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    validator_identity: Option<Pubkey>,
+    identity: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

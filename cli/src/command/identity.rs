@@ -7,26 +7,23 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signer;
 use solana_sdk::{account::WritableAccount, pubkey::Pubkey};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
-    extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
+    extension::{BaseStateWithExtensions, PodStateWithExtensions},
     pod::PodMint,
-    state::Mint,
 };
 use spl_token_metadata_interface::{
     borsh::BorshDeserialize as TokenBorshDeserialize, state::TokenMetadata,
 };
 use yellowstone_shield_client::accounts::Policy;
-use yellowstone_shield_client::types::PermissionStrategy;
 use yellowstone_shield_client::{
     instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
     TransactionBuilder,
 };
 
-/// Builder for adding a validator identity to a policy
+/// Builder for adding a identity to a policy
 pub struct AddCommandBuilder<'a> {
     mint: Option<&'a Pubkey>,
-    validator_identity: Option<&'a Pubkey>,
+    identity: Option<&'a Pubkey>,
 }
 
 impl<'a> AddCommandBuilder<'a> {
@@ -34,7 +31,7 @@ impl<'a> AddCommandBuilder<'a> {
     pub fn new() -> Self {
         Self {
             mint: None,
-            validator_identity: None,
+            identity: None,
         }
     }
 
@@ -44,24 +41,22 @@ impl<'a> AddCommandBuilder<'a> {
         self
     }
 
-    /// Set the validator identity to add
-    pub fn validator_identity(mut self, validator_identity: &'a Pubkey) -> Self {
-        self.validator_identity = Some(validator_identity);
+    /// Set the identity to add
+    pub fn identity(mut self, identity: &'a Pubkey) -> Self {
+        self.identity = Some(identity);
         self
     }
 }
 
 #[async_trait::async_trait]
 impl<'a> RunCommand for AddCommandBuilder<'a> {
-    /// Execute the addition of a validator identity to the policy
+    /// Execute the addition of a identity to the policy
     async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
         let (address, _) = Policy::find_pda(mint);
-        let validator_identity = self
-            .validator_identity
-            .expect("validator identity must be set");
+        let identity = self.identity.expect("identity must be set");
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
@@ -73,7 +68,7 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
             .mint(mint.clone())
             .token_account(token_account)
             .payer(keypair.pubkey())
-            .validator_identity(*validator_identity)
+            .identity(*identity)
             .instruction();
 
         let last_blockhash = client.get_latest_blockhash().await?;
@@ -88,7 +83,7 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
         client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
-                CommitmentConfig::confirmed(),
+                CommitmentConfig::finalized(),
             )
             .await?;
 
@@ -111,10 +106,10 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
     }
 }
 
-/// Builder for removing a validator identity from a policy
+/// Builder for removing an identity from a policy
 pub struct RemoveCommandBuilder<'a> {
     mint: Option<&'a Pubkey>,
-    validator_identity: Option<&'a Pubkey>,
+    identity: Option<&'a Pubkey>,
 }
 
 impl<'a> RemoveCommandBuilder<'a> {
@@ -122,7 +117,7 @@ impl<'a> RemoveCommandBuilder<'a> {
     pub fn new() -> Self {
         Self {
             mint: None,
-            validator_identity: None,
+            identity: None,
         }
     }
 
@@ -132,24 +127,22 @@ impl<'a> RemoveCommandBuilder<'a> {
         self
     }
 
-    /// Set the validator identity to remove
-    pub fn validator_identity(mut self, validator_identity: &'a Pubkey) -> Self {
-        self.validator_identity = Some(validator_identity);
+    /// Set the identity to remove
+    pub fn identity(mut self, identity: &'a Pubkey) -> Self {
+        self.identity = Some(identity);
         self
     }
 }
 
 #[async_trait::async_trait]
 impl<'a> RunCommand for RemoveCommandBuilder<'a> {
-    /// Execute the removal of a validator identity from the policy
+    /// Execute the removal of an identity from the policy
     async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
         let (address, _) = Policy::find_pda(mint);
-        let validator_identity = self
-            .validator_identity
-            .expect("validator identity must be set");
+        let identity = self.identity.expect("identity must be set");
 
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
@@ -162,7 +155,7 @@ impl<'a> RunCommand for RemoveCommandBuilder<'a> {
             .mint(*mint)
             .payer(keypair.pubkey())
             .token_account(token_account)
-            .validator_identity(*validator_identity)
+            .identity(*identity)
             .instruction();
 
         let last_blockhash = client.get_latest_blockhash().await?;
@@ -177,7 +170,7 @@ impl<'a> RunCommand for RemoveCommandBuilder<'a> {
         client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
-                CommitmentConfig::confirmed(),
+                CommitmentConfig::finalized(),
             )
             .await?;
 

@@ -4,7 +4,7 @@
   <img src="yellowstone-shield.jpg" alt="Yellowstone Shield" style="max-width: 250px;">
 </p>
 
-Yellowstone Shield is a Solana program designed to manage allowlists and blocklists of validator identities directly on-chain. It enables transaction senders, such as Agave STS, Helius' Atlas, Mango's lite-rpc, Jito's blockEngine, and Triton's Jet, to control transaction forwarding policies effectively.
+Yellowstone Shield is a Solana program that manages on-chain allowlists and blocklists of identities. An identity can be any addressable account in Solana, such as a validator, wallet, or program. This program allows transaction senders, like Agave STS, Helius' Atlas, Mango's lite-rpc, Jito's blockEngine, and Triton's Jet, to effectively control transaction forwarding policies.
 
 ## Deployments
 
@@ -45,15 +45,15 @@ A CLI tool is provided for convenient management of Yellowstone Shield policies,
 
 - [CLI Documentation](./cli/README.md)
 
-This CLI allows creating policies, adding or removing validators, and managing configurations directly via terminal commands.
+This CLI allows creating policies, adding or removing identites, and managing configurations directly via terminal commands.
 
 ## Rust Policy Store
 
-The Rust Policy Store provides efficient caching and quick retrieval of Yellowstone Shield policies, enabling real-time validator permission checks in transaction forwarders and RPC services. It ensures thread-safe access and updates with atomic snapshots. See the [Policy Store README](./policy-store/README.md) for detailed integration and usage instructions.
+The Rust Policy Store provides efficient caching and quick retrieval of Yellowstone Shield policies, enabling real-time identity permission checks in transaction forwarders and RPC services. It ensures thread-safe access and updates with atomic snapshots. See the [Policy Store README](./policy-store/README.md) for detailed integration and usage instructions.
 
 ## Policy Bound to Token Extensions Asset
 
-Policies are bound to a Token Extensions (TE) asset. Token holders can update validator identities tracked by the policy. The TE asset also contains metadata describing the policy:
+Policies are bound to a Token Extensions (TE) asset. Token holders can update identities tracked by the policy. The TE asset also contains metadata describing the policy:
 
 - **Name**: Identifier of the policy.
 - **Symbol**: Short representation of the policy.

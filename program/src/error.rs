@@ -50,9 +50,9 @@ pub enum ShieldError {
     /// 13 - Mismatching mint
     #[error("Mismatching mint")]
     MistmatchMint,
-    /// 14 - Validator Identity not found
-    #[error("Validator Identity not found")]
-    ValidatorIdentityNotFound,
+    /// 14 - identity not found
+    #[error("identity not found")]
+    IdentityNotFound,
     /// 15 - Invalid associated token account
     #[error("Invalid associated token account")]
     InvalidAssociatedTokenAccount,

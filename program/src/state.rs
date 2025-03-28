@@ -42,15 +42,15 @@ pub enum PermissionStrategy {
 pub struct Policy {
     pub kind: Kind,
     pub strategy: PermissionStrategy,
-    pub validator_identities: Vec<Pubkey>,
+    pub identities: Vec<Pubkey>,
 }
 
 impl Policy {
-    pub fn new(strategy: PermissionStrategy, validator_identities: Vec<Pubkey>) -> Self {
+    pub fn new(strategy: PermissionStrategy, identities: Vec<Pubkey>) -> Self {
         Self {
             kind: Kind::Policy,
             strategy,
-            validator_identities,
+            identities,
         }
     }
 

@@ -20,7 +20,7 @@ pub struct Policy {
         feature = "serde",
         serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
     )]
-    pub validator_identities: Vec<Pubkey>,
+    pub identities: Vec<Pubkey>,
 }
 
 impl Policy {

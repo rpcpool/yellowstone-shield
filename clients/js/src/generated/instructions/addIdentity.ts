@@ -74,16 +74,16 @@ export type AddIdentityInstruction<
 
 export type AddIdentityInstructionData = {
   discriminator: number;
-  validatorIdentity: Address;
+  identity: Address;
 };
 
-export type AddIdentityInstructionDataArgs = { validatorIdentity: Address };
+export type AddIdentityInstructionDataArgs = { identity: Address };
 
 export function getAddIdentityInstructionDataEncoder(): Encoder<AddIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['validatorIdentity', getAddressEncoder()],
+      ['identity', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: ADD_IDENTITY_DISCRIMINATOR })
   );
@@ -92,7 +92,7 @@ export function getAddIdentityInstructionDataEncoder(): Encoder<AddIdentityInstr
 export function getAddIdentityInstructionDataDecoder(): Decoder<AddIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['validatorIdentity', getAddressDecoder()],
+    ['identity', getAddressDecoder()],
   ]);
 }
 
@@ -123,7 +123,7 @@ export type AddIdentityInput<
   payer: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  validatorIdentity: AddIdentityInstructionDataArgs['validatorIdentity'];
+  identity: AddIdentityInstructionDataArgs['identity'];
 };
 
 export function getAddIdentityInstruction<

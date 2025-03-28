@@ -42,8 +42,8 @@ export const SHIELD_ERROR__EXPECTED_POSITIVE_AMOUNT = 0xb; // 11
 export const SHIELD_ERROR__INCORRECT_TOKEN_OWNER = 0xc; // 12
 /** MistmatchMint: Mismatching mint */
 export const SHIELD_ERROR__MISTMATCH_MINT = 0xd; // 13
-/** ValidatorIdentityNotFound: Validator Identity not found */
-export const SHIELD_ERROR__VALIDATOR_IDENTITY_NOT_FOUND = 0xe; // 14
+/** IdentityNotFound: identity not found */
+export const SHIELD_ERROR__IDENTITY_NOT_FOUND = 0xe; // 14
 /** InvalidAssociatedTokenAccount: Invalid associated token account */
 export const SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT = 0xf; // 15
 
@@ -55,6 +55,7 @@ export type ShieldError =
   | typeof SHIELD_ERROR__EXPECTED_POSITIVE_AMOUNT
   | typeof SHIELD_ERROR__EXPECTED_SIGNER_ACCOUNT
   | typeof SHIELD_ERROR__EXPECTED_WRITABLE_ACCOUNT
+  | typeof SHIELD_ERROR__IDENTITY_NOT_FOUND
   | typeof SHIELD_ERROR__INCORRECT_TOKEN_OWNER
   | typeof SHIELD_ERROR__INVALID_ACCOUNT_KEY
   | typeof SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT
@@ -62,8 +63,7 @@ export type ShieldError =
   | typeof SHIELD_ERROR__INVALID_PROGRAM_OWNER
   | typeof SHIELD_ERROR__MISTMATCH_MINT
   | typeof SHIELD_ERROR__NUMERICAL_OVERFLOW
-  | typeof SHIELD_ERROR__SERIALIZATION_ERROR
-  | typeof SHIELD_ERROR__VALIDATOR_IDENTITY_NOT_FOUND;
+  | typeof SHIELD_ERROR__SERIALIZATION_ERROR;
 
 let shieldErrorMessages: Record<ShieldError, string> | undefined;
 if (process.env.NODE_ENV !== 'production') {
@@ -75,6 +75,7 @@ if (process.env.NODE_ENV !== 'production') {
     [SHIELD_ERROR__EXPECTED_POSITIVE_AMOUNT]: `Expected ositive amount`,
     [SHIELD_ERROR__EXPECTED_SIGNER_ACCOUNT]: `Expected signer account`,
     [SHIELD_ERROR__EXPECTED_WRITABLE_ACCOUNT]: `Expected writable account`,
+    [SHIELD_ERROR__IDENTITY_NOT_FOUND]: `identity not found`,
     [SHIELD_ERROR__INCORRECT_TOKEN_OWNER]: `Incorrect token owner`,
     [SHIELD_ERROR__INVALID_ACCOUNT_KEY]: `Invalid account key`,
     [SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT]: `Invalid associated token account`,
@@ -83,7 +84,6 @@ if (process.env.NODE_ENV !== 'production') {
     [SHIELD_ERROR__MISTMATCH_MINT]: `Mismatching mint`,
     [SHIELD_ERROR__NUMERICAL_OVERFLOW]: `Numerical overflow`,
     [SHIELD_ERROR__SERIALIZATION_ERROR]: `Error serializing an account`,
-    [SHIELD_ERROR__VALIDATOR_IDENTITY_NOT_FOUND]: `Validator Identity not found`,
   };
 }
 

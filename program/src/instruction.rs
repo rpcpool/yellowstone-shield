@@ -17,24 +17,24 @@ pub enum BlockListInstruction {
     #[account(5, name="token_program", desc = "The token program")]
     CreatePolicy {
         strategy: PermissionStrategy,
-        validator_identities: Vec<Pubkey>,
+        identities: Vec<Pubkey>,
     },
-    /// Add a new validator identity to the shield policy.
+    /// Add a new identity to the shield policy.
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
     #[account(4, name="system_program", desc = "The system program")]
     AddIdentity {
-        validator_identity: Pubkey,
+        identity: Pubkey,
     },
-    /// Remove a validator identity from the shield policy.
+    /// Remove a identity from the shield policy.
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
     #[account(4, name="system_program", desc = "The system program")]
     RemoveIdentity {
-        validator_identity: Pubkey,
+        identity: Pubkey,
     },
 }

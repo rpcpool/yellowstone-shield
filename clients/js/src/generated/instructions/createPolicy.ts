@@ -97,12 +97,12 @@ export type CreatePolicyInstruction<
 export type CreatePolicyInstructionData = {
   discriminator: number;
   strategy: PermissionStrategy;
-  validatorIdentities: Array<Address>;
+  identities: Array<Address>;
 };
 
 export type CreatePolicyInstructionDataArgs = {
   strategy: PermissionStrategyArgs;
-  validatorIdentities: Array<Address>;
+  identities: Array<Address>;
 };
 
 export function getCreatePolicyInstructionDataEncoder(): Encoder<CreatePolicyInstructionDataArgs> {
@@ -110,7 +110,7 @@ export function getCreatePolicyInstructionDataEncoder(): Encoder<CreatePolicyIns
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['strategy', getPermissionStrategyEncoder()],
-      ['validatorIdentities', getArrayEncoder(getAddressEncoder())],
+      ['identities', getArrayEncoder(getAddressEncoder())],
     ]),
     (value) => ({ ...value, discriminator: CREATE_POLICY_DISCRIMINATOR })
   );
@@ -120,7 +120,7 @@ export function getCreatePolicyInstructionDataDecoder(): Decoder<CreatePolicyIns
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['strategy', getPermissionStrategyDecoder()],
-    ['validatorIdentities', getArrayDecoder(getAddressDecoder())],
+    ['identities', getArrayDecoder(getAddressDecoder())],
   ]);
 }
 
@@ -155,7 +155,7 @@ export type CreatePolicyAsyncInput<
   /** The token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   strategy: CreatePolicyInstructionDataArgs['strategy'];
-  validatorIdentities: CreatePolicyInstructionDataArgs['validatorIdentities'];
+  identities: CreatePolicyInstructionDataArgs['identities'];
 };
 
 export async function getCreatePolicyInstructionAsync<
@@ -277,7 +277,7 @@ export type CreatePolicyInput<
   /** The token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   strategy: CreatePolicyInstructionDataArgs['strategy'];
-  validatorIdentities: CreatePolicyInstructionDataArgs['validatorIdentities'];
+  identities: CreatePolicyInstructionDataArgs['identities'];
 };
 
 export function getCreatePolicyInstruction<

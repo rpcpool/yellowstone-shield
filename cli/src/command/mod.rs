@@ -1,5 +1,5 @@
+pub mod identity;
 pub mod policy;
-pub mod validator;
 
 use anyhow::Result;
 use solana_client::nonblocking::rpc_client::RpcClient;
