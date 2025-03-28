@@ -16,6 +16,7 @@ use solana_program::pubkey::Pubkey;
 pub struct Policy {
     pub kind: Kind,
     pub strategy: PermissionStrategy,
+    pub nonce: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
@@ -24,7 +25,7 @@ pub struct Policy {
 }
 
 impl Policy {
-    pub const LEN: usize = 6;
+    pub const LEN: usize = 7;
 
     /// Prefix values used to generate a PDA for this account.
     ///

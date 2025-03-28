@@ -19,6 +19,8 @@ import {
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU8Decoder,
+  getU8Encoder,
   transformEncoder,
   type Account,
   type Address,
@@ -51,11 +53,13 @@ export function getPolicyKindBytes() {
 export type Policy = {
   kind: Kind;
   strategy: PermissionStrategy;
+  nonce: number;
   identities: Array<Address>;
 };
 
 export type PolicyArgs = {
   strategy: PermissionStrategyArgs;
+  nonce: number;
   identities: Array<Address>;
 };
 
@@ -64,6 +68,7 @@ export function getPolicyEncoder(): Encoder<PolicyArgs> {
     getStructEncoder([
       ['kind', getKindEncoder()],
       ['strategy', getPermissionStrategyEncoder()],
+      ['nonce', getU8Encoder()],
       ['identities', getArrayEncoder(getAddressEncoder())],
     ]),
     (value) => ({ ...value, kind: POLICY_KIND })
@@ -74,6 +79,7 @@ export function getPolicyDecoder(): Decoder<Policy> {
   return getStructDecoder([
     ['kind', getKindDecoder()],
     ['strategy', getPermissionStrategyDecoder()],
+    ['nonce', getU8Decoder()],
     ['identities', getArrayDecoder(getAddressDecoder())],
   ]);
 }
@@ -136,7 +142,7 @@ export async function fetchAllMaybePolicy(
 }
 
 export function getPolicySize(): number {
-  return 6;
+  return 7;
 }
 
 export async function fetchPolicyFromSeeds(

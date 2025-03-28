@@ -27,7 +27,7 @@ pub trait Size {
 
 impl Size for generated::accounts::Policy {
     // The base size of the Policy struct is 5 bytes.
-    const BASE_SIZE: usize = 6;
+    const BASE_SIZE: usize = 7;
 
     fn size(&self) -> usize {
         Self::BASE_SIZE + (self.identities.len() * std::mem::size_of::<Pubkey>())
@@ -451,6 +451,7 @@ impl Default for InitializeMetadataBuilder<'_> {
     }
 }
 
+#[cfg(feature = "token-extensions")]
 impl<'a> InitializeMetadataBuilder<'a> {
     pub fn new() -> Self {
         Self {

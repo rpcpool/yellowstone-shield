@@ -227,6 +227,10 @@
             }
           },
           {
+            "name": "nonce",
+            "type": "u8"
+          },
+          {
             "name": "identities",
             "type": {
               "vec": "publicKey"

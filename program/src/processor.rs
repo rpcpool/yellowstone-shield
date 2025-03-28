@@ -45,7 +45,7 @@ fn create_policy<'a>(
 ) -> ProgramResult {
     let ctx = CreatePolicyAccounts::context(accounts)?;
 
-    let policy_bump = assert_pda(
+    let nonce = assert_pda(
         "policy",
         ctx.accounts.policy,
         &crate::ID,
@@ -78,10 +78,10 @@ fn create_policy<'a>(
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
     assert_empty("policy", ctx.accounts.policy)?;
 
-    let policy = Policy::new(strategy, identities);
+    let policy = Policy::new(nonce, strategy, identities);
 
     let mut seeds = Policy::seeds(ctx.accounts.mint.key);
-    let bump = [policy_bump];
+    let bump = [nonce];
     seeds.push(&bump);
 
     create_account(
@@ -99,12 +99,16 @@ fn create_policy<'a>(
 fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> ProgramResult {
     let ctx = AddIdentityAccounts::context(accounts)?;
 
-    assert_pda(
+    let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
+
+    let bump = assert_pda(
         "policy",
         ctx.accounts.policy,
         &crate::ID,
         &Policy::seeds(ctx.accounts.mint.key),
     )?;
+
+    assert_eq!(bump, policy.nonce);
     assert_signer("payer", ctx.accounts.payer)?;
     assert_signer("owner", ctx.accounts.owner)?;
     assert_writable("payer", ctx.accounts.payer)?;
@@ -130,7 +134,6 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Progra
     assert_token_owner("token_account", ctx.accounts.owner.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
-    let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
     policy.identities.push(identity);
 
     realloc_account(
@@ -147,12 +150,16 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Progra
 fn remove_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> ProgramResult {
     let ctx = RemoveIdentityAccounts::context(accounts)?;
 
-    assert_pda(
+    let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
+
+    let bump = assert_pda(
         "policy",
         ctx.accounts.policy,
         &crate::ID,
         &Policy::seeds(ctx.accounts.mint.key),
     )?;
+
+    assert_eq!(bump, policy.nonce);
     assert_signer("payer", ctx.accounts.payer)?;
     assert_signer("owner", ctx.accounts.owner)?;
     assert_writable("payer", ctx.accounts.payer)?;
@@ -179,7 +186,6 @@ fn remove_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Pro
     assert_token_owner("token_account", ctx.accounts.owner.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
-    let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
     if let Some(pos) = policy.identities.iter().position(|id| id == &identity) {
         policy.identities.remove(pos);
     }

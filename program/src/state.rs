@@ -42,14 +42,16 @@ pub enum PermissionStrategy {
 pub struct Policy {
     pub kind: Kind,
     pub strategy: PermissionStrategy,
+    pub nonce: u8,
     pub identities: Vec<Pubkey>,
 }
 
 impl Policy {
-    pub fn new(strategy: PermissionStrategy, identities: Vec<Pubkey>) -> Self {
+    pub fn new(nonce: u8, strategy: PermissionStrategy, identities: Vec<Pubkey>) -> Self {
         Self {
             kind: Kind::Policy,
             strategy,
+            nonce,
             identities,
         }
     }
@@ -58,8 +60,16 @@ impl Policy {
         vec![b"shield", b"policy", mint_key.as_ref()]
     }
 
-    pub fn find_policy_program_address(mint: &Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(&Self::seeds(mint), &crate::ID)
+    pub fn find_policy_program_address(mint: &Pubkey, nonce: Option<u8>) -> (Pubkey, u8) {
+        let mut seeds = Self::seeds(mint);
+        let slice;
+
+        if let Some(n) = nonce {
+            slice = [n];
+            seeds.push(&slice);
+        }
+
+        Pubkey::find_program_address(&seeds, &crate::ID)
     }
 }
 

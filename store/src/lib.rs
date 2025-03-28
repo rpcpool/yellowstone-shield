@@ -448,6 +448,7 @@ mod tests {
             kind: yellowstone_shield_client::types::Kind::Policy,
             strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
             identities: vec![validator],
+            nonce: 0,
         };
 
         cache.insert(address, 1, policy.clone());
@@ -469,6 +470,7 @@ mod tests {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
                     identities: vec![validator],
+                    nonce: 0,
                 },
             ),
             (
@@ -477,6 +479,7 @@ mod tests {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
                     identities: vec![validator],
+                    nonce: 0,
                 },
             ),
         ];
@@ -498,6 +501,7 @@ mod tests {
             kind: yellowstone_shield_client::types::Kind::Policy,
             strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
             identities: vec![validator],
+            nonce: 0,
         };
 
         cache.insert(address, 1, policy.clone());
@@ -526,6 +530,7 @@ mod tests {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
                     identities: vec![good],
+                    nonce: 0,
                 },
             ),
             (
@@ -534,6 +539,7 @@ mod tests {
                     kind: yellowstone_shield_client::types::Kind::Policy,
                     strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
                     identities: vec![sanctioned, sandwich],
+                    nonce: 0,
                 },
             ),
         ];

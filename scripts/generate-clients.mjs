@@ -24,7 +24,7 @@ codama.update(
 codama.update(
   c.updateAccountsVisitor({
     policy: {
-      size: 6,
+      size: 7,
       seeds: [
         c.constantPdaSeedNodeFromString('utf8', 'shield'),
         c.constantPdaSeedNodeFromString('utf8', 'policy'),
