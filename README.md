@@ -1,7 +1,7 @@
 # Yellowstone Shield
 
 <p align="center">
-  <img src="yellowstone-shield.jpg" alt="Yellowstone Shield" style="max-width: 250px;">
+  <img src="yellowstone-shield.png" alt="Yellowstone Shield" style="width: 250px;">
 </p>
 
 Yellowstone Shield is a Solana program that manages on-chain allowlists and blocklists of identities. An identity can be any addressable account in Solana, such as a validator, wallet, or program. This program allows transaction senders, like Agave STS, Helius' Atlas, Mango's lite-rpc, Jito's blockEngine, and Triton's Jet, to effectively control transaction forwarding policies.
