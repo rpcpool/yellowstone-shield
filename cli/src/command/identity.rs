@@ -72,6 +72,7 @@ impl RunCommand for AddCommandBuilder<'_> {
             .mint(*mint)
             .token_account(token_account)
             .payer(keypair.pubkey())
+            .owner(keypair.pubkey())
             .identity(*identity)
             .instruction();
 
@@ -164,6 +165,7 @@ impl RunCommand for RemoveCommandBuilder<'_> {
             .policy(address)
             .mint(*mint)
             .payer(keypair.pubkey())
+            .owner(keypair.pubkey())
             .token_account(token_account)
             .identity(*identity)
             .instruction();

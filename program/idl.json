@@ -38,6 +38,14 @@
           ]
         },
         {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The owner of the token account"
+          ]
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
@@ -109,6 +117,14 @@
           ]
         },
         {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The owner of the token account"
+          ]
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
@@ -161,6 +177,14 @@
           "isSigner": true,
           "docs": [
             "The account paying for the storage fees"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The owner of the token account"
           ]
         },
         {

@@ -75,8 +75,9 @@ impl InstructionParser {
                     token_account: ix.accounts[1].0.into(),
                     policy: ix.accounts[2].0.into(),
                     payer: ix.accounts[3].0.into(),
-                    system_program: ix.accounts[4].0.into(),
-                    token_program: ix.accounts[5].0.into(),
+                    owner: ix.accounts[4].0.into(),
+                    system_program: ix.accounts[5].0.into(),
+                    token_program: ix.accounts[6].0.into(),
                 };
                 let de_ix_data: CreatePolicyIxData = BorshDeserialize::deserialize(&mut ix_data)?;
                 Ok(ShieldProgramIx::CreatePolicy(ix_accounts, de_ix_data))
@@ -88,7 +89,8 @@ impl InstructionParser {
                     token_account: ix.accounts[1].0.into(),
                     policy: ix.accounts[2].0.into(),
                     payer: ix.accounts[3].0.into(),
-                    system_program: ix.accounts[4].0.into(),
+                    owner: ix.accounts[4].0.into(),
+                    system_program: ix.accounts[5].0.into(),
                 };
                 let de_ix_data: AddIdentityIxData = BorshDeserialize::deserialize(&mut ix_data)?;
                 Ok(ShieldProgramIx::AddIdentity(ix_accounts, de_ix_data))
@@ -100,7 +102,8 @@ impl InstructionParser {
                     token_account: ix.accounts[1].0.into(),
                     policy: ix.accounts[2].0.into(),
                     payer: ix.accounts[3].0.into(),
-                    system_program: ix.accounts[4].0.into(),
+                    owner: ix.accounts[4].0.into(),
+                    system_program: ix.accounts[5].0.into(),
                 };
                 let de_ix_data: RemoveIdentityIxData = BorshDeserialize::deserialize(&mut ix_data)?;
                 Ok(ShieldProgramIx::RemoveIdentity(ix_accounts, de_ix_data))

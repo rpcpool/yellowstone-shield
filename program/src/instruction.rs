@@ -13,8 +13,9 @@ pub enum BlockListInstruction {
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
-    #[account(4, name="system_program", desc = "The system program")]
-    #[account(5, name="token_program", desc = "The token program")]
+    #[account(4, writable, signer, name="owner", desc = "The owner of the token account")]
+    #[account(5, name="system_program", desc = "The system program")]
+    #[account(6, name="token_program", desc = "The token program")]
     CreatePolicy {
         strategy: PermissionStrategy,
         identities: Vec<Pubkey>,
@@ -24,7 +25,8 @@ pub enum BlockListInstruction {
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
-    #[account(4, name="system_program", desc = "The system program")]
+    #[account(4, writable, signer, name="owner", desc = "The owner of the token account")]
+    #[account(5, name="system_program", desc = "The system program")]
     AddIdentity {
         identity: Pubkey,
     },
@@ -33,7 +35,8 @@ pub enum BlockListInstruction {
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
     #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
-    #[account(4, name="system_program", desc = "The system program")]
+    #[account(4, writable, signer, name="owner", desc = "The owner of the token account")]
+    #[account(5, name="system_program", desc = "The system program")]
     RemoveIdentity {
         identity: Pubkey,
     },

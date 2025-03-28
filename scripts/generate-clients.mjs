@@ -45,6 +45,21 @@ codama.update(
       byteDeltas: [c.instructionByteDeltaNode(c.accountLinkNode('policy'))],
       accounts: {
         policy: { defaultValue: c.pdaValueNode('policy') },
+        owner: { defaultValue: c.accountValueNode('payer') },
+      },
+    },
+    addIdentity: {
+      byteDeltas: [c.instructionByteDeltaNode(c.accountLinkNode('policy'))],
+      accounts: {
+        policy: { defaultValue: c.pdaValueNode('policy') },
+        owner: { defaultValue: c.accountValueNode('payer') },
+      },
+    },
+    removeIdentity: {
+      byteDeltas: [c.instructionByteDeltaNode(c.accountLinkNode('policy'))],
+      accounts: {
+        policy: { defaultValue: c.pdaValueNode('policy') },
+        owner: { defaultValue: c.accountValueNode('payer') },
       },
     },
   })

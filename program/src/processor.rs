@@ -52,12 +52,13 @@ fn create_policy<'a>(
         &Policy::seeds(ctx.accounts.mint.key),
     )?;
     assert_signer("payer", ctx.accounts.payer)?;
+    assert_signer("owner", ctx.accounts.owner)?;
     assert_writable("payer", ctx.accounts.payer)?;
     assert_writable("policy", ctx.accounts.policy)?;
     assert_ata(
         "token_account",
         ctx.accounts.token_account,
-        ctx.accounts.payer.key,
+        ctx.accounts.owner.key,
         ctx.accounts.mint.key,
     )?;
     assert_program_owner("mint", ctx.accounts.mint, &spl_token_2022::id())?;
@@ -73,7 +74,7 @@ fn create_policy<'a>(
     >::unpack(token_account_data)?;
 
     assert_positive_amount("token_account", &token_account)?;
-    assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
+    assert_token_owner("token_account", ctx.accounts.owner.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
     assert_empty("policy", ctx.accounts.policy)?;
 
@@ -105,6 +106,7 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Progra
         &Policy::seeds(ctx.accounts.mint.key),
     )?;
     assert_signer("payer", ctx.accounts.payer)?;
+    assert_signer("owner", ctx.accounts.owner)?;
     assert_writable("payer", ctx.accounts.payer)?;
     assert_writable("policy", ctx.accounts.policy)?;
     assert_program_owner("mint", ctx.accounts.mint, &spl_token_2022::id())?;
@@ -122,10 +124,10 @@ fn add_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Progra
     assert_ata(
         "token_account",
         ctx.accounts.token_account,
-        ctx.accounts.payer.key,
+        ctx.accounts.owner.key,
         ctx.accounts.mint.key,
     )?;
-    assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
+    assert_token_owner("token_account", ctx.accounts.owner.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
     let mut policy: Policy = Policy::load(ctx.accounts.policy)?;
@@ -152,6 +154,7 @@ fn remove_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Pro
         &Policy::seeds(ctx.accounts.mint.key),
     )?;
     assert_signer("payer", ctx.accounts.payer)?;
+    assert_signer("owner", ctx.accounts.owner)?;
     assert_writable("payer", ctx.accounts.payer)?;
     assert_writable("policy", ctx.accounts.policy)?;
     assert_program_owner("mint", ctx.accounts.mint, &spl_token_2022::id())?;
@@ -170,10 +173,10 @@ fn remove_identity<'a>(accounts: &'a [AccountInfo<'a>], identity: Pubkey) -> Pro
     assert_ata(
         "token_account",
         ctx.accounts.token_account,
-        ctx.accounts.payer.key,
+        ctx.accounts.owner.key,
         ctx.accounts.mint.key,
     )?;
-    assert_token_owner("token_account", ctx.accounts.payer.key, &token_account)?;
+    assert_token_owner("token_account", ctx.accounts.owner.key, &token_account)?;
     assert_mint_association("token_account", ctx.accounts.mint.key, &token_account)?;
 
     let mut policy: Policy = Policy::load(ctx.accounts.policy)?;

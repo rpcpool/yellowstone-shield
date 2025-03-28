@@ -20,6 +20,8 @@ pub struct RemoveIdentity {
     pub policy: solana_program::pubkey::Pubkey,
     /// The account paying for the storage fees
     pub payer: solana_program::pubkey::Pubkey,
+    /// The owner of the token account
+    pub owner: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
 }
@@ -38,7 +40,7 @@ impl RemoveIdentity {
         args: RemoveIdentityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
@@ -52,6 +54,9 @@ impl RemoveIdentity {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
@@ -102,13 +107,15 @@ pub struct RemoveIdentityInstructionArgs {
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
 ///   3. `[writable, signer]` payer
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   4. `[writable, signer]` owner
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct RemoveIdentityBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     identity: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -140,6 +147,12 @@ impl RemoveIdentityBuilder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
+        self
+    }
+    /// The owner of the token account
+    #[inline(always)]
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -179,6 +192,7 @@ impl RemoveIdentityBuilder {
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
             payer: self.payer.expect("payer is not set"),
+            owner: self.owner.expect("owner is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -201,6 +215,8 @@ pub struct RemoveIdentityCpiAccounts<'a, 'b> {
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The owner of the token account
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -217,6 +233,8 @@ pub struct RemoveIdentityCpi<'a, 'b> {
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The owner of the token account
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -235,6 +253,7 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
             token_account: accounts.token_account,
             policy: accounts.policy,
             payer: accounts.payer,
+            owner: accounts.owner,
             system_program: accounts.system_program,
             __args: args,
         }
@@ -273,7 +292,7 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
             false,
@@ -288,6 +307,10 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.owner.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -310,12 +333,13 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
         account_infos.push(self.policy.clone());
         account_infos.push(self.payer.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
@@ -337,7 +361,8 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
 ///   3. `[writable, signer]` payer
-///   4. `[]` system_program
+///   4. `[writable, signer]` owner
+///   5. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct RemoveIdentityCpiBuilder<'a, 'b> {
     instruction: Box<RemoveIdentityCpiBuilderInstruction<'a, 'b>>,
@@ -351,6 +376,7 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
             token_account: None,
             policy: None,
             payer: None,
+            owner: None,
             system_program: None,
             identity: None,
             __remaining_accounts: Vec::new(),
@@ -385,6 +411,12 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
+        self
+    }
+    /// The owner of the token account
+    #[inline(always)]
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     /// The system program
@@ -463,6 +495,8 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
+            owner: self.instruction.owner.expect("owner is not set"),
+
             system_program: self
                 .instruction
                 .system_program
@@ -483,6 +517,7 @@ struct RemoveIdentityCpiBuilderInstruction<'a, 'b> {
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     policy: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     identity: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

@@ -21,6 +21,8 @@ pub struct CreatePolicy {
     pub policy: solana_program::pubkey::Pubkey,
     /// The account paying for the storage fees
     pub payer: solana_program::pubkey::Pubkey,
+    /// The owner of the token account
+    pub owner: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
     /// The token program
@@ -41,7 +43,7 @@ impl CreatePolicy {
         args: CreatePolicyInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
@@ -55,6 +57,9 @@ impl CreatePolicy {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
@@ -110,14 +115,16 @@ pub struct CreatePolicyInstructionArgs {
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
 ///   3. `[writable, signer]` payer
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   4. `[writable, signer]` owner
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct CreatePolicyBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     strategy: Option<PermissionStrategy>,
@@ -151,6 +158,12 @@ impl CreatePolicyBuilder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
+        self
+    }
+    /// The owner of the token account
+    #[inline(always)]
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -202,6 +215,7 @@ impl CreatePolicyBuilder {
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
             payer: self.payer.expect("payer is not set"),
+            owner: self.owner.expect("owner is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -228,6 +242,8 @@ pub struct CreatePolicyCpiAccounts<'a, 'b> {
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The owner of the token account
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token program
@@ -246,6 +262,8 @@ pub struct CreatePolicyCpi<'a, 'b> {
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The owner of the token account
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token program
@@ -266,6 +284,7 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             token_account: accounts.token_account,
             policy: accounts.policy,
             payer: accounts.payer,
+            owner: accounts.owner,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
             __args: args,
@@ -305,7 +324,7 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
             false,
@@ -320,6 +339,10 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.owner.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -346,12 +369,13 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
         account_infos.push(self.policy.clone());
         account_infos.push(self.payer.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
         remaining_accounts
@@ -374,8 +398,9 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
 ///   3. `[writable, signer]` payer
-///   4. `[]` system_program
-///   5. `[]` token_program
+///   4. `[writable, signer]` owner
+///   5. `[]` system_program
+///   6. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct CreatePolicyCpiBuilder<'a, 'b> {
     instruction: Box<CreatePolicyCpiBuilderInstruction<'a, 'b>>,
@@ -389,6 +414,7 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
             token_account: None,
             policy: None,
             payer: None,
+            owner: None,
             system_program: None,
             token_program: None,
             strategy: None,
@@ -425,6 +451,12 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
+        self
+    }
+    /// The owner of the token account
+    #[inline(always)]
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     /// The system program
@@ -522,6 +554,8 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
+            owner: self.instruction.owner.expect("owner is not set"),
+
             system_program: self
                 .instruction
                 .system_program
@@ -547,6 +581,7 @@ struct CreatePolicyCpiBuilderInstruction<'a, 'b> {
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     policy: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     strategy: Option<PermissionStrategy>,

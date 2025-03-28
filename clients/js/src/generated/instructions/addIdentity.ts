@@ -7,6 +7,7 @@
  */
 
 import {
+  BASE_ACCOUNT_SIZE,
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
@@ -29,8 +30,16 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import { getPolicySize } from '../accounts';
+import { findPolicyPda } from '../pdas';
 import { SHIELD_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+  type IInstructionWithByteDelta,
+  type ResolvedAccount,
+} from '../shared';
 
 export const ADD_IDENTITY_DISCRIMINATOR = 1;
 
@@ -44,6 +53,7 @@ export type AddIdentityInstruction<
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -65,6 +75,10 @@ export type AddIdentityInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountOwner extends string
+        ? WritableSignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
+        : TAccountOwner,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -106,11 +120,12 @@ export function getAddIdentityInstructionDataCodec(): Codec<
   );
 }
 
-export type AddIdentityInput<
+export type AddIdentityAsyncInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
   TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   /** The token extensions mint account linked to the policy */
@@ -118,37 +133,45 @@ export type AddIdentityInput<
   /** The authority over the policy based on token ownership of the mint */
   tokenAccount: Address<TAccountTokenAccount>;
   /** The shield policy account */
-  policy: Address<TAccountPolicy>;
+  policy?: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
+  /** The owner of the token account */
+  owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   identity: AddIdentityInstructionDataArgs['identity'];
 };
 
-export function getAddIdentityInstruction<
+export async function getAddIdentityInstructionAsync<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
   TAccountPayer extends string,
+  TAccountOwner extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
-  input: AddIdentityInput<
+  input: AddIdentityAsyncInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): AddIdentityInstruction<
-  TProgramAddress,
-  TAccountMint,
-  TAccountTokenAccount,
-  TAccountPolicy,
-  TAccountPayer,
-  TAccountSystemProgram
+): Promise<
+  AddIdentityInstruction<
+    TProgramAddress,
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  > &
+    IInstructionWithByteDelta
 > {
   // Program address.
   const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
@@ -159,6 +182,7 @@ export function getAddIdentityInstruction<
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
     policy: { value: input.policy ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -170,10 +194,24 @@ export function getAddIdentityInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.policy.value) {
+    accounts.policy.value = await findPolicyPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+
+  // Bytes created or reallocated by the instruction.
+  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
+    (a, b) => a + b,
+    0
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -182,6 +220,7 @@ export function getAddIdentityInstruction<
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.policy),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -194,10 +233,124 @@ export function getAddIdentityInstruction<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram
   >;
 
-  return instruction;
+  return Object.freeze({ ...instruction, byteDelta });
+}
+
+export type AddIdentityInput<
+  TAccountMint extends string = string,
+  TAccountTokenAccount extends string = string,
+  TAccountPolicy extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  /** The token extensions mint account linked to the policy */
+  mint: Address<TAccountMint>;
+  /** The authority over the policy based on token ownership of the mint */
+  tokenAccount: Address<TAccountTokenAccount>;
+  /** The shield policy account */
+  policy: Address<TAccountPolicy>;
+  /** The account paying for the storage fees */
+  payer: TransactionSigner<TAccountPayer>;
+  /** The owner of the token account */
+  owner?: TransactionSigner<TAccountOwner>;
+  /** The system program */
+  systemProgram?: Address<TAccountSystemProgram>;
+  identity: AddIdentityInstructionDataArgs['identity'];
+};
+
+export function getAddIdentityInstruction<
+  TAccountMint extends string,
+  TAccountTokenAccount extends string,
+  TAccountPolicy extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
+>(
+  input: AddIdentityInput<
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): AddIdentityInstruction<
+  TProgramAddress,
+  TAccountMint,
+  TAccountTokenAccount,
+  TAccountPolicy,
+  TAccountPayer,
+  TAccountOwner,
+  TAccountSystemProgram
+> &
+  IInstructionWithByteDelta {
+  // Program address.
+  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    mint: { value: input.mint ?? null, isWritable: false },
+    tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
+    policy: { value: input.policy ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  // Bytes created or reallocated by the instruction.
+  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
+    (a, b) => a + b,
+    0
+  );
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.tokenAccount),
+      getAccountMeta(accounts.policy),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getAddIdentityInstructionDataEncoder().encode(
+      args as AddIdentityInstructionDataArgs
+    ),
+  } as AddIdentityInstruction<
+    TProgramAddress,
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  >;
+
+  return Object.freeze({ ...instruction, byteDelta });
 }
 
 export type ParsedAddIdentityInstruction<
@@ -214,8 +367,10 @@ export type ParsedAddIdentityInstruction<
     policy: TAccountMetas[2];
     /** The account paying for the storage fees */
     payer: TAccountMetas[3];
+    /** The owner of the token account */
+    owner: TAccountMetas[4];
     /** The system program */
-    systemProgram: TAccountMetas[4];
+    systemProgram: TAccountMetas[5];
   };
   data: AddIdentityInstructionData;
 };
@@ -228,7 +383,7 @@ export function parseAddIdentityInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedAddIdentityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -245,6 +400,7 @@ export function parseAddIdentityInstruction<
       tokenAccount: getNextAccount(),
       policy: getNextAccount(),
       payer: getNextAccount(),
+      owner: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getAddIdentityInstructionDataDecoder().decode(instruction.data),

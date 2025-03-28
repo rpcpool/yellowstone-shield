@@ -88,6 +88,7 @@ async fn test_policy_lifecycle() {
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .token_account(payer_token_account)
+        .owner(context.payer.pubkey())
         .identities(vec![validator_identity.pubkey()])
         .strategy(yellowstone_shield_client::types::PermissionStrategy::Allow)
         .instruction();
@@ -161,6 +162,7 @@ async fn test_policy_lifecycle() {
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
+        .owner(context.payer.pubkey())
         .token_account(payer_token_account)
         .identity(another_identity.pubkey())
         .instruction();
@@ -192,6 +194,7 @@ async fn test_policy_lifecycle() {
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
+        .owner(context.payer.pubkey())
         .token_account(payer_token_account)
         .identity(validator_identity.pubkey())
         .instruction();

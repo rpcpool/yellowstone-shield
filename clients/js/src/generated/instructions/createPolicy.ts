@@ -37,6 +37,7 @@ import { findPolicyPda } from '../pdas';
 import { SHIELD_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
+  expectSome,
   getAccountMetaFactory,
   type IInstructionWithByteDelta,
   type ResolvedAccount,
@@ -60,6 +61,7 @@ export type CreatePolicyInstruction<
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -84,6 +86,10 @@ export type CreatePolicyInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
+      TAccountOwner extends string
+        ? WritableSignerAccount<TAccountOwner> &
+            IAccountSignerMeta<TAccountOwner>
+        : TAccountOwner,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -139,6 +145,7 @@ export type CreatePolicyAsyncInput<
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
   TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
@@ -150,6 +157,8 @@ export type CreatePolicyAsyncInput<
   policy?: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
+  /** The owner of the token account */
+  owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   /** The token program */
@@ -163,6 +172,7 @@ export async function getCreatePolicyInstructionAsync<
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
   TAccountPayer extends string,
+  TAccountOwner extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
@@ -172,6 +182,7 @@ export async function getCreatePolicyInstructionAsync<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram,
     TAccountTokenProgram
   >,
@@ -183,6 +194,7 @@ export async function getCreatePolicyInstructionAsync<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram,
     TAccountTokenProgram
   > &
@@ -197,6 +209,7 @@ export async function getCreatePolicyInstructionAsync<
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
     policy: { value: input.policy ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
@@ -214,6 +227,9 @@ export async function getCreatePolicyInstructionAsync<
       mint: expectAddress(accounts.mint.value),
     });
   }
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -236,6 +252,7 @@ export async function getCreatePolicyInstructionAsync<
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.policy),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -249,6 +266,7 @@ export async function getCreatePolicyInstructionAsync<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram,
     TAccountTokenProgram
   >;
@@ -261,6 +279,7 @@ export type CreatePolicyInput<
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
   TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
@@ -272,6 +291,8 @@ export type CreatePolicyInput<
   policy: Address<TAccountPolicy>;
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
+  /** The owner of the token account */
+  owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   /** The token program */
@@ -285,6 +306,7 @@ export function getCreatePolicyInstruction<
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
   TAccountPayer extends string,
+  TAccountOwner extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
@@ -294,6 +316,7 @@ export function getCreatePolicyInstruction<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram,
     TAccountTokenProgram
   >,
@@ -304,6 +327,7 @@ export function getCreatePolicyInstruction<
   TAccountTokenAccount,
   TAccountPolicy,
   TAccountPayer,
+  TAccountOwner,
   TAccountSystemProgram,
   TAccountTokenProgram
 > &
@@ -317,6 +341,7 @@ export function getCreatePolicyInstruction<
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
     policy: { value: input.policy ?? null, isWritable: true },
     payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
@@ -329,6 +354,9 @@ export function getCreatePolicyInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -351,6 +379,7 @@ export function getCreatePolicyInstruction<
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.policy),
       getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -364,6 +393,7 @@ export function getCreatePolicyInstruction<
     TAccountTokenAccount,
     TAccountPolicy,
     TAccountPayer,
+    TAccountOwner,
     TAccountSystemProgram,
     TAccountTokenProgram
   >;
@@ -385,10 +415,12 @@ export type ParsedCreatePolicyInstruction<
     policy: TAccountMetas[2];
     /** The account paying for the storage fees */
     payer: TAccountMetas[3];
+    /** The owner of the token account */
+    owner: TAccountMetas[4];
     /** The system program */
-    systemProgram: TAccountMetas[4];
+    systemProgram: TAccountMetas[5];
     /** The token program */
-    tokenProgram: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
   };
   data: CreatePolicyInstructionData;
 };
@@ -401,7 +433,7 @@ export function parseCreatePolicyInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCreatePolicyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -418,6 +450,7 @@ export function parseCreatePolicyInstruction<
       tokenAccount: getNextAccount(),
       policy: getNextAccount(),
       payer: getNextAccount(),
+      owner: getNextAccount(),
       systemProgram: getNextAccount(),
       tokenProgram: getNextAccount(),
     },

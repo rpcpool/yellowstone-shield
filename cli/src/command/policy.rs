@@ -151,6 +151,7 @@ impl RunCommand for CreateCommandBuilder<'_> {
             .policy(address)
             .mint(mint.pubkey())
             .payer(keypair.pubkey())
+            .owner(keypair.pubkey())
             .token_account(payer_token_account)
             .identities(identities.to_vec())
             .strategy(self.strategy.expect("strategy must be set"))
