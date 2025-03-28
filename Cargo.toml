@@ -4,10 +4,10 @@ resolver = "2"
 members = ["cli", "clients/rust", "parser", "program", "store"]
 
 [workspace.dependencies]
-yellowstone-shield-client = { path = "clients/rust" }
+yellowstone-shield-client = "0.0.0"
 yellowstone-shield = { path = "program" }
 yellowstone-shield-cli = { path = "cli" }
-yellowstone-shield-parser = { path = "parser" }
+yellowstone-shield-parser = "0.1.0"
 anyhow = "1.0.97"
 solana-sdk = "~2.1.11"
 solana-program = "~2.1.11"
@@ -15,6 +15,8 @@ solana-program = "~2.1.11"
 [workspace.metadata.patch.crates-io]
 solana-program = { git = "https://github.com/rpcpool/solana-public.git", tag = "v2.1.11-triton-public" }
 solana-sdk = { git = "https://github.com/rpcpool/solana-public.git", tag = "v2.1.11-triton-public" }
+yellowstone-shield-client = { path = "clients/rust" }
+yellowstone-shield-parser = { path = "parser" }
 
 [workspace.metadata.toolchains]
 format = "1.85"
