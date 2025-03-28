@@ -1,7 +1,9 @@
-/target
-*/buffer.json
-*/test.json
-*/target
-config_list.yaml
-.local
-.env
+.anchor
+.cargo
+.DS_Store
+**/.DS_Store
+**/target
+**/*.rs.bk
+node_modules
+test-ledger
+dist

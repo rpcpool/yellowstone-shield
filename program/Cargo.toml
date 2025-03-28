@@ -1,0 +1,35 @@
+[package]
+name = "yellowstone-shield"
+version = "0.0.0"
+edition = "2021"
+readme = "./README.md"
+license-file = "../LICENSE"
+publish = false
+
+[package.metadata.solana]
+program-id = "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W"
+program-dependencies = []
+account-dependencies = []
+
+[features]
+no-entrypoint = []
+test-sbf = []
+
+[lib]
+crate-type = ["cdylib", "lib"]
+doctest = false
+
+
+[dependencies]
+borsh = { version = "1.5.1", features = ["derive"] }
+shank = "^0.4.2"
+num-derive = "^0.3"
+num-traits = "^0.2"
+solana-program = { workspace = true }
+thiserror = "^1.0"
+spl-associated-token-account = { version = "6", features = ["no-entrypoint"] }
+spl-token = { version = "7", features = ["no-entrypoint"] }
+spl-token-2022 = { version = "7", features = ["no-entrypoint"] }
+spl-token-group-interface = { version = "0.5" }
+spl-token-metadata-interface = { version = "0.6" }
+spl-pod = { version = "0.5" }

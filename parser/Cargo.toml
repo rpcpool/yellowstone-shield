@@ -1,0 +1,12 @@
+[package]
+name = "yellowstone-shield-parser"
+version = "0.1.0"
+edition = "2021"
+description = "Parser for the Yellowstone Shield program"
+license = "Apache-2.0"
+
+[dependencies]
+yellowstone-shield-client = { workspace = true, features = [] }
+yellowstone-vixen-core = "0.1.0"
+borsh_0_10 = { version = "^0.10", package = "borsh" }
+solana-program = { workspace = true }
