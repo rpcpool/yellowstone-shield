@@ -22,7 +22,7 @@ impl ShieldProgramState {
         let inner = account_update
             .account
             .as_ref()
-            .ok_or_else(|| solana_program::program_error::ProgramError::InvalidArgument)?;
+            .ok_or(solana_program::program_error::ProgramError::InvalidArgument)?;
         let data = inner.data.as_slice();
 
         if data.is_empty() {

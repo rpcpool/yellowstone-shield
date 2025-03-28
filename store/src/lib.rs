@@ -30,6 +30,12 @@ pub struct PolicyCache {
     policies: RwLock<HashMap<Pubkey, SlotCacheItem<Policy>>>,
 }
 
+impl Default for PolicyCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PolicyCache {
     /// Creates a new, empty PolicyCache.
     ///
@@ -101,7 +107,7 @@ impl PolicyCache {
         self.policies
             .read()
             .iter()
-            .map(|(k, item)| (k.clone(), item.item.clone()))
+            .map(|(k, item)| (*k, item.item.clone()))
             .collect()
     }
 }
@@ -141,9 +147,9 @@ impl Snapshot {
         let mut strategies = HashMap::new();
 
         for (address, policy) in cache.all().iter() {
-            strategies.insert(address.clone(), policy.strategy.clone());
+            strategies.insert(*address, policy.strategy);
             for identity in &policy.identities {
-                lookup.insert((address.clone(), identity.clone()));
+                lookup.insert((*address, *identity));
             }
         }
 
@@ -270,7 +276,7 @@ pub struct PolicyHandler {
     sender: Sender<yellowstone_shield_parser::accounts_parser::ShieldProgramState>,
 }
 
-impl<'a> PolicyHandler {
+impl PolicyHandler {
     pub fn new(
         sender: Sender<yellowstone_shield_parser::accounts_parser::ShieldProgramState>,
     ) -> Self {
@@ -354,6 +360,12 @@ pub struct BuiltPolicyStore {
 pub struct PolicyStoreBuilder {
     vixen: Option<VixenConfig<NullConfig>>,
     rpc: Option<RpcClient>,
+}
+
+impl Default for PolicyStoreBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PolicyStoreBuilder {

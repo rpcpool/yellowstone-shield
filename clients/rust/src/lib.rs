@@ -291,7 +291,7 @@ impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
         let payer = self.payer.expect("payer is not set");
         let token_program = self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID);
 
-        create_associated_token_account(&payer, owner, mint, token_program)
+        create_associated_token_account(payer, owner, mint, token_program)
     }
 }
 
@@ -445,6 +445,12 @@ pub struct InitializeMetadataBuilder<'a> {
 }
 
 #[cfg(feature = "token-extensions")]
+impl Default for InitializeMetadataBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> InitializeMetadataBuilder<'a> {
     pub fn new() -> Self {
         Self {

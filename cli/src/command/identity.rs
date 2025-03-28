@@ -24,6 +24,12 @@ pub struct AddCommandBuilder<'a> {
     identity: Option<&'a Pubkey>,
 }
 
+impl Default for AddCommandBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> AddCommandBuilder<'a> {
     /// Create a new AddCommandBuilder
     pub fn new() -> Self {
@@ -47,7 +53,7 @@ impl<'a> AddCommandBuilder<'a> {
 }
 
 #[async_trait::async_trait]
-impl<'a> RunCommand for AddCommandBuilder<'a> {
+impl RunCommand for AddCommandBuilder<'_> {
     /// Execute the addition of a identity to the policy
     async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
@@ -62,8 +68,8 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
         );
 
         let add_identity_ix = AddIdentityBuilder::new()
-            .policy(address.clone())
-            .mint(mint.clone())
+            .policy(address)
+            .mint(*mint)
             .token_account(token_account)
             .payer(keypair.pubkey())
             .identity(*identity)
@@ -90,12 +96,12 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
 
         let policy = Policy::deserialize(&mut account_data)?;
 
-        let mut mint_data = client.get_account(&mint).await?;
+        let mut mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = mint_data.data_as_mut_slice();
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
-        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
-        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, token_metadata),
@@ -108,6 +114,12 @@ impl<'a> RunCommand for AddCommandBuilder<'a> {
 pub struct RemoveCommandBuilder<'a> {
     mint: Option<&'a Pubkey>,
     identity: Option<&'a Pubkey>,
+}
+
+impl Default for RemoveCommandBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> RemoveCommandBuilder<'a> {
@@ -133,7 +145,7 @@ impl<'a> RemoveCommandBuilder<'a> {
 }
 
 #[async_trait::async_trait]
-impl<'a> RunCommand for RemoveCommandBuilder<'a> {
+impl RunCommand for RemoveCommandBuilder<'_> {
     /// Execute the removal of an identity from the policy
     async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
@@ -177,12 +189,12 @@ impl<'a> RunCommand for RemoveCommandBuilder<'a> {
 
         let policy = Policy::deserialize(&mut account_data)?;
 
-        let mut mint_data = client.get_account(&mint).await?;
+        let mut mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = mint_data.data_as_mut_slice();
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
-        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
-        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, token_metadata),

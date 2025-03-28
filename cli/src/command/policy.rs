@@ -34,6 +34,12 @@ pub struct CreateCommandBuilder<'a> {
     uri: Option<String>,
 }
 
+impl Default for CreateCommandBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> CreateCommandBuilder<'a> {
     /// Create a new PolicyBuilder
     pub fn new() -> Self {
@@ -78,7 +84,7 @@ impl<'a> CreateCommandBuilder<'a> {
 }
 
 #[async_trait::async_trait]
-impl<'a> RunCommand for CreateCommandBuilder<'a> {
+impl RunCommand for CreateCommandBuilder<'_> {
     /// Execute the creation of the policy
     async fn run(&self, context: CommandContext) -> RunResult {
         let CommandContext { keypair, client } = context;
@@ -196,9 +202,9 @@ impl<'a> RunCommand for CreateCommandBuilder<'a> {
         let mut mint_data = client.get_account(&mint.pubkey()).await?;
         let account_data: &[u8] = mint_data.data_as_mut_slice();
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(&account_data).unwrap();
-        let mut mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
-        let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
         Ok(CommandComplete(
             SolanaAccount(mint.pubkey(), token_metadata),

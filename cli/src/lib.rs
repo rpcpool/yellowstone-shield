@@ -132,14 +132,13 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
                 symbol,
                 uri,
             } => policy::CreateCommandBuilder::new()
-                .strategy(strategy.clone())
+                .strategy(*strategy)
                 .identities(identities)
                 .name(name.clone())
                 .symbol(symbol.clone())
                 .uri(uri.clone())
                 .run(context)
-                .await
-                .map_err(Into::into),
+                .await,
         },
         Command::Identity { action } => match action {
             IdentityAction::Add { mint, identity } => {
@@ -148,15 +147,12 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
                     .mint(mint)
                     .identity(identity)
                     .run(context)
-                    .await
-                    .map_err(Into::into)
-            }
+                    .await}
             IdentityAction::Remove { mint, identity } => identity::RemoveCommandBuilder::new()
                 .mint(mint)
                 .identity(identity)
                 .run(context)
-                .await
-                .map_err(Into::into),
+                .await,
         },
     }
 }
