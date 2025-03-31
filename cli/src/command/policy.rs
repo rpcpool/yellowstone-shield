@@ -191,7 +191,7 @@ impl RunCommand for CreateCommandBuilder<'_> {
         client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
-                CommitmentConfig::finalized(),
+                CommitmentConfig::confirmed(),
             )
             .await?;
 
