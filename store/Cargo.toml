@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-store"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Policy store for the Yellowstone Shield program"
 license = "Apache-2.0"
@@ -17,7 +17,7 @@ tokio = { version = "1.37.0", features = ["full"] }
 thiserror = "1.0.69"
 anyhow = { workspace = true }
 borsh_0_10 = { version = "^0.10", package = "borsh" }
-yellowstone-vixen = "0.1.0"
+yellowstone-vixen = { workspace = true }
 yellowstone-shield-parser = { workspace = true, features = [] }
 
 [dev-dependencies]

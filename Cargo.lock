@@ -8742,29 +8742,6 @@ dependencies = [
  "spl-token-metadata-interface 0.6.0",
  "thiserror 1.0.69",
  "tokio",
- "yellowstone-shield-client 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "yellowstone-shield-client"
-version = "0.0.0"
-dependencies = [
- "anchor-lang",
- "assert_matches",
- "borsh 0.10.4",
- "num-derive 0.3.3",
- "num-traits",
- "serde",
- "serde_with",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-associated-token-account 6.0.0",
- "spl-pod 0.5.0",
- "spl-token-2022 7.0.0",
- "spl-token-metadata-interface 0.6.0",
- "thiserror 1.0.69",
- "yellowstone-shield",
  "yellowstone-shield-client 0.0.0",
 ]
 
@@ -8787,30 +8764,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "yellowstone-shield-client"
+version = "0.2.0"
+dependencies = [
+ "anchor-lang",
+ "assert_matches",
+ "borsh 0.10.4",
+ "num-derive 0.3.3",
+ "num-traits",
+ "serde",
+ "serde_with",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-associated-token-account 6.0.0",
+ "spl-pod 0.5.0",
+ "spl-token-2022 7.0.0",
+ "spl-token-metadata-interface 0.6.0",
+ "thiserror 1.0.69",
+ "yellowstone-shield",
+ "yellowstone-shield-client 0.2.0",
+]
+
+[[package]]
 name = "yellowstone-shield-parser"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "borsh 0.10.4",
  "solana-program",
- "yellowstone-shield-client 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yellowstone-shield-client 0.0.0",
  "yellowstone-vixen-core",
 ]
 
 [[package]]
 name = "yellowstone-shield-parser"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f370520e57a18a4fb482cf5b66c4426474cbffdc04c7861f610c8e2239edb641"
+checksum = "496101c32df12a42278e12b49dbaee67a4a892de422c5ca84125cae772897ed6"
 dependencies = [
  "borsh 0.10.4",
  "solana-program",
- "yellowstone-shield-client 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yellowstone-shield-client 0.0.0",
  "yellowstone-vixen-core",
 ]
 
 [[package]]
 name = "yellowstone-shield-store"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -8829,16 +8829,16 @@ dependencies = [
  "tokio",
  "toml 0.8.20",
  "yellowstone-shield-cli",
- "yellowstone-shield-client 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "yellowstone-shield-parser 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yellowstone-shield-client 0.0.0",
+ "yellowstone-shield-parser 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "yellowstone-vixen",
 ]
 
 [[package]]
 name = "yellowstone-vixen"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18f82908255dabd519eb709fd9a1df393e45bcc8c5f8882c363efff9e49bed96"
+checksum = "47a92ab40c3c8e68bfc69af714c1d9b293d55636bc1bfb02e609fe85e2620ad1"
 dependencies = [
  "clap 4.5.32",
  "futures-channel",
@@ -8856,9 +8856,9 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-vixen-core"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa7173490754ac4ddedd9e40f5b257a2d67d999ac29486d3931ffe106c74bd88"
+checksum = "ddd5abc79c20872eb5d5d320b099549e4e782c04fb7e30528162e6f72c23960a"
 dependencies = [
  "bs58",
  "thiserror 1.0.69",

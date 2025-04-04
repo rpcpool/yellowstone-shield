@@ -405,7 +405,10 @@ impl PolicyStoreBuilder {
             let (sender, mut receiver) = tokio::sync::mpsc::channel::<ShieldProgramState>(10_000);
 
             let pipeline = Pipeline::new(AccountParser, [PolicyHandler::new(sender)]);
-            let runtime = Runtime::builder().account(pipeline).build(vixen);
+            let runtime = Runtime::builder()
+                .account(pipeline)
+                .commitment_level(yellowstone_vixen::CommitmentLevel::Confirmed)
+                .build(vixen);
 
             let cache = Arc::clone(&cache);
             let snapshot = Arc::clone(&snapshot);

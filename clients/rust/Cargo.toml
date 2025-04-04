@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-client"
-version = "0.0.0"
+version = "0.2.0"
 description = "A generated Rust library for the Blocklist program"
 repository = "https://github.com/rpcpool/yellowstone-shield"
 edition = "2021"

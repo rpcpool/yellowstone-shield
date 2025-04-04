@@ -4,10 +4,11 @@ resolver = "2"
 members = ["cli", "clients/rust", "parser", "program", "store"]
 
 [workspace.dependencies]
+yellowstone-vixen = "0.2.0"
 yellowstone-shield-client = "0.0.0"
 yellowstone-shield = { path = "program" }
 yellowstone-shield-cli = { path = "cli" }
-yellowstone-shield-parser = "0.1.0"
+yellowstone-shield-parser = "0.2.0"
 anyhow = "1.0.97"
 solana-sdk = "~2.1.11"
 solana-program = "~2.1.11"
