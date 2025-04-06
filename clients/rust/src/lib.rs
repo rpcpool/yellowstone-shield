@@ -1,11 +1,11 @@
 mod generated;
 
+use bytemuck::PodCastError;
 pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
 use solana_program::pubkey::Pubkey;
 use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
 use std::str::FromStr;
-use thiserror::Error;
 
 #[cfg(feature = "token-extensions")]
 use spl_associated_token_account::instruction::create_associated_token_account;
@@ -20,35 +20,73 @@ use spl_token_2022::{
 #[cfg(feature = "token-extensions")]
 use spl_token_metadata_interface::instruction::initialize as initialize_metadata;
 
-pub trait Size {
-    const BASE_SIZE: usize;
-    fn size(&self) -> usize;
-}
-
-impl Size for generated::accounts::Policy {
-    // The base size of the Policy struct is 5 bytes.
-    const BASE_SIZE: usize = 7;
-
-    fn size(&self) -> usize {
-        Self::BASE_SIZE + (self.identities.len() * std::mem::size_of::<Pubkey>())
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum ParsePermissionStrategyError {
+#[derive(Debug, thiserror::Error)]
+pub enum ParseError {
     #[error("Invalid permission strategy")]
     InvalidStrategy,
+    #[error("Invalid kind")]
+    InvalidKind,
+    #[error("Invalid PodCastError")]
+    InvalidPodCastError,
 }
 
 impl FromStr for generated::types::PermissionStrategy {
-    type Err = ParsePermissionStrategyError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "allow" => Ok(generated::types::PermissionStrategy::Allow),
             "deny" => Ok(generated::types::PermissionStrategy::Deny),
-            _ => Err(ParsePermissionStrategyError::InvalidStrategy),
+            _ => Err(ParseError::InvalidStrategy),
         }
+    }
+}
+
+impl TryFrom<u8> for generated::types::PermissionStrategy {
+    type Error = ParseError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(generated::types::PermissionStrategy::Deny),
+            1 => Ok(generated::types::PermissionStrategy::Allow),
+            _ => Err(ParseError::InvalidStrategy),
+        }
+    }
+}
+
+impl From<PodCastError> for ParseError {
+    fn from(_: PodCastError) -> Self {
+        Self::InvalidPodCastError
+    }
+}
+
+impl TryFrom<u8> for generated::types::Kind {
+    type Error = ParseError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(generated::types::Kind::Policy),
+            _ => Err(ParseError::InvalidKind),
+        }
+    }
+}
+
+impl generated::accounts::Policy {
+    pub fn identities_len(&self) -> u32 {
+        u32::from_le_bytes(self.identities_len)
+    }
+
+    pub fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        Ok(bytemuck::try_cast_slice(data)
+            .map_err(ParseError::from)?
+            .to_vec())
+    }
+
+    pub fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+        generated::types::Kind::try_from(self.kind)
+    }
+    pub fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+        generated::types::PermissionStrategy::try_from(self.strategy)
     }
 }
 
@@ -388,6 +426,16 @@ impl<'a> TransactionBuilder<'a> {
             payer: None,
             recent_blockhash: None,
         }
+    }
+
+    /// Set the entire list of instructions for the transaction
+    #[inline(always)]
+    pub fn instructions(
+        &mut self,
+        instructions: Vec<solana_program::instruction::Instruction>,
+    ) -> &mut Self {
+        self.instructions = instructions;
+        self
     }
 
     /// Add an instruction to the transaction

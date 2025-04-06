@@ -5,8 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use crate::generated::types::Kind;
-use crate::generated::types::PermissionStrategy;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -14,14 +12,10 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Policy {
-    pub kind: Kind,
-    pub strategy: PermissionStrategy,
+    pub kind: u8,
+    pub strategy: u8,
     pub nonce: u8,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
-    )]
-    pub identities: Vec<Pubkey>,
+    pub identities_len: [u8; 4],
 }
 
 impl Policy {

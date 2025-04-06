@@ -14,10 +14,12 @@ import {
 } from '@solana/kit';
 import {
   type ParsedAddIdentityInstruction,
+  type ParsedClosePolicyInstruction,
   type ParsedCreatePolicyInstruction,
   type ParsedRemoveIdentityInstruction,
+  type ParsedReplaceIdentityInstruction,
 } from '../instructions';
-import { Kind, getKindEncoder } from '../types';
+import { Kind } from '../types';
 
 export const SHIELD_PROGRAM_ADDRESS =
   'b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W' as Address<'b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W'>;
@@ -30,7 +32,7 @@ export function identifyShieldAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): ShieldAccount {
   const data = 'data' in account ? account.data : account;
-  if (containsBytes(data, getKindEncoder().encode(Kind.Policy), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(Kind.Policy), 0)) {
     return ShieldAccount.Policy;
   }
   throw new Error(
@@ -42,6 +44,8 @@ export enum ShieldInstruction {
   CreatePolicy,
   AddIdentity,
   RemoveIdentity,
+  ReplaceIdentity,
+  ClosePolicy,
 }
 
 export function identifyShieldInstruction(
@@ -56,6 +60,12 @@ export function identifyShieldInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
     return ShieldInstruction.RemoveIdentity;
+  }
+  if (containsBytes(data, getU8Encoder().encode(3), 0)) {
+    return ShieldInstruction.ReplaceIdentity;
+  }
+  if (containsBytes(data, getU8Encoder().encode(4), 0)) {
+    return ShieldInstruction.ClosePolicy;
   }
   throw new Error(
     'The provided instruction could not be identified as a shield instruction.'
@@ -73,4 +83,10 @@ export type ParsedShieldInstruction<
     } & ParsedAddIdentityInstruction<TProgram>)
   | ({
       instructionType: ShieldInstruction.RemoveIdentity;
-    } & ParsedRemoveIdentityInstruction<TProgram>);
+    } & ParsedRemoveIdentityInstruction<TProgram>)
+  | ({
+      instructionType: ShieldInstruction.ReplaceIdentity;
+    } & ParsedReplaceIdentityInstruction<TProgram>)
+  | ({
+      instructionType: ShieldInstruction.ClosePolicy;
+    } & ParsedClosePolicyInstruction<TProgram>);

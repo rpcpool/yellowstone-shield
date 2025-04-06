@@ -13,10 +13,10 @@ import {
   decodeAccount,
   fetchEncodedAccount,
   fetchEncodedAccounts,
-  getAddressDecoder,
-  getAddressEncoder,
-  getArrayDecoder,
-  getArrayEncoder,
+  fixDecoderSize,
+  fixEncoderSize,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -32,44 +32,37 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
+  type ReadonlyUint8Array,
 } from '@solana/kit';
 import { PolicySeeds, findPolicyPda } from '../pdas';
-import {
-  Kind,
-  getKindDecoder,
-  getKindEncoder,
-  getPermissionStrategyDecoder,
-  getPermissionStrategyEncoder,
-  type PermissionStrategy,
-  type PermissionStrategyArgs,
-} from '../types';
+import { Kind } from '../types';
 
 export const POLICY_KIND = Kind.Policy;
 
 export function getPolicyKindBytes() {
-  return getKindEncoder().encode(POLICY_KIND);
+  return getU8Encoder().encode(POLICY_KIND);
 }
 
 export type Policy = {
-  kind: Kind;
-  strategy: PermissionStrategy;
+  kind: number;
+  strategy: number;
   nonce: number;
-  identities: Array<Address>;
+  identitiesLen: ReadonlyUint8Array;
 };
 
 export type PolicyArgs = {
-  strategy: PermissionStrategyArgs;
+  strategy: number;
   nonce: number;
-  identities: Array<Address>;
+  identitiesLen: ReadonlyUint8Array;
 };
 
 export function getPolicyEncoder(): Encoder<PolicyArgs> {
   return transformEncoder(
     getStructEncoder([
-      ['kind', getKindEncoder()],
-      ['strategy', getPermissionStrategyEncoder()],
+      ['kind', getU8Encoder()],
+      ['strategy', getU8Encoder()],
       ['nonce', getU8Encoder()],
-      ['identities', getArrayEncoder(getAddressEncoder())],
+      ['identitiesLen', fixEncoderSize(getBytesEncoder(), 4)],
     ]),
     (value) => ({ ...value, kind: POLICY_KIND })
   );
@@ -77,10 +70,10 @@ export function getPolicyEncoder(): Encoder<PolicyArgs> {
 
 export function getPolicyDecoder(): Decoder<Policy> {
   return getStructDecoder([
-    ['kind', getKindDecoder()],
-    ['strategy', getPermissionStrategyDecoder()],
+    ['kind', getU8Decoder()],
+    ['strategy', getU8Decoder()],
     ['nonce', getU8Decoder()],
-    ['identities', getArrayDecoder(getAddressDecoder())],
+    ['identitiesLen', fixDecoderSize(getBytesDecoder(), 4)],
   ]);
 }
 

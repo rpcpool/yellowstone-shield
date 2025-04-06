@@ -46,44 +46,156 @@ export const SHIELD_ERROR__MISTMATCH_MINT = 0xd; // 13
 export const SHIELD_ERROR__IDENTITY_NOT_FOUND = 0xe; // 14
 /** InvalidAssociatedTokenAccount: Invalid associated token account */
 export const SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT = 0xf; // 15
+/** MissedCondition: Condition not met */
+export const SHIELD_ERROR__MISSED_CONDITION = 0x10; // 16
+/** InvalidAccountData: invalid account data */
+export const SHIELD_ERROR__INVALID_ACCOUNT_DATA = 0x11; // 17
+/** InvalidArgument: Invalid argument */
+export const SHIELD_ERROR__INVALID_ARGUMENT = 0x12; // 18
+/** InvalidInstructionData: Invalid instruction data */
+export const SHIELD_ERROR__INVALID_INSTRUCTION_DATA = 0x13; // 19
+/** AccountDataTooSmall: Account data too small */
+export const SHIELD_ERROR__ACCOUNT_DATA_TOO_SMALL = 0x14; // 20
+/** InsufficientFunds: Insufficient funds */
+export const SHIELD_ERROR__INSUFFICIENT_FUNDS = 0x15; // 21
+/** IncorrectProgramId: Incorrect program id */
+export const SHIELD_ERROR__INCORRECT_PROGRAM_ID = 0x16; // 22
+/** MissingRequiredSignature: Missing required signature */
+export const SHIELD_ERROR__MISSING_REQUIRED_SIGNATURE = 0x17; // 23
+/** AccountAlreadyInitialized: Account already initialized */
+export const SHIELD_ERROR__ACCOUNT_ALREADY_INITIALIZED = 0x18; // 24
+/** UninitializedAccount: Uninitialized account */
+export const SHIELD_ERROR__UNINITIALIZED_ACCOUNT = 0x19; // 25
+/** NotEnoughAccountKeys: Not enough account keys */
+export const SHIELD_ERROR__NOT_ENOUGH_ACCOUNT_KEYS = 0x1a; // 26
+/** AccountBorrowFailed: Account borrow failed */
+export const SHIELD_ERROR__ACCOUNT_BORROW_FAILED = 0x1b; // 27
+/** MaxSeedLengthExceeded: Max seed length exceeded */
+export const SHIELD_ERROR__MAX_SEED_LENGTH_EXCEEDED = 0x1c; // 28
+/** InvalidSeeds: Invalid seeds */
+export const SHIELD_ERROR__INVALID_SEEDS = 0x1d; // 29
+/** BorshIoError: Borsh IO error */
+export const SHIELD_ERROR__BORSH_IO_ERROR = 0x1e; // 30
+/** AccountNotRentExempt: Account not rent exempt */
+export const SHIELD_ERROR__ACCOUNT_NOT_RENT_EXEMPT = 0x1f; // 31
+/** UnsupportedSysvar: Unsupported sysvar */
+export const SHIELD_ERROR__UNSUPPORTED_SYSVAR = 0x20; // 32
+/** IllegalOwner: Illegal owner */
+export const SHIELD_ERROR__ILLEGAL_OWNER = 0x21; // 33
+/** MaxAccountsDataAllocationsExceeded: Max accounts data allocations exceeded */
+export const SHIELD_ERROR__MAX_ACCOUNTS_DATA_ALLOCATIONS_EXCEEDED = 0x22; // 34
+/** InvalidRealloc: Invalid realloc */
+export const SHIELD_ERROR__INVALID_REALLOC = 0x23; // 35
+/** MaxInstructionTraceLengthExceeded: Max instruction trace length exceeded */
+export const SHIELD_ERROR__MAX_INSTRUCTION_TRACE_LENGTH_EXCEEDED = 0x24; // 36
+/** BuiltinProgramsMustConsumeComputeUnits: Builtin programs must consume compute units */
+export const SHIELD_ERROR__BUILTIN_PROGRAMS_MUST_CONSUME_COMPUTE_UNITS = 0x25; // 37
+/** InvalidAccountOwner: Invalid account owner */
+export const SHIELD_ERROR__INVALID_ACCOUNT_OWNER = 0x26; // 38
+/** ArithmeticOverflow: Arithmetic overflow */
+export const SHIELD_ERROR__ARITHMETIC_OVERFLOW = 0x27; // 39
+/** Immutable: Immutable */
+export const SHIELD_ERROR__IMMUTABLE = 0x28; // 40
+/** IncorrectAuthority: Incorrect authority */
+export const SHIELD_ERROR__INCORRECT_AUTHORITY = 0x29; // 41
+/** GenericError: Generic program error */
+export const SHIELD_ERROR__GENERIC_ERROR = 0x2a; // 42
+/** InvalidStrategy: Invalid strategy */
+export const SHIELD_ERROR__INVALID_STRATEGY = 0x2b; // 43
 
 export type ShieldError =
+  | typeof SHIELD_ERROR__ACCOUNT_ALREADY_INITIALIZED
+  | typeof SHIELD_ERROR__ACCOUNT_BORROW_FAILED
+  | typeof SHIELD_ERROR__ACCOUNT_DATA_TOO_SMALL
   | typeof SHIELD_ERROR__ACCOUNT_MISMATCH
+  | typeof SHIELD_ERROR__ACCOUNT_NOT_RENT_EXEMPT
+  | typeof SHIELD_ERROR__ARITHMETIC_OVERFLOW
+  | typeof SHIELD_ERROR__BORSH_IO_ERROR
+  | typeof SHIELD_ERROR__BUILTIN_PROGRAMS_MUST_CONSUME_COMPUTE_UNITS
   | typeof SHIELD_ERROR__DESERIALIZATION_ERROR
   | typeof SHIELD_ERROR__EXPECTED_EMPTY_ACCOUNT
   | typeof SHIELD_ERROR__EXPECTED_NON_EMPTY_ACCOUNT
   | typeof SHIELD_ERROR__EXPECTED_POSITIVE_AMOUNT
   | typeof SHIELD_ERROR__EXPECTED_SIGNER_ACCOUNT
   | typeof SHIELD_ERROR__EXPECTED_WRITABLE_ACCOUNT
+  | typeof SHIELD_ERROR__GENERIC_ERROR
   | typeof SHIELD_ERROR__IDENTITY_NOT_FOUND
+  | typeof SHIELD_ERROR__ILLEGAL_OWNER
+  | typeof SHIELD_ERROR__IMMUTABLE
+  | typeof SHIELD_ERROR__INCORRECT_AUTHORITY
+  | typeof SHIELD_ERROR__INCORRECT_PROGRAM_ID
   | typeof SHIELD_ERROR__INCORRECT_TOKEN_OWNER
+  | typeof SHIELD_ERROR__INSUFFICIENT_FUNDS
+  | typeof SHIELD_ERROR__INVALID_ACCOUNT_DATA
   | typeof SHIELD_ERROR__INVALID_ACCOUNT_KEY
+  | typeof SHIELD_ERROR__INVALID_ACCOUNT_OWNER
+  | typeof SHIELD_ERROR__INVALID_ARGUMENT
   | typeof SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT
+  | typeof SHIELD_ERROR__INVALID_INSTRUCTION_DATA
   | typeof SHIELD_ERROR__INVALID_PDA
   | typeof SHIELD_ERROR__INVALID_PROGRAM_OWNER
+  | typeof SHIELD_ERROR__INVALID_REALLOC
+  | typeof SHIELD_ERROR__INVALID_SEEDS
+  | typeof SHIELD_ERROR__INVALID_STRATEGY
+  | typeof SHIELD_ERROR__MAX_ACCOUNTS_DATA_ALLOCATIONS_EXCEEDED
+  | typeof SHIELD_ERROR__MAX_INSTRUCTION_TRACE_LENGTH_EXCEEDED
+  | typeof SHIELD_ERROR__MAX_SEED_LENGTH_EXCEEDED
+  | typeof SHIELD_ERROR__MISSED_CONDITION
+  | typeof SHIELD_ERROR__MISSING_REQUIRED_SIGNATURE
   | typeof SHIELD_ERROR__MISTMATCH_MINT
+  | typeof SHIELD_ERROR__NOT_ENOUGH_ACCOUNT_KEYS
   | typeof SHIELD_ERROR__NUMERICAL_OVERFLOW
-  | typeof SHIELD_ERROR__SERIALIZATION_ERROR;
+  | typeof SHIELD_ERROR__SERIALIZATION_ERROR
+  | typeof SHIELD_ERROR__UNINITIALIZED_ACCOUNT
+  | typeof SHIELD_ERROR__UNSUPPORTED_SYSVAR;
 
 let shieldErrorMessages: Record<ShieldError, string> | undefined;
 if (process.env.NODE_ENV !== 'production') {
   shieldErrorMessages = {
+    [SHIELD_ERROR__ACCOUNT_ALREADY_INITIALIZED]: `Account already initialized`,
+    [SHIELD_ERROR__ACCOUNT_BORROW_FAILED]: `Account borrow failed`,
+    [SHIELD_ERROR__ACCOUNT_DATA_TOO_SMALL]: `Account data too small`,
     [SHIELD_ERROR__ACCOUNT_MISMATCH]: `Account mismatch`,
+    [SHIELD_ERROR__ACCOUNT_NOT_RENT_EXEMPT]: `Account not rent exempt`,
+    [SHIELD_ERROR__ARITHMETIC_OVERFLOW]: `Arithmetic overflow`,
+    [SHIELD_ERROR__BORSH_IO_ERROR]: `Borsh IO error`,
+    [SHIELD_ERROR__BUILTIN_PROGRAMS_MUST_CONSUME_COMPUTE_UNITS]: `Builtin programs must consume compute units`,
     [SHIELD_ERROR__DESERIALIZATION_ERROR]: `Error deserializing an account`,
     [SHIELD_ERROR__EXPECTED_EMPTY_ACCOUNT]: `Expected empty account`,
     [SHIELD_ERROR__EXPECTED_NON_EMPTY_ACCOUNT]: `Expected non empty account`,
     [SHIELD_ERROR__EXPECTED_POSITIVE_AMOUNT]: `Expected ositive amount`,
     [SHIELD_ERROR__EXPECTED_SIGNER_ACCOUNT]: `Expected signer account`,
     [SHIELD_ERROR__EXPECTED_WRITABLE_ACCOUNT]: `Expected writable account`,
+    [SHIELD_ERROR__GENERIC_ERROR]: `Generic program error`,
     [SHIELD_ERROR__IDENTITY_NOT_FOUND]: `identity not found`,
+    [SHIELD_ERROR__ILLEGAL_OWNER]: `Illegal owner`,
+    [SHIELD_ERROR__IMMUTABLE]: `Immutable`,
+    [SHIELD_ERROR__INCORRECT_AUTHORITY]: `Incorrect authority`,
+    [SHIELD_ERROR__INCORRECT_PROGRAM_ID]: `Incorrect program id`,
     [SHIELD_ERROR__INCORRECT_TOKEN_OWNER]: `Incorrect token owner`,
+    [SHIELD_ERROR__INSUFFICIENT_FUNDS]: `Insufficient funds`,
+    [SHIELD_ERROR__INVALID_ACCOUNT_DATA]: `invalid account data`,
     [SHIELD_ERROR__INVALID_ACCOUNT_KEY]: `Invalid account key`,
+    [SHIELD_ERROR__INVALID_ACCOUNT_OWNER]: `Invalid account owner`,
+    [SHIELD_ERROR__INVALID_ARGUMENT]: `Invalid argument`,
     [SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT]: `Invalid associated token account`,
+    [SHIELD_ERROR__INVALID_INSTRUCTION_DATA]: `Invalid instruction data`,
     [SHIELD_ERROR__INVALID_PDA]: `Invalid PDA derivation`,
     [SHIELD_ERROR__INVALID_PROGRAM_OWNER]: `Invalid program owner. This likely mean the provided account does not exist`,
+    [SHIELD_ERROR__INVALID_REALLOC]: `Invalid realloc`,
+    [SHIELD_ERROR__INVALID_SEEDS]: `Invalid seeds`,
+    [SHIELD_ERROR__INVALID_STRATEGY]: `Invalid strategy`,
+    [SHIELD_ERROR__MAX_ACCOUNTS_DATA_ALLOCATIONS_EXCEEDED]: `Max accounts data allocations exceeded`,
+    [SHIELD_ERROR__MAX_INSTRUCTION_TRACE_LENGTH_EXCEEDED]: `Max instruction trace length exceeded`,
+    [SHIELD_ERROR__MAX_SEED_LENGTH_EXCEEDED]: `Max seed length exceeded`,
+    [SHIELD_ERROR__MISSED_CONDITION]: `Condition not met`,
+    [SHIELD_ERROR__MISSING_REQUIRED_SIGNATURE]: `Missing required signature`,
     [SHIELD_ERROR__MISTMATCH_MINT]: `Mismatching mint`,
+    [SHIELD_ERROR__NOT_ENOUGH_ACCOUNT_KEYS]: `Not enough account keys`,
     [SHIELD_ERROR__NUMERICAL_OVERFLOW]: `Numerical overflow`,
     [SHIELD_ERROR__SERIALIZATION_ERROR]: `Error serializing an account`,
+    [SHIELD_ERROR__UNINITIALIZED_ACCOUNT]: `Uninitialized account`,
+    [SHIELD_ERROR__UNSUPPORTED_SYSVAR]: `Unsupported sysvar`,
   };
 }
 

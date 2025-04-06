@@ -1,7 +1,10 @@
 #![cfg(feature = "test-sbf")]
 use borsh::BorshDeserialize;
 use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::signature::{Keypair, Signer};
+use solana_sdk::{
+    pubkey::Pubkey,
+    signature::{Keypair, Signer},
+};
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
@@ -12,11 +15,13 @@ use spl_token_2022::{
 use spl_token_metadata_interface::{
     borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
 };
+use yellowstone_shield_client::instructions::{ClosePolicyBuilder, ReplaceIdentityBuilder};
+use yellowstone_shield_client::types::{Kind, PermissionStrategy};
 use yellowstone_shield_client::{
     accounts::Policy,
     instructions::{AddIdentityBuilder, CreatePolicyBuilder, RemoveIdentityBuilder},
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
-    InitializeMint2Builder, MetadataPointerInitializeBuilder, Size, TokenExtensionsMintToBuilder,
+    InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
     TransactionBuilder,
 };
 
@@ -28,8 +33,7 @@ async fn test_policy_lifecycle() {
 
     // Given a PDA derived from the payer's public key.
     let mint = Keypair::new();
-    // Mock the identity.
-    let validator_identity = Keypair::new();
+
     let payer_token_account = get_associated_token_address_with_program_id(
         &context.payer.pubkey(),
         &mint.pubkey(),
@@ -89,8 +93,7 @@ async fn test_policy_lifecycle() {
         .payer(context.payer.pubkey())
         .token_account(payer_token_account)
         .owner(context.payer.pubkey())
-        .identities(vec![validator_identity.pubkey()])
-        .strategy(yellowstone_shield_client::types::PermissionStrategy::Allow)
+        .strategy(PermissionStrategy::Allow)
         .instruction();
 
     // Initialize the payer's token account.
@@ -132,12 +135,10 @@ async fn test_policy_lifecycle() {
 
     let policy = Policy::deserialize(&mut policy_account_data).unwrap();
 
-    assert_eq!(policy_account.data.len(), policy.size());
-    assert_eq!(policy.identities, vec![validator_identity.pubkey()]);
-    assert_eq!(
-        policy.strategy,
-        yellowstone_shield_client::types::PermissionStrategy::Allow
-    );
+    assert_eq!(policy_account.data.len(), Policy::LEN);
+    assert_eq!(policy.try_kind().unwrap(), Kind::Policy);
+    assert_eq!(policy.try_strategy().unwrap(), PermissionStrategy::Allow);
+    assert_eq!(policy.identities_len(), 0);
 
     let mint_account = context
         .banks_client
@@ -156,19 +157,31 @@ async fn test_policy_lifecycle() {
     let payer_token_account_data = payer_token_account_data.unwrap();
     assert_eq!(payer_token_account_data.owner, spl_token_2022::ID);
 
-    let another_identity = Keypair::new();
+    let first = Pubkey::new_unique();
 
-    let push_identity_ix = AddIdentityBuilder::new()
+    let first_push_identity_ix = AddIdentityBuilder::new()
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .owner(context.payer.pubkey())
         .token_account(payer_token_account)
-        .identity(another_identity.pubkey())
+        .identity(first)
+        .instruction();
+
+    let second = Pubkey::new_unique();
+
+    let second_push_identity_ix = AddIdentityBuilder::new()
+        .policy(address)
+        .mint(mint.pubkey())
+        .payer(context.payer.pubkey())
+        .owner(context.payer.pubkey())
+        .token_account(payer_token_account)
+        .identity(second)
         .instruction();
 
     let tx = TransactionBuilder::build()
-        .instruction(push_identity_ix)
+        .instruction(first_push_identity_ix)
+        .instruction(second_push_identity_ix)
         .signer(&context.payer)
         .payer(&context.payer.pubkey())
         .recent_blockhash(context.last_blockhash)
@@ -180,27 +193,34 @@ async fn test_policy_lifecycle() {
     assert!(policy_account.is_some());
 
     let policy_account = policy_account.unwrap();
-    let mut policy_account_data = policy_account.data.as_ref();
+    let policy_account_data = policy_account.data;
+    let policy = Policy::deserialize(&mut &policy_account_data[..Policy::LEN]).unwrap();
 
-    let policy = Policy::deserialize(&mut policy_account_data).unwrap();
+    assert_eq!(policy.identities_len(), 2);
+    let identites = &policy_account_data[Policy::LEN..];
 
-    assert_eq!(policy_account.data.len(), policy.size());
-    assert_eq!(
-        policy.identities,
-        vec![validator_identity.pubkey(), another_identity.pubkey()]
-    );
+    let first_bytes = first.to_bytes();
+    let second_bytes = second.to_bytes();
 
-    let pop_identity_ix = RemoveIdentityBuilder::new()
+    let first_second_identities: Vec<u8> = first_bytes
+        .iter()
+        .chain(second_bytes.iter())
+        .cloned()
+        .collect();
+
+    assert_eq!(identites, &first_second_identities[..]);
+
+    let remove_identity_ix = RemoveIdentityBuilder::new()
         .policy(address)
         .mint(mint.pubkey())
         .payer(context.payer.pubkey())
         .owner(context.payer.pubkey())
         .token_account(payer_token_account)
-        .identity(validator_identity.pubkey())
+        .index(0)
         .instruction();
 
     let tx = TransactionBuilder::build()
-        .instruction(pop_identity_ix)
+        .instruction(remove_identity_ix)
         .signer(&context.payer)
         .payer(&context.payer.pubkey())
         .recent_blockhash(context.last_blockhash)
@@ -208,19 +228,58 @@ async fn test_policy_lifecycle() {
 
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Test the policy account
     let policy_account = context.banks_client.get_account(address).await.unwrap();
     assert!(policy_account.is_some());
 
     let policy_account = policy_account.unwrap();
-    let mut policy_account_data = policy_account.data.as_ref();
+    let policy_account_data = policy_account.data;
 
-    let policy = Policy::deserialize(&mut policy_account_data).unwrap();
+    let policy = Policy::deserialize(&mut &policy_account_data[..Policy::LEN]).unwrap();
 
-    assert_eq!(policy_account.data.len(), policy.size());
-    assert_eq!(policy.identities, vec![another_identity.pubkey()]);
+    assert_eq!(policy.identities_len(), 2);
+    let identites = &policy_account_data[Policy::LEN..];
 
-    // Test the mint account and token metadata
+    let zeroed_bytes = [0u8; 32];
+    let second_bytes = second.to_bytes();
+    let expected_identities: Vec<u8> = zeroed_bytes
+        .iter()
+        .chain(second_bytes.iter())
+        .cloned()
+        .collect();
+
+    assert_eq!(identites, &expected_identities);
+
+    let replace_identity_ix = ReplaceIdentityBuilder::new()
+        .policy(address)
+        .mint(mint.pubkey())
+        .payer(context.payer.pubkey())
+        .owner(context.payer.pubkey())
+        .token_account(payer_token_account)
+        .index(0)
+        .identity(first)
+        .instruction();
+
+    let tx = TransactionBuilder::build()
+        .instruction(replace_identity_ix)
+        .signer(&context.payer)
+        .payer(&context.payer.pubkey())
+        .recent_blockhash(context.last_blockhash)
+        .transaction();
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let policy_account = context.banks_client.get_account(address).await.unwrap();
+    assert!(policy_account.is_some());
+
+    let policy_account = policy_account.unwrap();
+    let policy_account_data = policy_account.data;
+    let policy = Policy::deserialize(&mut &policy_account_data[..Policy::LEN]).unwrap();
+
+    assert_eq!(policy.identities_len(), 2);
+    let identites = &policy_account_data[Policy::LEN..];
+
+    assert_eq!(identites, &first_second_identities);
+
     let mint_account = context
         .banks_client
         .get_account(mint.pubkey())
@@ -231,11 +290,31 @@ async fn test_policy_lifecycle() {
     let mint_account = mint_account.unwrap();
     let mint_account_data = mint_account.data;
 
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_account_data).unwrap();
-    let mut mint_bytes = mint.get_extension_bytes::<TokenMetadata>().unwrap();
+    let pod_mint = PodStateWithExtensions::<PodMint>::unpack(&mint_account_data).unwrap();
+    let mut mint_bytes = pod_mint.get_extension_bytes::<TokenMetadata>().unwrap();
     let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
 
     assert_eq!(token_metadata.name, "Test".to_string());
     assert_eq!(token_metadata.symbol, "TST".to_string());
     assert_eq!(token_metadata.uri, "https://test.com".to_string());
+
+    let close_policy = ClosePolicyBuilder::new()
+        .policy(address)
+        .mint(mint.pubkey())
+        .payer(context.payer.pubkey())
+        .owner(context.payer.pubkey())
+        .token_account(payer_token_account)
+        .instruction();
+
+    let tx = TransactionBuilder::build()
+        .instruction(close_policy)
+        .signer(&context.payer)
+        .payer(&context.payer.pubkey())
+        .recent_blockhash(context.last_blockhash)
+        .transaction();
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let policy_account = context.banks_client.get_account(address).await.unwrap();
+    assert!(policy_account.is_none());
 }

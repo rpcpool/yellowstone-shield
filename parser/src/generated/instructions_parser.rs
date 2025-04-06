@@ -77,7 +77,6 @@ impl InstructionParser {
                     payer: ix.accounts[3].0.into(),
                     owner: ix.accounts[4].0.into(),
                     system_program: ix.accounts[5].0.into(),
-                    token_program: ix.accounts[6].0.into(),
                 };
                 let de_ix_data: CreatePolicyIxData = BorshDeserialize::deserialize(&mut ix_data)?;
                 Ok(ShieldProgramIx::CreatePolicy(ix_accounts, de_ix_data))

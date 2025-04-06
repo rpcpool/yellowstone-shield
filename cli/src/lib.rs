@@ -10,6 +10,7 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use std::fs::read_to_string as read_path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::{str::FromStr, time::Duration};
 use yellowstone_shield_client::types::PermissionStrategy;
@@ -48,9 +49,9 @@ pub enum Command {
         action: PolicyAction,
     },
     /// Manage identities
-    Identity {
+    Identities {
         #[command(subcommand)]
-        action: IdentityAction,
+        action: IdentitiesAction,
     },
 }
 
@@ -61,10 +62,6 @@ pub enum PolicyAction {
         /// The strategy to use for the policy
         #[arg(long)]
         strategy: PermissionStrategy,
-
-        /// The identities to add to the policy
-        #[arg(long, value_delimiter = ',')]
-        identities: Vec<Pubkey>,
 
         /// The name of the policy
         #[arg(long)]
@@ -78,25 +75,32 @@ pub enum PolicyAction {
         #[arg(long)]
         uri: String,
     },
+    /// Delete a policy
+    Delete {
+        /// The mint address associated with the policy
+        #[arg(long)]
+        mint: Pubkey,
+    },
 }
 
 #[derive(Subcommand, Debug)]
-pub enum IdentityAction {
-    /// Add a identity to a policy
+pub enum IdentitiesAction {
+    /// Add identities to a policy
     Add {
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
-        /// The identity to add to the policy
-        identity: Pubkey,
+        /// The identities to add to the policy
+        #[arg(long)]
+        identities_path: PathBuf,
     },
-    /// Remove a identity from a policy
+    /// Remove identities from a policy
     Remove {
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
-        /// The identity to remove from the policy
-        identity: Pubkey,
+        /// The identities to remove from the policy
+        identities_path: PathBuf,
     },
 }
 
@@ -127,34 +131,53 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
         Command::Policy { action } => match action {
             PolicyAction::Create {
                 strategy,
-                identities,
                 name,
                 symbol,
                 uri,
             } => {
                 policy::CreateCommandBuilder::new()
                     .strategy(*strategy)
-                    .identities(identities)
                     .name(name.clone())
                     .symbol(symbol.clone())
                     .uri(uri.clone())
                     .run(context)
                     .await
             }
-        },
-        Command::Identity { action } => match action {
-            IdentityAction::Add { mint, identity } => {
-                // Add logic to add an identity
-                identity::AddCommandBuilder::new()
+            PolicyAction::Delete { mint } => {
+                policy::DeleteCommandBuilder::new()
                     .mint(mint)
-                    .identity(identity)
                     .run(context)
                     .await
             }
-            IdentityAction::Remove { mint, identity } => {
-                identity::RemoveCommandBuilder::new()
+        },
+        Command::Identities { action } => match action {
+            IdentitiesAction::Add {
+                mint,
+                identities_path,
+            } => {
+                let identities: Vec<Pubkey> = read_path(identities_path)?
+                    .lines()
+                    .filter_map(|s| Pubkey::from_str(s.trim()).ok())
+                    .collect();
+
+                identity::AddBatchCommandBuilder::new()
                     .mint(mint)
-                    .identity(identity)
+                    .identities(identities)
+                    .run(context)
+                    .await
+            }
+            IdentitiesAction::Remove {
+                mint,
+                identities_path,
+            } => {
+                let identities: Vec<Pubkey> = read_path(identities_path)?
+                    .lines()
+                    .filter_map(|s| Pubkey::from_str(s.trim()).ok())
+                    .collect();
+
+                identity::RemoveBatchCommandBuilder::new()
+                    .mint(mint)
+                    .identities(identities)
                     .run(context)
                     .await
             }

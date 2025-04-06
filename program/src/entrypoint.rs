@@ -1,20 +1,17 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
-    program_error::PrintProgramError, pubkey::Pubkey,
-};
-
-use crate::{error::ShieldError, processor};
+use crate::processor;
+use pinocchio::{account_info::AccountInfo, entrypoint, msg, pubkey::Pubkey, ProgramResult};
 
 entrypoint!(process_instruction);
-fn process_instruction<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    if let Err(error) = processor::process_instruction(program_id, accounts, instruction_data) {
-        // catch the error so we can print it
-        error.print::<ShieldError>();
-        return Err(error);
+    if let Err(e) = processor::process_instruction(program_id, accounts, instruction_data) {
+        msg!("Error processing instruction: {:?}", e);
+        return Err(e);
     }
+
     Ok(())
 }

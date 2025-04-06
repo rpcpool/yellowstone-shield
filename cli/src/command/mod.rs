@@ -13,12 +13,12 @@ pub struct CommandContext {
     pub keypair: Keypair,
 }
 
-pub struct SolanaAccount<T>(pub Pubkey, pub T);
+pub struct SolanaAccount<T>(pub Pubkey, pub Option<T>);
 pub struct CommandComplete(pub SolanaAccount<TokenMetadata>, pub SolanaAccount<Policy>);
 
 pub type RunResult = Result<CommandComplete>;
 
 #[async_trait::async_trait]
 pub trait RunCommand {
-    async fn run(&self, context: CommandContext) -> RunResult;
+    async fn run(&mut self, context: CommandContext) -> RunResult;
 }

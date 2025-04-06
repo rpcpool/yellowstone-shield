@@ -52,14 +52,6 @@
           "docs": [
             "The system program"
           ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The token program"
-          ]
         }
       ],
       "args": [
@@ -67,12 +59,6 @@
           "name": "strategy",
           "type": {
             "defined": "PermissionStrategy"
-          }
-        },
-        {
-          "name": "identities",
-          "type": {
-            "vec": "publicKey"
           }
         }
       ],
@@ -198,13 +184,138 @@
       ],
       "args": [
         {
+          "name": "index",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "ReplaceIdentity",
+      "accounts": [
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The token extensions mint account linked to the policy"
+          ]
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The authority over the policy based on token ownership of the mint"
+          ]
+        },
+        {
+          "name": "policy",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The shield policy account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The owner of the token account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "index",
+          "type": "u64"
+        },
+        {
           "name": "identity",
           "type": "publicKey"
         }
       ],
       "discriminant": {
         "type": "u8",
-        "value": 2
+        "value": 3
+      }
+    },
+    {
+      "name": "ClosePolicy",
+      "accounts": [
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The token extensions mint account linked to the policy"
+          ]
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The authority over the policy based on token ownership of the mint"
+          ]
+        },
+        {
+          "name": "policy",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The shield policy account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The owner of the token account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
       }
     }
   ],
@@ -216,24 +327,23 @@
         "fields": [
           {
             "name": "kind",
-            "type": {
-              "defined": "Kind"
-            }
+            "type": "u8"
           },
           {
             "name": "strategy",
-            "type": {
-              "defined": "PermissionStrategy"
-            }
+            "type": "u8"
           },
           {
             "name": "nonce",
             "type": "u8"
           },
           {
-            "name": "identities",
+            "name": "identitiesLen",
             "type": {
-              "vec": "publicKey"
+              "array": [
+                "u8",
+                4
+              ]
             }
           }
         ]
@@ -258,10 +368,10 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "Allow"
+            "name": "Deny"
           },
           {
-            "name": "Deny"
+            "name": "Allow"
           }
         ]
       }
@@ -347,6 +457,146 @@
       "code": 15,
       "name": "InvalidAssociatedTokenAccount",
       "msg": "Invalid associated token account"
+    },
+    {
+      "code": 16,
+      "name": "MissedCondition",
+      "msg": "Condition not met"
+    },
+    {
+      "code": 17,
+      "name": "InvalidAccountData",
+      "msg": "invalid account data"
+    },
+    {
+      "code": 18,
+      "name": "InvalidArgument",
+      "msg": "Invalid argument"
+    },
+    {
+      "code": 19,
+      "name": "InvalidInstructionData",
+      "msg": "Invalid instruction data"
+    },
+    {
+      "code": 20,
+      "name": "AccountDataTooSmall",
+      "msg": "Account data too small"
+    },
+    {
+      "code": 21,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds"
+    },
+    {
+      "code": 22,
+      "name": "IncorrectProgramId",
+      "msg": "Incorrect program id"
+    },
+    {
+      "code": 23,
+      "name": "MissingRequiredSignature",
+      "msg": "Missing required signature"
+    },
+    {
+      "code": 24,
+      "name": "AccountAlreadyInitialized",
+      "msg": "Account already initialized"
+    },
+    {
+      "code": 25,
+      "name": "UninitializedAccount",
+      "msg": "Uninitialized account"
+    },
+    {
+      "code": 26,
+      "name": "NotEnoughAccountKeys",
+      "msg": "Not enough account keys"
+    },
+    {
+      "code": 27,
+      "name": "AccountBorrowFailed",
+      "msg": "Account borrow failed"
+    },
+    {
+      "code": 28,
+      "name": "MaxSeedLengthExceeded",
+      "msg": "Max seed length exceeded"
+    },
+    {
+      "code": 29,
+      "name": "InvalidSeeds",
+      "msg": "Invalid seeds"
+    },
+    {
+      "code": 30,
+      "name": "BorshIoError",
+      "msg": "Borsh IO error"
+    },
+    {
+      "code": 31,
+      "name": "AccountNotRentExempt",
+      "msg": "Account not rent exempt"
+    },
+    {
+      "code": 32,
+      "name": "UnsupportedSysvar",
+      "msg": "Unsupported sysvar"
+    },
+    {
+      "code": 33,
+      "name": "IllegalOwner",
+      "msg": "Illegal owner"
+    },
+    {
+      "code": 34,
+      "name": "MaxAccountsDataAllocationsExceeded",
+      "msg": "Max accounts data allocations exceeded"
+    },
+    {
+      "code": 35,
+      "name": "InvalidRealloc",
+      "msg": "Invalid realloc"
+    },
+    {
+      "code": 36,
+      "name": "MaxInstructionTraceLengthExceeded",
+      "msg": "Max instruction trace length exceeded"
+    },
+    {
+      "code": 37,
+      "name": "BuiltinProgramsMustConsumeComputeUnits",
+      "msg": "Builtin programs must consume compute units"
+    },
+    {
+      "code": 38,
+      "name": "InvalidAccountOwner",
+      "msg": "Invalid account owner"
+    },
+    {
+      "code": 39,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 40,
+      "name": "Immutable",
+      "msg": "Immutable"
+    },
+    {
+      "code": 41,
+      "name": "IncorrectAuthority",
+      "msg": "Incorrect authority"
+    },
+    {
+      "code": 42,
+      "name": "GenericError",
+      "msg": "Generic program error"
+    },
+    {
+      "code": 43,
+      "name": "InvalidStrategy",
+      "msg": "Invalid strategy"
     }
   ],
   "metadata": {
