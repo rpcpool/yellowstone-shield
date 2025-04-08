@@ -8,7 +8,6 @@
 use crate::generated::types::PermissionStrategy;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 #[derive(Debug)]
@@ -25,8 +24,6 @@ pub struct CreatePolicy {
     pub owner: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
-    /// The token program
-    pub token_program: solana_program::pubkey::Pubkey,
 }
 
 impl CreatePolicy {
@@ -43,7 +40,7 @@ impl CreatePolicy {
         args: CreatePolicyInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
@@ -63,10 +60,6 @@ impl CreatePolicy {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.token_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -104,7 +97,6 @@ impl Default for CreatePolicyInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreatePolicyInstructionArgs {
     pub strategy: PermissionStrategy,
-    pub identities: Vec<Pubkey>,
 }
 
 /// Instruction builder for `CreatePolicy`.
@@ -117,7 +109,6 @@ pub struct CreatePolicyInstructionArgs {
 ///   3. `[writable, signer]` payer
 ///   4. `[writable, signer]` owner
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct CreatePolicyBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
@@ -126,9 +117,7 @@ pub struct CreatePolicyBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    token_program: Option<solana_program::pubkey::Pubkey>,
     strategy: Option<PermissionStrategy>,
-    identities: Option<Vec<Pubkey>>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -173,21 +162,9 @@ impl CreatePolicyBuilder {
         self.system_program = Some(system_program);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
-    /// The token program
-    #[inline(always)]
-    pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.token_program = Some(token_program);
-        self
-    }
     #[inline(always)]
     pub fn strategy(&mut self, strategy: PermissionStrategy) -> &mut Self {
         self.strategy = Some(strategy);
-        self
-    }
-    #[inline(always)]
-    pub fn identities(&mut self, identities: Vec<Pubkey>) -> &mut Self {
-        self.identities = Some(identities);
         self
     }
     /// Add an additional account to the instruction.
@@ -219,13 +196,9 @@ impl CreatePolicyBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-            )),
         };
         let args = CreatePolicyInstructionArgs {
             strategy: self.strategy.clone().expect("strategy is not set"),
-            identities: self.identities.clone().expect("identities is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -246,8 +219,6 @@ pub struct CreatePolicyCpiAccounts<'a, 'b> {
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token program
-    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `create_policy` CPI instruction.
@@ -266,8 +237,6 @@ pub struct CreatePolicyCpi<'a, 'b> {
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token program
-    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: CreatePolicyInstructionArgs,
 }
@@ -286,7 +255,6 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             payer: accounts.payer,
             owner: accounts.owner,
             system_program: accounts.system_program,
-            token_program: accounts.token_program,
             __args: args,
         }
     }
@@ -324,7 +292,7 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
             false,
@@ -349,10 +317,6 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             *self.system_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.token_program.key,
-            false,
-        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -369,7 +333,7 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
@@ -377,7 +341,6 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
         account_infos.push(self.payer.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.token_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -400,7 +363,6 @@ impl<'a, 'b> CreatePolicyCpi<'a, 'b> {
 ///   3. `[writable, signer]` payer
 ///   4. `[writable, signer]` owner
 ///   5. `[]` system_program
-///   6. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct CreatePolicyCpiBuilder<'a, 'b> {
     instruction: Box<CreatePolicyCpiBuilderInstruction<'a, 'b>>,
@@ -416,9 +378,7 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
             payer: None,
             owner: None,
             system_program: None,
-            token_program: None,
             strategy: None,
-            identities: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -468,23 +428,9 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
         self.instruction.system_program = Some(system_program);
         self
     }
-    /// The token program
-    #[inline(always)]
-    pub fn token_program(
-        &mut self,
-        token_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.token_program = Some(token_program);
-        self
-    }
     #[inline(always)]
     pub fn strategy(&mut self, strategy: PermissionStrategy) -> &mut Self {
         self.instruction.strategy = Some(strategy);
-        self
-    }
-    #[inline(always)]
-    pub fn identities(&mut self, identities: Vec<Pubkey>) -> &mut Self {
-        self.instruction.identities = Some(identities);
         self
     }
     /// Add an additional account to the instruction.
@@ -534,11 +480,6 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
                 .strategy
                 .clone()
                 .expect("strategy is not set"),
-            identities: self
-                .instruction
-                .identities
-                .clone()
-                .expect("identities is not set"),
         };
         let instruction = CreatePolicyCpi {
             __program: self.instruction.__program,
@@ -560,11 +501,6 @@ impl<'a, 'b> CreatePolicyCpiBuilder<'a, 'b> {
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
-
-            token_program: self
-                .instruction
-                .token_program
-                .expect("token_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -583,9 +519,7 @@ struct CreatePolicyCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     strategy: Option<PermissionStrategy>,
-    identities: Option<Vec<Pubkey>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

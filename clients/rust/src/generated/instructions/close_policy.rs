@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 #[derive(Debug)]
-pub struct RemoveIdentity {
+pub struct ClosePolicy {
     /// The token extensions mint account linked to the policy
     pub mint: solana_program::pubkey::Pubkey,
     /// The authority over the policy based on token ownership of the mint
@@ -25,18 +25,14 @@ pub struct RemoveIdentity {
     pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl RemoveIdentity {
-    pub fn instruction(
-        &self,
-        args: RemoveIdentityInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(args, &[])
+impl ClosePolicy {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::arithmetic_side_effects)]
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: RemoveIdentityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
@@ -62,9 +58,7 @@ impl RemoveIdentity {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = borsh::to_vec(&RemoveIdentityInstructionData::new()).unwrap();
-        let mut args = borsh::to_vec(&args).unwrap();
-        data.append(&mut args);
+        let data = borsh::to_vec(&ClosePolicyInstructionData::new()).unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::SHIELD_ID,
@@ -76,29 +70,23 @@ impl RemoveIdentity {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RemoveIdentityInstructionData {
+pub struct ClosePolicyInstructionData {
     discriminator: u8,
 }
 
-impl RemoveIdentityInstructionData {
+impl ClosePolicyInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 2 }
+        Self { discriminator: 4 }
     }
 }
 
-impl Default for RemoveIdentityInstructionData {
+impl Default for ClosePolicyInstructionData {
     fn default() -> Self {
         Self::new()
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RemoveIdentityInstructionArgs {
-    pub index: u64,
-}
-
-/// Instruction builder for `RemoveIdentity`.
+/// Instruction builder for `ClosePolicy`.
 ///
 /// ### Accounts:
 ///
@@ -109,18 +97,17 @@ pub struct RemoveIdentityInstructionArgs {
 ///   4. `[writable, signer]` owner
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
-pub struct RemoveIdentityBuilder {
+pub struct ClosePolicyBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    index: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl RemoveIdentityBuilder {
+impl ClosePolicyBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -161,11 +148,6 @@ impl RemoveIdentityBuilder {
         self.system_program = Some(system_program);
         self
     }
-    #[inline(always)]
-    pub fn index(&mut self, index: u64) -> &mut Self {
-        self.index = Some(index);
-        self
-    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -186,7 +168,7 @@ impl RemoveIdentityBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = RemoveIdentity {
+        let accounts = ClosePolicy {
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
@@ -196,16 +178,13 @@ impl RemoveIdentityBuilder {
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = RemoveIdentityInstructionArgs {
-            index: self.index.clone().expect("index is not set"),
-        };
 
-        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `remove_identity` CPI accounts.
-pub struct RemoveIdentityCpiAccounts<'a, 'b> {
+/// `close_policy` CPI accounts.
+pub struct ClosePolicyCpiAccounts<'a, 'b> {
     /// The token extensions mint account linked to the policy
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The authority over the policy based on token ownership of the mint
@@ -220,8 +199,8 @@ pub struct RemoveIdentityCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `remove_identity` CPI instruction.
-pub struct RemoveIdentityCpi<'a, 'b> {
+/// `close_policy` CPI instruction.
+pub struct ClosePolicyCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token extensions mint account linked to the policy
@@ -236,15 +215,12 @@ pub struct RemoveIdentityCpi<'a, 'b> {
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The arguments for the instruction.
-    pub __args: RemoveIdentityInstructionArgs,
 }
 
-impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
+impl<'a, 'b> ClosePolicyCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: RemoveIdentityCpiAccounts<'a, 'b>,
-        args: RemoveIdentityInstructionArgs,
+        accounts: ClosePolicyCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
@@ -254,7 +230,6 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
             payer: accounts.payer,
             owner: accounts.owner,
             system_program: accounts.system_program,
-            __args: args,
         }
     }
     #[inline(always)]
@@ -323,9 +298,7 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = borsh::to_vec(&RemoveIdentityInstructionData::new()).unwrap();
-        let mut args = borsh::to_vec(&self.__args).unwrap();
-        data.append(&mut args);
+        let data = borsh::to_vec(&ClosePolicyInstructionData::new()).unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SHIELD_ID,
@@ -352,7 +325,7 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `RemoveIdentity` via CPI.
+/// Instruction builder for `ClosePolicy` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -363,13 +336,13 @@ impl<'a, 'b> RemoveIdentityCpi<'a, 'b> {
 ///   4. `[writable, signer]` owner
 ///   5. `[]` system_program
 #[derive(Clone, Debug)]
-pub struct RemoveIdentityCpiBuilder<'a, 'b> {
-    instruction: Box<RemoveIdentityCpiBuilderInstruction<'a, 'b>>,
+pub struct ClosePolicyCpiBuilder<'a, 'b> {
+    instruction: Box<ClosePolicyCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
+impl<'a, 'b> ClosePolicyCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(RemoveIdentityCpiBuilderInstruction {
+        let instruction = Box::new(ClosePolicyCpiBuilderInstruction {
             __program: program,
             mint: None,
             token_account: None,
@@ -377,7 +350,6 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
             payer: None,
             owner: None,
             system_program: None,
-            index: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -427,11 +399,6 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
         self.instruction.system_program = Some(system_program);
         self
     }
-    #[inline(always)]
-    pub fn index(&mut self, index: u64) -> &mut Self {
-        self.instruction.index = Some(index);
-        self
-    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -473,10 +440,7 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = RemoveIdentityInstructionArgs {
-            index: self.instruction.index.clone().expect("index is not set"),
-        };
-        let instruction = RemoveIdentityCpi {
+        let instruction = ClosePolicyCpi {
             __program: self.instruction.__program,
 
             mint: self.instruction.mint.expect("mint is not set"),
@@ -496,7 +460,6 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
-            __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -506,7 +469,7 @@ impl<'a, 'b> RemoveIdentityCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct RemoveIdentityCpiBuilderInstruction<'a, 'b> {
+struct ClosePolicyCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -514,7 +477,6 @@ struct RemoveIdentityCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    index: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

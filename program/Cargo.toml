@@ -33,3 +33,7 @@ spl-token-2022 = { version = "7", features = ["no-entrypoint"] }
 spl-token-group-interface = { version = "0.5" }
 spl-token-metadata-interface = { version = "0.6" }
 spl-pod = { version = "0.5" }
+bytemuck = "1.22.0"
+pinocchio = { version = "0.8.1", features = ["std"] }
+pinocchio-system = "0.2.3"
+pinocchio-pubkey = "0.2.4"

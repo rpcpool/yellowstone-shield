@@ -1,28 +1,20 @@
 use crate::error::ShieldError;
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
-    pubkey::Pubkey,
+use pinocchio::{
+    account_info::AccountInfo,
+    msg,
+    program_error::ProgramError,
+    pubkey::{create_program_address, find_program_address, Pubkey},
+    ProgramResult,
 };
 use spl_token_2022::extension::StateWithExtensions;
 
-/// Assert that the given account is owned by the given program or one of the given owners.
-/// Useful for dealing with program interfaces.
-pub fn assert_program_owner_either(
-    account_name: &str,
-    account: &AccountInfo,
-    owners: &[Pubkey],
-) -> ProgramResult {
-    if !owners.iter().any(|owner| account.owner == owner) {
-        msg!(
-            "Account \"{}\" [{}] must be owned by either {:?}",
-            account_name,
-            account.key,
-            owners
-        );
-        Err(ShieldError::InvalidProgramOwner.into())
-    } else {
-        Ok(())
+/// Assert that the given strategy is valid.
+pub fn assert_strategy(strategy: u8) -> ProgramResult {
+    if strategy > 1 {
+        return Err(ShieldError::InvalidStrategy.into());
     }
+
+    Ok(())
 }
 
 /// Assert that the given account is owned by the given program.
@@ -31,18 +23,17 @@ pub fn assert_program_owner(
     account: &AccountInfo,
     owner: &Pubkey,
 ) -> ProgramResult {
-    if account.owner != owner {
-        msg!(
-            "Account \"{}\" [{}] expected program owner [{}], got [{}]",
-            account_name,
-            account.key,
-            owner,
-            account.owner
-        );
-        Err(ShieldError::InvalidProgramOwner.into())
-    } else {
-        Ok(())
+    if account.is_owned_by(owner) {
+        return Ok(());
     }
+    msg!(
+        "Account \"{}\" [{:?}] expected program owner [{:?}], got [{:?}]",
+        account_name,
+        account.key(),
+        owner,
+        unsafe { account.owner() },
+    );
+    Err(ShieldError::InvalidProgramOwner.into())
 }
 
 /// Assert the derivation of the seeds against the given account and return the bump seed.
@@ -52,17 +43,27 @@ pub fn assert_pda(
     program_id: &Pubkey,
     seeds: &[&[u8]],
 ) -> Result<u8, ProgramError> {
-    let (key, bump) = Pubkey::find_program_address(seeds, program_id);
-    if *account.key != key {
+    let (key, bump) = find_program_address(seeds, program_id);
+    if *account.key() != key {
         msg!(
-            "Account \"{}\" [{}] is an invalid PDA. Expected the following valid PDA [{}]",
+            "Account \"{}\" [{:?}] is an invalid PDA. Expected the following valid PDA [{:?}]",
             account_name,
-            account.key,
+            account.key(),
             key,
         );
         return Err(ShieldError::InvalidPda.into());
     }
     Ok(bump)
+}
+
+/// Assert a condition and return an error if it is not met.
+pub fn assert_condition(condition: bool, msg: &str) -> ProgramResult {
+    if condition {
+        return Ok(());
+    }
+
+    msg!(msg);
+    Err(ShieldError::MissedCondition.into())
 }
 
 /// Assert the derivation of the seeds plus bump against the given account.
@@ -72,12 +73,12 @@ pub fn assert_pda_with_bump(
     program_id: &Pubkey,
     seeds_with_bump: &[&[u8]],
 ) -> ProgramResult {
-    let key = Pubkey::create_program_address(seeds_with_bump, program_id)?;
-    if *account.key != key {
+    let key = create_program_address(seeds_with_bump, program_id)?;
+    if *account.key() != key {
         msg!(
-            "Account \"{}\" [{}] is an invalid PDA. Expected the following valid PDA [{}]",
+            "Account \"{}\" [{:?}] is an invalid PDA. Expected the following valid PDA [{:?}]",
             account_name,
-            account.key,
+            account.key(),
             key,
         );
         Err(ShieldError::InvalidPda.into())
@@ -90,9 +91,9 @@ pub fn assert_pda_with_bump(
 pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult {
     if !account.data_is_empty() {
         msg!(
-            "Account \"{}\" [{}] must be empty",
+            "Account \"{}\" [{:?}] must be empty",
             account_name,
-            account.key,
+            account.key(),
         );
         Err(ShieldError::ExpectedEmptyAccount.into())
     } else {
@@ -104,9 +105,9 @@ pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult 
 pub fn assert_non_empty(account_name: &str, account: &AccountInfo) -> ProgramResult {
     if account.data_is_empty() {
         msg!(
-            "Account \"{}\" [{}] must not be empty",
+            "Account \"{}\" [{:?}] must not be empty",
             account_name,
-            account.key,
+            account.key(),
         );
         Err(ShieldError::ExpectedNonEmptyAccount.into())
     } else {
@@ -116,11 +117,11 @@ pub fn assert_non_empty(account_name: &str, account: &AccountInfo) -> ProgramRes
 
 /// Assert that the given account is a signer.
 pub fn assert_signer(account_name: &str, account: &AccountInfo) -> ProgramResult {
-    if !account.is_signer {
+    if !account.is_signer() {
         msg!(
-            "Account \"{}\" [{}] must be a signer",
+            "Account \"{}\" [{:?}] must be a signer",
             account_name,
-            account.key,
+            account.key(),
         );
         Err(ShieldError::ExpectedSignerAccount.into())
     } else {
@@ -130,11 +131,11 @@ pub fn assert_signer(account_name: &str, account: &AccountInfo) -> ProgramResult
 
 /// Assert that the given account is writable.
 pub fn assert_writable(account_name: &str, account: &AccountInfo) -> ProgramResult {
-    if !account.is_writable {
+    if !account.is_writable() {
         msg!(
-            "Account \"{}\" [{}] must be writable",
+            "Account \"{}\" [{:?}] must be writable",
             account_name,
-            account.key,
+            account.key(),
         );
         Err(ShieldError::ExpectedWritableAccount.into())
     } else {
@@ -148,11 +149,11 @@ pub fn assert_same_pubkeys(
     account: &AccountInfo,
     expected: &Pubkey,
 ) -> ProgramResult {
-    if account.key != expected {
+    if account.key() != expected {
         msg!(
-            "Account \"{}\" [{}] must match the following public key [{}]",
+            "Account \"{}\" [{:?}] must match the following public key [{:?}]",
             account_name,
-            account.key,
+            account.key(),
             expected
         );
         Err(ShieldError::AccountMismatch.into())
@@ -180,9 +181,9 @@ pub fn assert_token_owner(
     expected: &Pubkey,
     account: &StateWithExtensions<spl_token_2022::state::Account>,
 ) -> ProgramResult {
-    if &account.base.owner != expected {
+    if *expected != account.base.owner.to_bytes() {
         msg!(
-            "Account \"{}\" owner must match the expected owner [{}]",
+            "Account \"{}\" owner must match the expected owner [{:?}]",
             account_name,
             expected
         );
@@ -198,9 +199,9 @@ pub fn assert_mint_association(
     expected: &Pubkey,
     account: &StateWithExtensions<spl_token_2022::state::Account>,
 ) -> ProgramResult {
-    if &account.base.mint != expected {
+    if &account.base.mint.to_bytes() != expected {
         msg!(
-            "Account \"{}\" mint must match the expected mint [{}]",
+            "Account \"{}\" mint must match the expected mint [{:?}]",
             account_name,
             expected
         );
@@ -216,16 +217,15 @@ pub fn assert_ata(
     owner: &Pubkey,
     mint: &Pubkey,
 ) -> ProgramResult {
-    let ata = spl_associated_token_account::get_associated_token_address_with_program_id(
-        owner,
-        mint,
-        &spl_token_2022::ID,
+    let (ata, _) = find_program_address(
+        &[owner, &spl_token_2022::ID.to_bytes(), mint],
+        &spl_associated_token_account::ID.to_bytes(),
     );
-    if account.key != &ata {
+    if account.key() != &ata {
         msg!(
-            "Account \"{}\" [{}] must be the associated token account for [{}]",
+            "Account \"{}\" [{:?}] must be the associated token account for [{:?}]",
             account_name,
-            account.key,
+            account.key(),
             ata
         );
         Err(ShieldError::InvalidAssociatedTokenAccount.into())

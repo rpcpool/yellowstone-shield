@@ -58,6 +58,90 @@ pub enum ShieldError {
     /// 15 - Invalid associated token account
     #[error("Invalid associated token account")]
     InvalidAssociatedTokenAccount = 0xF,
+    /// 16 - Condition not met
+    #[error("Condition not met")]
+    MissedCondition = 0x10,
+    /// 17 - invalid account data
+    #[error("invalid account data")]
+    InvalidAccountData = 0x11,
+    /// 18 - Invalid argument
+    #[error("Invalid argument")]
+    InvalidArgument = 0x12,
+    /// 19 - Invalid instruction data
+    #[error("Invalid instruction data")]
+    InvalidInstructionData = 0x13,
+    /// 20 - Account data too small
+    #[error("Account data too small")]
+    AccountDataTooSmall = 0x14,
+    /// 21 - Insufficient funds
+    #[error("Insufficient funds")]
+    InsufficientFunds = 0x15,
+    /// 22 - Incorrect program id
+    #[error("Incorrect program id")]
+    IncorrectProgramId = 0x16,
+    /// 23 - Missing required signature
+    #[error("Missing required signature")]
+    MissingRequiredSignature = 0x17,
+    /// 24 - Account already initialized
+    #[error("Account already initialized")]
+    AccountAlreadyInitialized = 0x18,
+    /// 25 - Uninitialized account
+    #[error("Uninitialized account")]
+    UninitializedAccount = 0x19,
+    /// 26 - Not enough account keys
+    #[error("Not enough account keys")]
+    NotEnoughAccountKeys = 0x1A,
+    /// 27 - Account borrow failed
+    #[error("Account borrow failed")]
+    AccountBorrowFailed = 0x1B,
+    /// 28 - Max seed length exceeded
+    #[error("Max seed length exceeded")]
+    MaxSeedLengthExceeded = 0x1C,
+    /// 29 - Invalid seeds
+    #[error("Invalid seeds")]
+    InvalidSeeds = 0x1D,
+    /// 30 - Borsh IO error
+    #[error("Borsh IO error")]
+    BorshIoError = 0x1E,
+    /// 31 - Account not rent exempt
+    #[error("Account not rent exempt")]
+    AccountNotRentExempt = 0x1F,
+    /// 32 - Unsupported sysvar
+    #[error("Unsupported sysvar")]
+    UnsupportedSysvar = 0x20,
+    /// 33 - Illegal owner
+    #[error("Illegal owner")]
+    IllegalOwner = 0x21,
+    /// 34 - Max accounts data allocations exceeded
+    #[error("Max accounts data allocations exceeded")]
+    MaxAccountsDataAllocationsExceeded = 0x22,
+    /// 35 - Invalid realloc
+    #[error("Invalid realloc")]
+    InvalidRealloc = 0x23,
+    /// 36 - Max instruction trace length exceeded
+    #[error("Max instruction trace length exceeded")]
+    MaxInstructionTraceLengthExceeded = 0x24,
+    /// 37 - Builtin programs must consume compute units
+    #[error("Builtin programs must consume compute units")]
+    BuiltinProgramsMustConsumeComputeUnits = 0x25,
+    /// 38 - Invalid account owner
+    #[error("Invalid account owner")]
+    InvalidAccountOwner = 0x26,
+    /// 39 - Arithmetic overflow
+    #[error("Arithmetic overflow")]
+    ArithmeticOverflow = 0x27,
+    /// 40 - Immutable
+    #[error("Immutable")]
+    Immutable = 0x28,
+    /// 41 - Incorrect authority
+    #[error("Incorrect authority")]
+    IncorrectAuthority = 0x29,
+    /// 42 - Generic program error
+    #[error("Generic program error")]
+    GenericError = 0x2A,
+    /// 43 - Invalid strategy
+    #[error("Invalid strategy")]
+    InvalidStrategy = 0x2B,
 }
 
 impl solana_program::program_error::PrintProgramError for ShieldError {

@@ -5,7 +5,6 @@ use clap::Parser;
 use log::info;
 use solana_cli_config::{Config, CONFIG_FILE};
 use yellowstone_shield_cli::{run, Args, CliError, CommandComplete, SolanaAccount};
-use yellowstone_shield_client::types::PermissionStrategy;
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {
@@ -44,15 +43,19 @@ async fn main() -> Result<(), CliError> {
     info!("  🔑 Mint: {}", mint);
     info!("--------------------------------");
     info!("🔍 Details");
-    match policy.strategy {
-        PermissionStrategy::Allow => info!("  ✅ Strategy: Allow"),
-        PermissionStrategy::Deny => info!("  ❌ Strategy: Deny"),
+    if let Some(policy) = policy {
+        match policy.strategy {
+            0 => info!("  ✅ Strategy: Allow"),
+            1 => info!("  ❌ Strategy: Deny"),
+            _ => info!("  ❓ Strategy: Unknown"),
+        }
     }
-    info!("  🛡️ Identities: {:?}", policy.identities);
-    info!("  🏷️ Name: {}", token_metadata.name);
-    info!("  🔖 Symbol: {}", token_metadata.symbol);
-    info!("  🌐 URI: {}", token_metadata.uri);
-    info!("--------------------------------");
+    if let Some(token_metadata) = token_metadata {
+        info!("  🏷️ Name: {}", token_metadata.name);
+        info!("  🔖 Symbol: {}", token_metadata.symbol);
+        info!("  🌐 URI: {}", token_metadata.uri);
+        info!("--------------------------------");
+    }
 
     Ok(())
 }

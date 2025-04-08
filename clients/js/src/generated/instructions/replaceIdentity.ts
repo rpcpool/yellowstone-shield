@@ -7,10 +7,13 @@
  */
 
 import {
-  BASE_ACCOUNT_SIZE,
   combineCodec,
+  getAddressDecoder,
+  getAddressEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -28,30 +31,16 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
-import { getPolicySize } from '../accounts';
-import { findPolicyPda } from '../pdas';
 import { SHIELD_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  expectSome,
-  getAccountMetaFactory,
-  type IInstructionWithByteDelta,
-  type ResolvedAccount,
-} from '../shared';
-import {
-  getPermissionStrategyDecoder,
-  getPermissionStrategyEncoder,
-  type PermissionStrategy,
-  type PermissionStrategyArgs,
-} from '../types';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const CREATE_POLICY_DISCRIMINATOR = 0;
+export const REPLACE_IDENTITY_DISCRIMINATOR = 3;
 
-export function getCreatePolicyDiscriminatorBytes() {
-  return getU8Encoder().encode(CREATE_POLICY_DISCRIMINATOR);
+export function getReplaceIdentityDiscriminatorBytes() {
+  return getU8Encoder().encode(REPLACE_IDENTITY_DISCRIMINATOR);
 }
 
-export type CreatePolicyInstruction<
+export type ReplaceIdentityInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
@@ -90,163 +79,47 @@ export type CreatePolicyInstruction<
     ]
   >;
 
-export type CreatePolicyInstructionData = {
+export type ReplaceIdentityInstructionData = {
   discriminator: number;
-  strategy: PermissionStrategy;
+  index: bigint;
+  identity: Address;
 };
 
-export type CreatePolicyInstructionDataArgs = {
-  strategy: PermissionStrategyArgs;
+export type ReplaceIdentityInstructionDataArgs = {
+  index: number | bigint;
+  identity: Address;
 };
 
-export function getCreatePolicyInstructionDataEncoder(): Encoder<CreatePolicyInstructionDataArgs> {
+export function getReplaceIdentityInstructionDataEncoder(): Encoder<ReplaceIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['strategy', getPermissionStrategyEncoder()],
+      ['index', getU64Encoder()],
+      ['identity', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: CREATE_POLICY_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: REPLACE_IDENTITY_DISCRIMINATOR })
   );
 }
 
-export function getCreatePolicyInstructionDataDecoder(): Decoder<CreatePolicyInstructionData> {
+export function getReplaceIdentityInstructionDataDecoder(): Decoder<ReplaceIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['strategy', getPermissionStrategyDecoder()],
+    ['index', getU64Decoder()],
+    ['identity', getAddressDecoder()],
   ]);
 }
 
-export function getCreatePolicyInstructionDataCodec(): Codec<
-  CreatePolicyInstructionDataArgs,
-  CreatePolicyInstructionData
+export function getReplaceIdentityInstructionDataCodec(): Codec<
+  ReplaceIdentityInstructionDataArgs,
+  ReplaceIdentityInstructionData
 > {
   return combineCodec(
-    getCreatePolicyInstructionDataEncoder(),
-    getCreatePolicyInstructionDataDecoder()
+    getReplaceIdentityInstructionDataEncoder(),
+    getReplaceIdentityInstructionDataDecoder()
   );
 }
 
-export type CreatePolicyAsyncInput<
-  TAccountMint extends string = string,
-  TAccountTokenAccount extends string = string,
-  TAccountPolicy extends string = string,
-  TAccountPayer extends string = string,
-  TAccountOwner extends string = string,
-  TAccountSystemProgram extends string = string,
-> = {
-  /** The token extensions mint account linked to the policy */
-  mint: Address<TAccountMint>;
-  /** The authority over the policy based on token ownership of the mint */
-  tokenAccount: Address<TAccountTokenAccount>;
-  /** The shield policy account */
-  policy?: Address<TAccountPolicy>;
-  /** The account paying for the storage fees */
-  payer: TransactionSigner<TAccountPayer>;
-  /** The owner of the token account */
-  owner?: TransactionSigner<TAccountOwner>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
-  strategy: CreatePolicyInstructionDataArgs['strategy'];
-};
-
-export async function getCreatePolicyInstructionAsync<
-  TAccountMint extends string,
-  TAccountTokenAccount extends string,
-  TAccountPolicy extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
->(
-  input: CreatePolicyAsyncInput<
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
-): Promise<
-  CreatePolicyInstruction<
-    TProgramAddress,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  > &
-    IInstructionWithByteDelta
-> {
-  // Program address.
-  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
-
-  // Original accounts.
-  const originalAccounts = {
-    mint: { value: input.mint ?? null, isWritable: false },
-    tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
-    policy: { value: input.policy ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
-
-  // Original args.
-  const args = { ...input };
-
-  // Resolve default values.
-  if (!accounts.policy.value) {
-    accounts.policy.value = await findPolicyPda({
-      mint: expectAddress(accounts.mint.value),
-    });
-  }
-  if (!accounts.owner.value) {
-    accounts.owner.value = expectSome(accounts.payer.value);
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
-  // Bytes created or reallocated by the instruction.
-  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
-    (a, b) => a + b,
-    0
-  );
-
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-  const instruction = {
-    accounts: [
-      getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.tokenAccount),
-      getAccountMeta(accounts.policy),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.systemProgram),
-    ],
-    programAddress,
-    data: getCreatePolicyInstructionDataEncoder().encode(
-      args as CreatePolicyInstructionDataArgs
-    ),
-  } as CreatePolicyInstruction<
-    TProgramAddress,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  >;
-
-  return Object.freeze({ ...instruction, byteDelta });
-}
-
-export type CreatePolicyInput<
+export type ReplaceIdentityInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
@@ -263,13 +136,14 @@ export type CreatePolicyInput<
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
   /** The owner of the token account */
-  owner?: TransactionSigner<TAccountOwner>;
+  owner: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  strategy: CreatePolicyInstructionDataArgs['strategy'];
+  index: ReplaceIdentityInstructionDataArgs['index'];
+  identity: ReplaceIdentityInstructionDataArgs['identity'];
 };
 
-export function getCreatePolicyInstruction<
+export function getReplaceIdentityInstruction<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
@@ -278,7 +152,7 @@ export function getCreatePolicyInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
-  input: CreatePolicyInput<
+  input: ReplaceIdentityInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
@@ -287,7 +161,7 @@ export function getCreatePolicyInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): CreatePolicyInstruction<
+): ReplaceIdentityInstruction<
   TProgramAddress,
   TAccountMint,
   TAccountTokenAccount,
@@ -295,8 +169,7 @@ export function getCreatePolicyInstruction<
   TAccountPayer,
   TAccountOwner,
   TAccountSystemProgram
-> &
-  IInstructionWithByteDelta {
+> {
   // Program address.
   const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
 
@@ -318,19 +191,10 @@ export function getCreatePolicyInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.owner.value) {
-    accounts.owner.value = expectSome(accounts.payer.value);
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
-
-  // Bytes created or reallocated by the instruction.
-  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
-    (a, b) => a + b,
-    0
-  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -343,10 +207,10 @@ export function getCreatePolicyInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getCreatePolicyInstructionDataEncoder().encode(
-      args as CreatePolicyInstructionDataArgs
+    data: getReplaceIdentityInstructionDataEncoder().encode(
+      args as ReplaceIdentityInstructionDataArgs
     ),
-  } as CreatePolicyInstruction<
+  } as ReplaceIdentityInstruction<
     TProgramAddress,
     TAccountMint,
     TAccountTokenAccount,
@@ -356,10 +220,10 @@ export function getCreatePolicyInstruction<
     TAccountSystemProgram
   >;
 
-  return Object.freeze({ ...instruction, byteDelta });
+  return instruction;
 }
 
-export type ParsedCreatePolicyInstruction<
+export type ParsedReplaceIdentityInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -378,17 +242,17 @@ export type ParsedCreatePolicyInstruction<
     /** The system program */
     systemProgram: TAccountMetas[5];
   };
-  data: CreatePolicyInstructionData;
+  data: ReplaceIdentityInstructionData;
 };
 
-export function parseCreatePolicyInstruction<
+export function parseReplaceIdentityInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedCreatePolicyInstruction<TProgram, TAccountMetas> {
+): ParsedReplaceIdentityInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -409,6 +273,6 @@ export function parseCreatePolicyInstruction<
       owner: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getCreatePolicyInstructionDataDecoder().decode(instruction.data),
+    data: getReplaceIdentityInstructionDataDecoder().decode(instruction.data),
   };
 }

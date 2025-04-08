@@ -1,10 +1,13 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use clap::Parser;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_pubkey::pubkey;
 use solana_sdk::pubkey::Pubkey;
-use yellowstone_shield_cli::{run, Command, CommandComplete, PolicyAction, SolanaAccount};
+use yellowstone_shield_cli::{
+    run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
+};
 use yellowstone_shield_store::{
     BuiltPolicyStore, NullConfig, PolicyStoreBuilder, PolicyStoreTrait, VixenConfig,
 };
@@ -53,16 +56,16 @@ async fn main() {
 
     local
         .run_until(async {
-            let good = Pubkey::new_unique();
-            let bad = Pubkey::new_unique();
+            let good = pubkey!("7kos12TGQYnX62cdu52tre53X6Y7ZicGsbwpNz1d3ESj");
+            let bad = pubkey!("HApPge4oeRUgKcmEAjs1PuYV4ZcTXjZoLzJFpBnENywm");
+
             let other = Pubkey::new_unique();
 
-            let allow = run(
+            let CommandComplete(SolanaAccount(allow, _), _) = run(
                 Arc::clone(&cli),
                 Command::Policy {
                     action: PolicyAction::Create {
                         strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                        identities: vec![good],
                         name: "Good".to_string(),
                         symbol: "G".to_string(),
                         uri: "https://test.com/good.json".to_string(),
@@ -71,15 +74,36 @@ async fn main() {
             )
             .await
             .unwrap();
-            let deny = run(
+            let allow = run(
+                Arc::clone(&cli),
+                Command::Identities {
+                    action: IdentitiesAction::Add {
+                        mint: allow,
+                        identities_path: PathBuf::from("./identities-good-demo.txt"),
+                    },
+                },
+            )
+            .await
+            .unwrap();
+            let CommandComplete(SolanaAccount(deny, _), _) = run(
                 Arc::clone(&cli),
                 Command::Policy {
                     action: PolicyAction::Create {
                         strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                        identities: vec![bad],
                         name: "Bad".to_string(),
                         symbol: "B".to_string(),
                         uri: "https://test.com/bad.json".to_string(),
+                    },
+                },
+            )
+            .await
+            .unwrap();
+            let deny = run(
+                Arc::clone(&cli),
+                Command::Identities {
+                    action: IdentitiesAction::Add {
+                        mint: deny,
+                        identities_path: PathBuf::from("./identities-bad-demo.txt"),
                     },
                 },
             )

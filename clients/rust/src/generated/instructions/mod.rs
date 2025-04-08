@@ -6,9 +6,13 @@
 //!
 
 pub(crate) mod r#add_identity;
+pub(crate) mod r#close_policy;
 pub(crate) mod r#create_policy;
 pub(crate) mod r#remove_identity;
+pub(crate) mod r#replace_identity;
 
 pub use self::r#add_identity::*;
+pub use self::r#close_policy::*;
 pub use self::r#create_policy::*;
 pub use self::r#remove_identity::*;
+pub use self::r#replace_identity::*;

@@ -16,8 +16,8 @@ import {
 } from '@solana/kit';
 
 export enum PermissionStrategy {
-  Allow,
   Deny,
+  Allow,
 }
 
 export type PermissionStrategyArgs = PermissionStrategy;

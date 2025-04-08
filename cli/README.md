@@ -36,7 +36,7 @@ The CLI provides several commands to interact with the shield policies and ident
   ```
 
   - `--strategy <STRATEGY>`: The strategy to use for the policy.
-  - `--identities <IDENTITIES>`: Comma-separated list of identities to add to the policy.
+  - `--identities-path <IDENTITIES>`:
 
 #### Identity Management
 

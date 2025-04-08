@@ -7,5 +7,7 @@
  */
 
 export * from './addIdentity';
+export * from './closePolicy';
 export * from './createPolicy';
 export * from './removeIdentity';
+export * from './replaceIdentity';

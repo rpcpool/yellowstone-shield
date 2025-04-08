@@ -1,78 +1,58 @@
-use borsh::{object_length, to_writer, BorshDeserialize, BorshSerialize};
+use borsh::{BorshDeserialize, BorshSerialize};
+use bytemuck::{Pod, Zeroable};
+use pinocchio::{account_info::AccountInfo, program_error::ProgramError};
 use shank::ShankAccount;
-use solana_program::entrypoint_deprecated::ProgramResult;
-use solana_program::program_error::ProgramError;
-use solana_program::pubkey::Pubkey;
-use solana_program::sysvar::slot_history::AccountInfo;
 
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, BorshDeserialize, BorshSerialize)]
 pub enum Kind {
     Policy,
 }
-pub trait Save: BorshSerialize {
-    fn save(&self, account: &AccountInfo) -> ProgramResult {
-        to_writer(&mut account.data.borrow_mut()[..], self).map_err(Into::into)
-    }
-}
 
-pub trait Load: BorshDeserialize {
-    fn load(account: &AccountInfo) -> Result<Self, ProgramError>
-    where
-        Self: Sized,
-    {
-        let mut bytes: &[u8] = &(*account.data).borrow();
-        Self::deserialize(&mut bytes).map_err(Into::into)
-    }
-}
-
-pub trait TrySize: BorshSerialize {
-    fn try_size(&self) -> Result<usize, ProgramError> {
-        object_length(&self).map_err(Into::into)
-    }
-}
-
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
+#[repr(u8)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize, Default)]
 pub enum PermissionStrategy {
-    Allow,
+    #[default]
     Deny,
+    Allow,
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug, ShankAccount)]
+#[derive(Clone, Copy, Pod, Zeroable, ShankAccount)]
 pub struct Policy {
-    pub kind: Kind,
-    pub strategy: PermissionStrategy,
+    pub kind: u8,
+    pub strategy: u8,
     pub nonce: u8,
-    pub identities: Vec<Pubkey>,
+    pub identities_len: [u8; 4],
+}
+
+pub trait Size {
+    const LEN: usize;
+}
+
+impl Size for Policy {
+    const LEN: usize = core::mem::size_of::<Self>();
 }
 
 impl Policy {
-    pub fn new(nonce: u8, strategy: PermissionStrategy, identities: Vec<Pubkey>) -> Self {
-        Self {
-            kind: Kind::Policy,
-            strategy,
-            nonce,
-            identities,
-        }
-    }
-
-    pub fn seeds(mint_key: &Pubkey) -> Vec<&[u8]> {
-        vec![b"shield", b"policy", mint_key.as_ref()]
-    }
-
-    pub fn find_policy_program_address(mint: &Pubkey, nonce: Option<u8>) -> (Pubkey, u8) {
-        let mut seeds = Self::seeds(mint);
-        let slice;
-
-        if let Some(n) = nonce {
-            slice = [n];
-            seeds.push(&slice);
-        }
-
-        Pubkey::find_program_address(&seeds, &crate::ID)
+    pub fn identities_len(&self) -> usize {
+        u32::from_le_bytes(self.identities_len) as usize
     }
 }
 
-impl TrySize for Policy {}
-impl Save for Policy {}
-impl Load for Policy {}
+pub trait ZeroCopyLoad {
+    unsafe fn from_bytes(bytes: &[u8]) -> &Self;
+    unsafe fn load(account_info: &AccountInfo) -> Result<&Self, ProgramError>;
+}
+
+impl ZeroCopyLoad for Policy {
+    #[inline(always)]
+    unsafe fn from_bytes(bytes: &[u8]) -> &Self {
+        &*(bytes.as_ptr() as *const Self)
+    }
+
+    unsafe fn load(account_info: &AccountInfo) -> Result<&Self, ProgramError> {
+        let data = account_info.borrow_data_unchecked();
+        Ok(Self::from_bytes(&data[..Self::LEN]))
+    }
+}

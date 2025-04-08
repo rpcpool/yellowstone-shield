@@ -9,10 +9,10 @@
 import {
   BASE_ACCOUNT_SIZE,
   combineCodec,
-  getAddressDecoder,
-  getAddressEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -88,16 +88,16 @@ export type RemoveIdentityInstruction<
 
 export type RemoveIdentityInstructionData = {
   discriminator: number;
-  identity: Address;
+  index: bigint;
 };
 
-export type RemoveIdentityInstructionDataArgs = { identity: Address };
+export type RemoveIdentityInstructionDataArgs = { index: number | bigint };
 
 export function getRemoveIdentityInstructionDataEncoder(): Encoder<RemoveIdentityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['identity', getAddressEncoder()],
+      ['index', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: REMOVE_IDENTITY_DISCRIMINATOR })
   );
@@ -106,7 +106,7 @@ export function getRemoveIdentityInstructionDataEncoder(): Encoder<RemoveIdentit
 export function getRemoveIdentityInstructionDataDecoder(): Decoder<RemoveIdentityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['identity', getAddressDecoder()],
+    ['index', getU64Decoder()],
   ]);
 }
 
@@ -140,7 +140,7 @@ export type RemoveIdentityAsyncInput<
   owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  identity: RemoveIdentityInstructionDataArgs['identity'];
+  index: RemoveIdentityInstructionDataArgs['index'];
 };
 
 export async function getRemoveIdentityInstructionAsync<
@@ -260,7 +260,7 @@ export type RemoveIdentityInput<
   owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  identity: RemoveIdentityInstructionDataArgs['identity'];
+  index: RemoveIdentityInstructionDataArgs['index'];
 };
 
 export function getRemoveIdentityInstruction<

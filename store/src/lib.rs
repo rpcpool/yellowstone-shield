@@ -2,19 +2,19 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use arc_swap::ArcSwap;
-use borsh_0_10::BorshDeserialize;
 use hashbrown::{HashMap, HashSet};
 use parking_lot::RwLock;
 use tokio::sync::mpsc::Sender;
 
+use solana_account_decoder_client_types::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
 };
-use solana_sdk::{account::WritableAccount, commitment_config::CommitmentConfig, pubkey::Pubkey};
+use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
-use yellowstone_shield_client::{accounts::Policy, types::PermissionStrategy};
-use yellowstone_shield_parser::accounts_parser::{AccountParser, ShieldProgramState};
+use yellowstone_shield_client::{accounts, types::PermissionStrategy};
+use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
 pub use yellowstone_vixen::config::*;
 use yellowstone_vixen::{Pipeline, Runtime};
 
@@ -56,14 +56,14 @@ impl PolicyCache {
     /// * `pubkey` - The public key to associate with the policy.
     /// * `slot` - The slot number of the policy update.
     /// * `policy` - The policy to be stored in the cache.
-    pub fn insert(&self, pubkey: Pubkey, slot: u64, policy: Policy) {
+    pub fn insert(&self, pubkey: Pubkey, slot: u64, item: Policy) {
         let mut policies = self.policies.write();
         if let Some(current_item) = policies.get(&pubkey) {
             if slot > current_item.slot {
-                policies.insert(pubkey, SlotCacheItem { slot, item: policy });
+                policies.insert(pubkey, SlotCacheItem { slot, item });
             }
         } else {
-            policies.insert(pubkey, SlotCacheItem { slot, item: policy });
+            policies.insert(pubkey, SlotCacheItem { slot, item });
         }
     }
 
@@ -238,6 +238,7 @@ impl PolicyRpcClient {
                 program_id,
                 RpcProgramAccountsConfig {
                     account_config: RpcAccountInfoConfig {
+                        encoding: Some(UiAccountEncoding::Base64),
                         commitment: Some(CommitmentConfig::confirmed()),
                         ..Default::default()
                     },
@@ -246,10 +247,15 @@ impl PolicyRpcClient {
             )
             .await?
             .into_iter()
-            .map(|(address, mut account)| {
-                let mut account_data: &[u8] = account.data_as_mut_slice();
+            .map(|(address, account)| {
+                let data: &[u8] = &account.data;
 
-                let policy = Policy::deserialize(&mut account_data)?;
+                let meta = accounts::Policy::from_bytes(&data[..accounts::Policy::LEN])?;
+                let identities =
+                    accounts::Policy::try_deserialize_identities(&data[accounts::Policy::LEN..])?;
+                let strategy = meta.try_strategy()?;
+
+                let policy = Policy::new(strategy, identities);
 
                 Ok((address, policy))
             })
@@ -440,19 +446,17 @@ impl PolicyStoreBuilder {
 mod tests {
     use super::*;
     use solana_sdk::pubkey::Pubkey;
-    use yellowstone_shield_client::accounts::Policy;
+    use yellowstone_shield_parser::accounts_parser::Policy;
 
     #[test]
     fn test_policy_cache_insert_and_get() {
         let cache = PolicyCache::new();
         let address = Pubkey::new_unique();
         let validator = Pubkey::new_unique();
-        let policy = Policy {
-            kind: yellowstone_shield_client::types::Kind::Policy,
-            strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-            identities: vec![validator],
-            nonce: 0,
-        };
+        let policy = Policy::new(
+            yellowstone_shield_client::types::PermissionStrategy::Deny,
+            vec![validator],
+        );
 
         cache.insert(address, 1, policy.clone());
         let retrieved_policy = cache.get(&address).unwrap();
@@ -469,21 +473,17 @@ mod tests {
         let policies = [
             (
                 Pubkey::new_unique(),
-                Policy {
-                    kind: yellowstone_shield_client::types::Kind::Policy,
-                    strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    identities: vec![validator],
-                    nonce: 0,
-                },
+                Policy::new(
+                    yellowstone_shield_client::types::PermissionStrategy::Deny,
+                    vec![validator],
+                ),
             ),
             (
                 Pubkey::new_unique(),
-                Policy {
-                    kind: yellowstone_shield_client::types::Kind::Policy,
-                    strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    identities: vec![validator],
-                    nonce: 0,
-                },
+                Policy::new(
+                    yellowstone_shield_client::types::PermissionStrategy::Allow,
+                    vec![validator],
+                ),
             ),
         ];
 
@@ -500,12 +500,10 @@ mod tests {
         let cache = PolicyCache::new();
         let address = Pubkey::new_unique();
         let validator = Pubkey::new_unique();
-        let policy = Policy {
-            kind: yellowstone_shield_client::types::Kind::Policy,
-            strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-            identities: vec![validator],
-            nonce: 0,
-        };
+        let policy = Policy::new(
+            yellowstone_shield_client::types::PermissionStrategy::Deny,
+            vec![validator],
+        );
 
         cache.insert(address, 1, policy.clone());
         cache.remove(&address).unwrap();
@@ -529,21 +527,17 @@ mod tests {
         let policies = [
             (
                 allow,
-                Policy {
-                    kind: yellowstone_shield_client::types::Kind::Policy,
-                    strategy: yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    identities: vec![good],
-                    nonce: 0,
-                },
+                Policy::new(
+                    yellowstone_shield_client::types::PermissionStrategy::Allow,
+                    vec![good],
+                ),
             ),
             (
                 deny,
-                Policy {
-                    kind: yellowstone_shield_client::types::Kind::Policy,
-                    strategy: yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    identities: vec![sanctioned, sandwich],
-                    nonce: 0,
-                },
+                Policy::new(
+                    yellowstone_shield_client::types::PermissionStrategy::Deny,
+                    vec![sanctioned, sandwich],
+                ),
             ),
         ];
 

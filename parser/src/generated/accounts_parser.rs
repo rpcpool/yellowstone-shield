@@ -6,9 +6,24 @@
 //!
 
 use solana_program::pubkey::Pubkey;
-use yellowstone_shield_client::accounts::Policy;
 use yellowstone_shield_client::ID;
+use yellowstone_shield_client::{accounts, types::PermissionStrategy};
 use yellowstone_vixen_core::AccountUpdate;
+
+#[derive(Debug, Clone)]
+pub struct Policy {
+    pub strategy: PermissionStrategy,
+    pub identities: Vec<Pubkey>,
+}
+
+impl Policy {
+    pub fn new(strategy: PermissionStrategy, identities: Vec<Pubkey>) -> Self {
+        Self {
+            strategy,
+            identities,
+        }
+    }
+}
 
 /// Shield Program State
 #[allow(clippy::large_enum_variant, dead_code)]
@@ -33,12 +48,18 @@ impl ShieldProgramState {
 
         match data[0] {
             0 => {
-                let policy = Policy::from_bytes(data)?;
+                let policy = accounts::Policy::from_bytes(&data[..accounts::Policy::LEN])?;
+                let identities =
+                    accounts::Policy::try_deserialize_identities(&data[accounts::Policy::LEN..])?;
+                let strategy = policy.try_strategy()?;
 
                 Ok(ShieldProgramState::Policy(
                     account_update.slot,
                     Pubkey::try_from(inner.pubkey.as_slice())?,
-                    policy,
+                    Policy {
+                        strategy,
+                        identities,
+                    },
                 ))
             }
             _ => Err(yellowstone_vixen_core::ParseError::from(
