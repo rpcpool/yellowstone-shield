@@ -247,19 +247,20 @@ impl PolicyRpcClient {
             )
             .await?
             .into_iter()
-            .map(|(address, account)| {
+            .filter_map(|(address, account)| {
                 let data: &[u8] = &account.data;
 
-                let meta = accounts::Policy::from_bytes(&data[..accounts::Policy::LEN])?;
+                let meta = accounts::Policy::from_bytes(&data[..accounts::Policy::LEN]).ok()?;
                 let identities =
-                    accounts::Policy::try_deserialize_identities(&data[accounts::Policy::LEN..])?;
-                let strategy = meta.try_strategy()?;
+                    accounts::Policy::try_deserialize_identities(&data[accounts::Policy::LEN..])
+                        .ok()?;
+                let strategy = meta.try_strategy().ok()?;
 
                 let policy = Policy::new(strategy, identities);
 
-                Ok((address, policy))
+                Some((address, policy))
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Vec<_>>();
 
         Ok(SlotRpcResponse { slot, result })
     }
