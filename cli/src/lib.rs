@@ -81,6 +81,12 @@ pub enum PolicyAction {
         #[arg(long)]
         mint: Pubkey,
     },
+    /// Show policy details
+    Show {
+        /// The mint address associated with the policy
+        #[arg(long)]
+        mint: Pubkey,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -145,6 +151,12 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
             }
             PolicyAction::Delete { mint } => {
                 policy::DeleteCommandBuilder::new()
+                    .mint(mint)
+                    .run(context)
+                    .await
+            }
+            PolicyAction::Show { mint } => {
+                policy::ShowCommandBuilder::new()
                     .mint(mint)
                     .run(context)
                     .await

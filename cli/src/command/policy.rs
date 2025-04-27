@@ -269,3 +269,52 @@ impl RunCommand for DeleteCommandBuilder<'_> {
         ))
     }
 }
+
+pub struct ShowCommandBuilder<'a> {
+    mint: Option<&'a Pubkey>,
+}
+
+impl<'a> ShowCommandBuilder<'a> {
+    pub fn new() -> Self {
+        Self { mint: None }
+    }
+
+    pub fn mint(mut self, mint: &'a Pubkey) -> Self {
+        self.mint = Some(mint);
+        self
+    }
+}
+
+#[async_trait::async_trait]
+impl RunCommand for ShowCommandBuilder<'_> {
+    async fn run(&mut self, context: CommandContext) -> RunResult {
+        let CommandContext { keypair: _, client } = context;
+
+        let mint = self.mint.expect("mint must be set");
+        let (address, _) = Policy::find_pda(mint);
+
+        let account_data = client.get_account(&address).await?;
+        let account_data: &[u8] = &account_data.data;
+
+        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+
+        let identities = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+
+        let mint_data = client.get_account(mint).await?;
+        let account_data: &[u8] = &mint_data.data;
+
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
+        let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        info!("Identities in policy:");
+        for (i, identity) in identities.iter().enumerate() {
+            info!("  {}. {}", i, identity);
+        }
+
+        Ok(CommandComplete(
+            SolanaAccount(*mint, Some(token_metadata)),
+            SolanaAccount(address, Some(policy)),
+        ))
+    }
+}
