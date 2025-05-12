@@ -23,8 +23,8 @@ Yellowstone Shield is a Solana program that manages on-chain allowlists and bloc
 
 Yellowstone Shield integrates with Solana RPC by introducing:
 
-- A new parameter, `forwardingPolicy`, in the `sendTransaction` RPC method, enabling users to specify allow/blocklists.
-- An optional `Solana-ForwardingPolicy` HTTP header to support legacy clients.
+- A new parameter, `forwardingPolicies`, in the `sendTransaction` RPC method, enabling users to specify allow/blocklists.
+- An optional `Solana-ForwardingPolicies` HTTP header to support legacy clients.
 
 Transaction senders interpret these policies to determine validator forwarding behavior, ensuring consistent enforcement of allow/blocklists across different RPC providers.
 
