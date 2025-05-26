@@ -2,15 +2,12 @@ use std::{path::PathBuf, sync::Arc};
 
 use clap::Parser;
 use solana_cli_config::{Config, CONFIG_FILE};
-use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_pubkey::pubkey;
 use solana_sdk::pubkey::Pubkey;
 use yellowstone_shield_cli::{
     run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
 };
-use yellowstone_shield_store::{
-    BuiltPolicyStore, NullConfig, PolicyStoreBuilder, PolicyStoreTrait, VixenConfig,
-};
+use yellowstone_shield_store::{PolicyStore, PolicyStoreConfig, PolicyStoreTrait};
 
 #[derive(Parser)]
 struct Opts {
@@ -27,32 +24,22 @@ async fn main() {
 
     let Opts { config } = Opts::parse();
     let config = std::fs::read_to_string(config).expect("Error reading config file");
-    let config: VixenConfig<NullConfig> = toml::from_str(&config).expect("Error parsing config");
+    let config: PolicyStoreConfig = toml::from_str(&config).expect("Error parsing config");
 
     let cli = CONFIG_FILE.as_ref().unwrap();
 
     let mut cli = Config::load(cli).unwrap();
-    cli.json_rpc_url = "http://localhost:8899".to_string();
+    cli.json_rpc_url = config.rpc.endpoint.clone();
 
     let cli = Arc::new(cli);
 
-    let rpc = RpcClient::new(cli.json_rpc_url.clone());
-
-    let BuiltPolicyStore {
-        policies,
-        subscription,
-    } = PolicyStoreBuilder::new()
-        .rpc(rpc)
-        .vixen(config)
-        .build()
-        .await
-        .unwrap();
-
     let local = tokio::task::LocalSet::new();
 
-    if let Some(sub) = subscription {
-        local.spawn_local(sub);
-    }
+    let policy_store = PolicyStore::build()
+        .config(config)
+        .run(&local)
+        .await
+        .unwrap();
 
     local
         .run_until(async {
@@ -110,7 +97,7 @@ async fn main() {
             .await
             .unwrap();
 
-            let snapshot = policies.snapshot();
+            let snapshot = policy_store.snapshot();
 
             let CommandComplete(_, SolanaAccount(address, _)) = deny;
 

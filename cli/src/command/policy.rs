@@ -210,6 +210,12 @@ pub struct DeleteCommandBuilder<'a> {
     mint: Option<&'a Pubkey>,
 }
 
+impl Default for DeleteCommandBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> DeleteCommandBuilder<'a> {
     /// Create a new DeleteCommandBuilder
     pub fn new() -> Self {
@@ -272,6 +278,12 @@ impl RunCommand for DeleteCommandBuilder<'_> {
 
 pub struct ShowCommandBuilder<'a> {
     mint: Option<&'a Pubkey>,
+}
+
+impl Default for ShowCommandBuilder<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> ShowCommandBuilder<'a> {

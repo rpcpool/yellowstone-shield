@@ -4,7 +4,8 @@ use anyhow::Result;
 use arc_swap::ArcSwap;
 use hashbrown::{HashMap, HashSet};
 use parking_lot::RwLock;
-use tokio::sync::mpsc::Sender;
+use serde::Deserialize;
+use tokio::{sync::mpsc::Sender, task::LocalSet};
 
 use solana_account_decoder_client_types::UiAccountEncoding;
 use solana_client::{
@@ -15,8 +16,10 @@ use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 use yellowstone_shield_client::{accounts, types::PermissionStrategy};
 use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
-pub use yellowstone_vixen::config::*;
-use yellowstone_vixen::{Pipeline, Runtime};
+use yellowstone_vixen::{
+    config::{BufferConfig, OptConfig, VixenConfig, YellowstoneConfig},
+    Pipeline, Runtime,
+};
 
 pub struct SlotCacheItem<T> {
     slot: u64,
@@ -360,86 +363,84 @@ impl PolicyStoreTrait for MockPolicyStore {
 
 pub type SubscriptionTask = std::pin::Pin<Box<dyn std::future::Future<Output = ()> + 'static>>;
 
-pub struct BuiltPolicyStore {
-    pub policies: PolicyStore,
-    pub subscription: Option<SubscriptionTask>,
-}
-pub struct PolicyStoreBuilder {
-    vixen: Option<VixenConfig<NullConfig>>,
-    rpc: Option<RpcClient>,
+#[derive(Deserialize)]
+pub struct PolicyStoreRpcConfig {
+    pub endpoint: String,
 }
 
-impl Default for PolicyStoreBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Deserialize)]
+pub struct PolicyStoreConfig {
+    pub rpc: PolicyStoreRpcConfig,
+    pub grpc: YellowstoneConfig,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum BuilderError {
+    #[error("No config")]
+    NoConfig,
+}
+
+#[derive(Default)]
+pub struct PolicyStoreBuilder {
+    config: Option<PolicyStoreConfig>,
 }
 
 impl PolicyStoreBuilder {
-    pub fn new() -> Self {
-        Self {
-            vixen: None,
-            rpc: None,
-        }
-    }
+    pub fn config(&mut self, config: PolicyStoreConfig) -> &mut Self {
+        self.config = Some(config);
 
-    #[inline(always)]
-    pub fn vixen(&mut self, vixen: VixenConfig<NullConfig>) -> &mut Self {
-        self.vixen = Some(vixen);
         self
     }
 
-    #[inline(always)]
-    pub fn rpc(&mut self, rpc: RpcClient) -> &mut Self {
-        self.rpc = Some(rpc);
-        self
-    }
+    pub async fn run(&mut self, local: &LocalSet) -> Result<PolicyStore> {
+        let config = self.config.take().ok_or(BuilderError::NoConfig)?;
+        let rpc = RpcClient::new(config.rpc.endpoint);
 
-    pub async fn build(&mut self) -> Result<BuiltPolicyStore> {
-        let policies = match self.rpc.take() {
-            Some(rpc) => {
-                PolicyRpcClient::new(rpc)
-                    .list(&yellowstone_shield_client::ID)
-                    .await?
-            }
-            None => PoliciesSlotRpcResponse::default(),
-        };
+        let policies = PolicyRpcClient::new(rpc)
+            .list(&yellowstone_shield_client::ID)
+            .await?;
 
         let cache = Arc::new(policies.into());
         let snapshot = Arc::new(ArcSwap::from_pointee(Snapshot::new(&cache)));
 
-        let subscription = self.vixen.take().map(|vixen| {
-            let (sender, mut receiver) = tokio::sync::mpsc::channel::<ShieldProgramState>(10_000);
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<ShieldProgramState>(10_000);
 
-            let pipeline = Pipeline::new(AccountParser, [PolicyHandler::new(sender)]);
-            let runtime = Runtime::builder()
-                .account(pipeline)
-                .commitment_level(yellowstone_vixen::CommitmentLevel::Confirmed)
-                .build(vixen);
+        let vixen = VixenConfig {
+            yellowstone: config.grpc,
+            buffer: BufferConfig::default(),
+            metrics: OptConfig::default(),
+        };
 
-            let cache = Arc::clone(&cache);
-            let snapshot = Arc::clone(&snapshot);
+        let pipeline = Pipeline::new(AccountParser, [PolicyHandler::new(sender)]);
+        let runtime = Runtime::builder()
+            .account(pipeline)
+            .commitment_level(yellowstone_vixen::CommitmentLevel::Confirmed)
+            .build(vixen);
 
-            Box::pin(async move {
-                tokio::task::spawn_local(async move {
-                    if let Err(e) = runtime.try_run_async().await {
-                        log::error!("Vixen runtime error: {:?}", e);
-                    }
-                });
+        let cache = Arc::clone(&cache);
 
-                // listen for updates
-                while let Some(value) = receiver.recv().await {
-                    let ShieldProgramState::Policy(slot, pubkey, policy) = value;
-                    cache.insert(pubkey, slot, policy);
-                    snapshot.store(Arc::new(Snapshot::new(&cache)));
+        let subscription_snapshot = Arc::clone(&snapshot);
+        local.spawn_local(Box::pin(async move {
+            tokio::task::spawn_local(async move {
+                if let Err(e) = runtime.try_run_async().await {
+                    log::error!("Vixen runtime error: {:?}", e);
                 }
-            }) as SubscriptionTask
-        });
+            });
 
-        Ok(BuiltPolicyStore {
-            policies: PolicyStore::new(snapshot),
-            subscription,
-        })
+            while let Some(value) = receiver.recv().await {
+                let ShieldProgramState::Policy(slot, pubkey, policy) = value;
+                cache.insert(pubkey, slot, policy);
+                subscription_snapshot.store(Arc::new(Snapshot::new(&cache)));
+            }
+        }) as SubscriptionTask);
+
+        Ok(PolicyStore::new(snapshot))
+    }
+}
+
+impl PolicyStore {
+    pub fn build() -> PolicyStoreBuilder {
+        PolicyStoreBuilder::default()
     }
 }
 
