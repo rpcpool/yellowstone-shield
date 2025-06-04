@@ -27,37 +27,38 @@ The CLI provides several commands to interact with the shield policies and ident
 
 ### Commands
 
-#### Policy Management
-
 - **Create a Policy**
 
   ```bash
-  yellowstone-shield policy create --strategy <STRATEGY> --identities <IDENTITIES>
+  yellowstone-shield policy create [OPTIONS] --strategy <STRATEGY> --name <NAME> --symbol <SYMBOL> --uri <URI>
   ```
 
+  - `-r, --rpc <RPC>`: RPC endpoint URL to override using the Solana config.
   - `--strategy <STRATEGY>`: The strategy to use for the policy.
-  - `--identities-path <IDENTITIES>`:
+  - `-l, --log-level <LOG_LEVEL>`: Log level (default is "off").
+  - `--name <NAME>`: The name of the policy.
+  - `-k, --keypair <KEYPAIR>`: Path to the owner keypair file.
+  - `--symbol <SYMBOL>`: The symbol of the policy.
+  - `--uri <URI>`: The URI of the policy.
+  - `-h, --help`: Print help.
 
-#### Identity Management
-
-- **Add a Identity**
-
-  ```bash
-  yellowstone-shield identity add --mint <MINT> --identity <IDENTITY>
-  ```
-
-  - `--mint <MINT>`: The mint address associated with the policy.
-  - `--identity <IDENTITY>`: The identity to add to the policy.
-
-- **Remove a Identity**
+- **Add Identities**
 
   ```bash
-  yellowstone-shield identity remove --mint <MINT> --identity <IDENTITY>
+  yellowstone-shield identities add --mint <MINT> --identities-path <IDENTITIES>
   ```
 
-  - `--policy <POLICY>`: The policy from which the identity will be removed.
-  - `--mint <MINT>`: The mint address associated with the policy.
-  - `--identity <IDENTITY>`: The identity to remove from the policy.
+  - `--mint <MINT>`: The mint address linked to the shield policy.
+  - `--identities-path <IDENTITIES>`: File path to a list of public keys, each on a new line, to be added.
+
+- **Remove Identities**
+
+  ```bash
+  yellowstone-shield identities remove --mint <MINT> --identities-path <IDENTITIES>
+  ```
+
+  - `--mint <MINT>`: The mint address linked to the shield policy.
+  - `--identities-path <IDENTITIES>`: File path to a list of public keys, each on a new line, to be removed.
 
 ## Configuration
 

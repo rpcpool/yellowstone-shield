@@ -17,35 +17,32 @@ cargo add yellowstone-shield-store
 ```
 
 ```rust
-use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
-use yellowstone_shield_store::{BuiltPolicyStore, NullConfig, PolicyStoreBuilder, VixenConfig, PolicyStoreTrait};
+use yellowstone_shield_store::{PolicyStore, PolicyStoreConfig, PolicyStoreTrait};
+
+#[derive(Parser)]
+struct Opts {
+    #[clap(short, long)]
+    config: String,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-// Initialize the RPC client to communicate with Solana
-let rpc = RpcClient::new("https://api.mainnet-beta.solana.com".to_string());
-
-    // Set up the default configuration for Vixen
-    let vixen = VixenConfig::<NullConfig>::default();
-
-    // Optionally seed and sync policy from on-chain
-    let BuiltPolicyStore { subscription, policies } = PolicyStoreBuilder::new()
-        .rpc(rpc)
-        .vixen(vixen)
-        .build()
-        .await?;
+    let Opts { config } = Opts::parse();
+    let config = std::fs::read_to_string(config).expect("Error reading config file");
+    let config: PolicyStoreConfig = toml::from_str(&config).expect("Error parsing config");
 
     let local = tokio::task::LocalSet::new();
 
-    if let Some(subscription) = subscription {
-        local.spawn_local(subscription);
-    }
+    let policy_store = PolicyStore::build()
+        .config(config)
+        .run(&local)
+        .await?;
 
     local
         .run_until(async {
             // Retrieve the latest snapshot of validator policies
-            let snapshot = policies.snapshot();
+            let snapshot = policy_store.snapshot();
 
             // Define validator and policy pubkeys to check permission
             // Note: These are dummy pubkeys for demonstration purposes
