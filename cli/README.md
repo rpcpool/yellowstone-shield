@@ -226,6 +226,10 @@ The CLI provides formatted output with emojis for better readability:
 3. **Large Identity Lists**: Files are processed in batches of 20 to avoid transaction size limits
 4. **Permission Errors**: Only the policy owner can modify identities
 
+## License
+
+This project is licensed under the AGPL-3.0 License. See the [LICENSE](../LICENSE) file for details.
+
 ## Support
 
 - 📚 [Documentation](https://docs.triton.one/shield-transaction-policies)
