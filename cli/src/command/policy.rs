@@ -15,7 +15,7 @@ use spl_token_metadata_interface::{
     borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
 };
 use yellowstone_shield_client::{
-    accounts::Policy,
+    accounts::PolicyV2,
     instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
     types::PermissionStrategy,
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
@@ -138,7 +138,7 @@ impl RunCommand for CreateCommandBuilder {
             .instruction();
 
         // Create the policy account.
-        let (address, _) = Policy::find_pda(&mint.pubkey());
+        let (address, _) = PolicyV2::find_pda(&mint.pubkey());
         let create_policy_ix = CreatePolicyBuilder::new()
             .policy(address)
             .mint(mint.pubkey())
@@ -189,7 +189,7 @@ impl RunCommand for CreateCommandBuilder {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy = PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?;
 
         let mint_data = client.get_account(&mint.pubkey()).await?;
         let account_data: &[u8] = &mint_data.data;
@@ -236,7 +236,7 @@ impl RunCommand for DeleteCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (address, _) = Policy::find_pda(mint);
+        let (address, _) = PolicyV2::find_pda(mint);
         let payer_token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
@@ -303,14 +303,14 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let CommandContext { keypair: _, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (address, _) = Policy::find_pda(mint);
+        let (address, _) = PolicyV2::find_pda(mint);
 
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy = PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?;
 
-        let identities = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let identities = PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..])?;
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;

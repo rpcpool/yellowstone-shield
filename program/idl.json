@@ -348,6 +348,39 @@
           }
         ]
       }
+    },
+    {
+      "name": "PolicyV2",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "kind",
+            "type": "u8"
+          },
+          {
+            "name": "strategy",
+            "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "identitiesLen",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -358,6 +391,9 @@
         "variants": [
           {
             "name": "Policy"
+          },
+          {
+            "name": "PolicyV2"
           }
         ]
       }
@@ -597,12 +633,22 @@
       "code": 43,
       "name": "InvalidStrategy",
       "msg": "Invalid strategy"
+    },
+    {
+      "code": 44,
+      "name": "InvalidPolicyKind",
+      "msg": "Invalid Policy Kind"
+    },
+    {
+      "code": 45,
+      "name": "InvalidIndexToReferenceIdentity",
+      "msg": "Invalid Index To Reference Identity"
     }
   ],
   "metadata": {
     "origin": "shank",
     "address": "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W",
-    "binaryVersion": "0.4.2",
+    "binaryVersion": "0.4.3",
     "libVersion": "^0.4.2"
   }
 }

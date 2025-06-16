@@ -12,7 +12,7 @@ use spl_token_2022::{
 use spl_token_metadata_interface::{
     borsh::BorshDeserialize as TokenBorshDeserialize, state::TokenMetadata,
 };
-use yellowstone_shield_client::accounts::Policy;
+use yellowstone_shield_client::accounts::PolicyV2;
 use yellowstone_shield_client::{
     instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
     TransactionBuilder,
@@ -62,7 +62,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (address, _) = Policy::find_pda(mint);
+        let (address, _) = PolicyV2::find_pda(mint);
         let identities = self.identities.take().expect("identities must be set");
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
@@ -73,7 +73,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let current = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let current = PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..])?;
 
         let add: Vec<Pubkey> = identities
             .into_iter()
@@ -116,7 +116,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy = PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?;
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;
@@ -173,7 +173,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
-        let (address, _) = Policy::find_pda(mint);
+        let (address, _) = PolicyV2::find_pda(mint);
         let identities = self.identities.take().expect("identity must be set");
 
         let token_account = get_associated_token_address_with_program_id(
@@ -185,7 +185,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let current = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let current = PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..])?;
 
         let remove: Vec<usize> = identities
             .into_iter()
@@ -232,7 +232,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy = PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?;
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;

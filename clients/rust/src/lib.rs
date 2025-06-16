@@ -66,13 +66,33 @@ impl TryFrom<u8> for generated::types::Kind {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(generated::types::Kind::Policy),
+            1 => Ok(generated::types::Kind::PolicyV2),
             _ => Err(ParseError::InvalidKind),
         }
     }
 }
 
 impl generated::accounts::Policy {
-    pub fn identities_len(&self) -> u32 {
+    pub fn current_identities_len(&self) -> u32 {
+        u32::from_le_bytes(self.identities_len)
+    }
+
+    pub fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        Ok(bytemuck::try_cast_slice(data)
+            .map_err(ParseError::from)?
+            .to_vec())
+    }
+
+    pub fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+        generated::types::Kind::try_from(self.kind)
+    }
+    pub fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+        generated::types::PermissionStrategy::try_from(self.strategy)
+    }
+}
+
+impl generated::accounts::PolicyV2 {
+    pub fn current_identities_len(&self) -> u32 {
         u32::from_le_bytes(self.identities_len)
     }
 

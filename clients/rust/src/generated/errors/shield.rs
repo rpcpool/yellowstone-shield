@@ -142,6 +142,12 @@ pub enum ShieldError {
     /// 43 - Invalid strategy
     #[error("Invalid strategy")]
     InvalidStrategy = 0x2B,
+    /// 44 - Invalid Policy Kind
+    #[error("Invalid Policy Kind")]
+    InvalidPolicyKind = 0x2C,
+    /// 45 - Invalid Index To Reference Identity
+    #[error("Invalid Index To Reference Identity")]
+    InvalidIndexToReferenceIdentity = 0x2D,
 }
 
 impl solana_program::program_error::PrintProgramError for ShieldError {

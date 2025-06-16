@@ -26,6 +26,7 @@ export const SHIELD_PROGRAM_ADDRESS =
 
 export enum ShieldAccount {
   Policy,
+  PolicyV2,
 }
 
 export function identifyShieldAccount(

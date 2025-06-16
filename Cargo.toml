@@ -7,8 +7,8 @@ members = ["cli", "clients/rust", "parser", "program", "store"]
 yellowstone-vixen = "0.2.0"
 yellowstone-shield = { path = "program" }
 yellowstone-shield-cli = { path = "cli" }
-yellowstone-shield-client = "0.3.0"
-yellowstone-shield-parser = "0.3.0"
+yellowstone-shield-client = { path = "clients/rust" }
+yellowstone-shield-parser = { path = "parser" }
 anyhow = "1.0.97"
 solana-sdk = "~2.1.11"
 solana-program = "~2.1.11"
