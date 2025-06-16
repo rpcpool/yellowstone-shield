@@ -143,6 +143,29 @@ pub fn assert_writable(account_name: &str, account: &AccountInfo) -> ProgramResu
     }
 }
 
+/// Assert that the given account is writable and signer
+pub fn assert_writable_and_signer(account_name: &str, account: &AccountInfo) -> ProgramResult {
+    if !account.is_writable() {
+        msg!(
+            "Account \"{}\" [{:?}] must be writable",
+            account_name,
+            account.key(),
+        );
+        return Err(ShieldError::ExpectedWritableAccount.into());
+    }
+
+    if !account.is_signer() {
+        msg!(
+            "Account \"{}\" [{:?}] must be a signer",
+            account_name,
+            account.key(),
+        );
+        return Err(ShieldError::ExpectedSignerAccount.into());
+    }
+
+    Ok(())
+}
+
 /// Assert that the given account matches the given public key.
 pub fn assert_same_pubkeys(
     account_name: &str,

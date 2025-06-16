@@ -2,12 +2,13 @@ use borsh::BorshDeserialize;
 use bytemuck::bytes_of;
 use pinocchio::instruction::Signer;
 use pinocchio::memory::sol_memcpy;
+use pinocchio::program_error::ProgramError;
 use pinocchio::{account_info::AccountInfo, msg, pubkey::Pubkey, seeds, ProgramResult};
 
 use crate::assertions::{
     assert_ata, assert_condition, assert_empty, assert_mint_association, assert_pda,
     assert_positive_amount, assert_program_owner, assert_same_pubkeys, assert_signer,
-    assert_strategy, assert_token_owner, assert_writable,
+    assert_strategy, assert_token_owner, assert_writable, assert_writable_and_signer,
 };
 use crate::error::ShieldError;
 use crate::instruction::ShieldInstruction;
@@ -50,12 +51,9 @@ pub fn process_instruction(
 }
 
 fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, system_program, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     let nonce = assert_pda(
         "policy",
@@ -67,7 +65,6 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
     assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
     assert_signer("payer", payer)?;
     assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
     assert_writable("policy", policy)?;
     assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
     assert_program_owner("mint", mint, &spl_token_2022::ID.to_bytes())?;
@@ -90,7 +87,7 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
     assert_empty("policy", &policy)?;
 
     let strategy = strategy as u8;
-    assert_strategy(strategy)?;
+    assert_strategy(strategy as u8)?;
 
     let record = PolicyV2 {
         kind: Kind::PolicyV2 as u8,
@@ -114,12 +111,11 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
 }
 
 fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, system_program, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
+
+    let record = unsafe { PolicyV2::load(policy)? };
 
     let bump = assert_pda(
         "policy",
@@ -162,9 +158,8 @@ fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
 
     assert_condition(bump == nonce, "Policy nonce mismatch")?;
     assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
+    assert_writable_and_signer("payer", payer)?;
     assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
     assert_writable("policy", policy)?;
     assert_program_owner("mint", mint, &spl_token_2022::ID.to_bytes())?;
     assert_program_owner(
@@ -213,12 +208,9 @@ fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
 }
 
 fn remove_identity(accounts: &[AccountInfo], index: usize) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     let mut data = policy.try_borrow_mut_data()?;
 
@@ -261,7 +253,6 @@ fn remove_identity(accounts: &[AccountInfo], index: usize) -> ProgramResult {
     assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
     assert_signer("payer", payer)?;
     assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
     assert_writable("policy", policy)?;
     assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
     assert_program_owner(
