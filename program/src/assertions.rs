@@ -37,7 +37,7 @@ pub fn assert_program_owner(
 }
 
 /// Assert the derivation of the seeds against the given account and return the bump seed.
-pub fn assert_pda(
+pub fn find_and_validate_pda(
     account_name: &str,
     account: &AccountInfo,
     program_id: &Pubkey,
@@ -54,6 +54,26 @@ pub fn assert_pda(
         return Err(ShieldError::InvalidPda.into());
     }
     Ok(bump)
+}
+
+pub fn validate_pda(
+    account_name: &str,
+    account: &AccountInfo,
+    program_id: &Pubkey,
+    seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    let key = create_program_address(seeds, program_id)?;
+    if *account.key() != key {
+        msg!(
+            "Account \"{}\" [{:?}] is an invalid PDA. Expected the following valid PDA [{:?}]",
+            account_name,
+            account.key(),
+            key,
+        );
+        return Err(ShieldError::InvalidPda.into());
+    }
+
+    Ok(())
 }
 
 /// Assert a condition and return an error if it is not met.
@@ -88,10 +108,13 @@ pub fn assert_pda_with_bump(
 }
 
 /// Assert that the given account is empty.
-pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult {
-    if !account.data_is_empty() {
+pub fn assert_empty_and_owned_by_system(
+    account_name: &str,
+    account: &AccountInfo,
+) -> ProgramResult {
+    if !(account.data_is_empty() && unsafe { account.owner() } == &pinocchio_system::ID) {
         msg!(
-            "Account \"{}\" [{:?}] must be empty",
+            "Account \"{}\" [{:?}] must be empty and owned by system_program",
             account_name,
             account.key(),
         );

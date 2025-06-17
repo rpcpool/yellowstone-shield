@@ -18,12 +18,8 @@ pub struct ReplaceIdentity {
     pub token_account: solana_program::pubkey::Pubkey,
     /// The shield policy account
     pub policy: solana_program::pubkey::Pubkey,
-    /// The account paying for the storage fees
-    pub payer: solana_program::pubkey::Pubkey,
     /// The owner of the token account
     pub owner: solana_program::pubkey::Pubkey,
-    /// The system program
-    pub system_program: solana_program::pubkey::Pubkey,
 }
 
 impl ReplaceIdentity {
@@ -40,7 +36,7 @@ impl ReplaceIdentity {
         args: ReplaceIdentityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
@@ -53,14 +49,7 @@ impl ReplaceIdentity {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let mut data = borsh::to_vec(&ReplaceIdentityInstructionData::new()).unwrap();
@@ -107,17 +96,13 @@ pub struct ReplaceIdentityInstructionArgs {
 ///   0. `[]` mint
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
-///   3. `[writable, signer]` payer
-///   4. `[writable, signer]` owner
-///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   3. `[writable, signer]` owner
 #[derive(Clone, Debug, Default)]
 pub struct ReplaceIdentityBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     policy: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     index: Option<u64>,
     identity: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -145,23 +130,10 @@ impl ReplaceIdentityBuilder {
         self.policy = Some(policy);
         self
     }
-    /// The account paying for the storage fees
-    #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
-        self
-    }
     /// The owner of the token account
     #[inline(always)]
     pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
         self.owner = Some(owner);
-        self
-    }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
         self
     }
     #[inline(always)]
@@ -198,11 +170,7 @@ impl ReplaceIdentityBuilder {
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
             policy: self.policy.expect("policy is not set"),
-            payer: self.payer.expect("payer is not set"),
             owner: self.owner.expect("owner is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = ReplaceIdentityInstructionArgs {
             index: self.index.clone().expect("index is not set"),
@@ -221,12 +189,8 @@ pub struct ReplaceIdentityCpiAccounts<'a, 'b> {
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The shield policy account
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The owner of the token account
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The system program
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `replace_identity` CPI instruction.
@@ -239,12 +203,8 @@ pub struct ReplaceIdentityCpi<'a, 'b> {
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The shield policy account
     pub policy: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The owner of the token account
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The system program
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: ReplaceIdentityInstructionArgs,
 }
@@ -260,9 +220,7 @@ impl<'a, 'b> ReplaceIdentityCpi<'a, 'b> {
             mint: accounts.mint,
             token_account: accounts.token_account,
             policy: accounts.policy,
-            payer: accounts.payer,
             owner: accounts.owner,
-            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -300,7 +258,7 @@ impl<'a, 'b> ReplaceIdentityCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
             false,
@@ -314,16 +272,8 @@ impl<'a, 'b> ReplaceIdentityCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner.key,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -341,14 +291,12 @@ impl<'a, 'b> ReplaceIdentityCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
         account_infos.push(self.policy.clone());
-        account_infos.push(self.payer.clone());
         account_infos.push(self.owner.clone());
-        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -368,9 +316,7 @@ impl<'a, 'b> ReplaceIdentityCpi<'a, 'b> {
 ///   0. `[]` mint
 ///   1. `[]` token_account
 ///   2. `[writable]` policy
-///   3. `[writable, signer]` payer
-///   4. `[writable, signer]` owner
-///   5. `[]` system_program
+///   3. `[writable, signer]` owner
 #[derive(Clone, Debug)]
 pub struct ReplaceIdentityCpiBuilder<'a, 'b> {
     instruction: Box<ReplaceIdentityCpiBuilderInstruction<'a, 'b>>,
@@ -383,9 +329,7 @@ impl<'a, 'b> ReplaceIdentityCpiBuilder<'a, 'b> {
             mint: None,
             token_account: None,
             policy: None,
-            payer: None,
             owner: None,
-            system_program: None,
             index: None,
             identity: None,
             __remaining_accounts: Vec::new(),
@@ -416,25 +360,10 @@ impl<'a, 'b> ReplaceIdentityCpiBuilder<'a, 'b> {
         self.instruction.policy = Some(policy);
         self
     }
-    /// The account paying for the storage fees
-    #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
-        self
-    }
     /// The owner of the token account
     #[inline(always)]
     pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.owner = Some(owner);
-        self
-    }
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.system_program = Some(system_program);
         self
     }
     #[inline(always)]
@@ -508,14 +437,7 @@ impl<'a, 'b> ReplaceIdentityCpiBuilder<'a, 'b> {
 
             policy: self.instruction.policy.expect("policy is not set"),
 
-            payer: self.instruction.payer.expect("payer is not set"),
-
             owner: self.instruction.owner.expect("owner is not set"),
-
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -531,9 +453,7 @@ struct ReplaceIdentityCpiBuilderInstruction<'a, 'b> {
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     policy: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     index: Option<u64>,
     identity: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

@@ -227,7 +227,6 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
                     .policy(address)
                     .mint(*mint)
                     .token_account(token_account)
-                    .payer(keypair.pubkey())
                     .owner(keypair.pubkey())
                     .index(index as u64)
                     .instruction();

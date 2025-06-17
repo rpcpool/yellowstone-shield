@@ -72,7 +72,7 @@ codama.update(
         owner: { defaultValue: c.accountValueNode('payer') },
       },
     },
-    removeIdentity: {
+    closePolicy: {
       byteDeltas: [c.instructionByteDeltaNode(c.accountLinkNode('policy'))],
       accounts: {
         policy: { defaultValue: c.pdaValueNode('policy') },

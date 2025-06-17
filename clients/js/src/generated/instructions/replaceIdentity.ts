@@ -45,11 +45,7 @@ export type ReplaceIdentityInstruction<
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -64,17 +60,10 @@ export type ReplaceIdentityInstruction<
       TAccountPolicy extends string
         ? WritableAccount<TAccountPolicy>
         : TAccountPolicy,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
       TAccountOwner extends string
         ? WritableSignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -123,9 +112,7 @@ export type ReplaceIdentityInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
-  TAccountPayer extends string = string,
   TAccountOwner extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** The token extensions mint account linked to the policy */
   mint: Address<TAccountMint>;
@@ -133,12 +120,8 @@ export type ReplaceIdentityInput<
   tokenAccount: Address<TAccountTokenAccount>;
   /** The shield policy account */
   policy: Address<TAccountPolicy>;
-  /** The account paying for the storage fees */
-  payer: TransactionSigner<TAccountPayer>;
   /** The owner of the token account */
   owner: TransactionSigner<TAccountOwner>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
   index: ReplaceIdentityInstructionDataArgs['index'];
   identity: ReplaceIdentityInstructionDataArgs['identity'];
 };
@@ -147,18 +130,14 @@ export function getReplaceIdentityInstruction<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
-  TAccountPayer extends string,
   TAccountOwner extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
   input: ReplaceIdentityInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
+    TAccountOwner
   >,
   config?: { programAddress?: TProgramAddress }
 ): ReplaceIdentityInstruction<
@@ -166,9 +145,7 @@ export function getReplaceIdentityInstruction<
   TAccountMint,
   TAccountTokenAccount,
   TAccountPolicy,
-  TAccountPayer,
-  TAccountOwner,
-  TAccountSystemProgram
+  TAccountOwner
 > {
   // Program address.
   const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
@@ -178,9 +155,7 @@ export function getReplaceIdentityInstruction<
     mint: { value: input.mint ?? null, isWritable: false },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
     policy: { value: input.policy ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -190,21 +165,13 @@ export function getReplaceIdentityInstruction<
   // Original args.
   const args = { ...input };
 
-  // Resolve default values.
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.policy),
-      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getReplaceIdentityInstructionDataEncoder().encode(
@@ -215,9 +182,7 @@ export function getReplaceIdentityInstruction<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
+    TAccountOwner
   >;
 
   return instruction;
@@ -235,12 +200,8 @@ export type ParsedReplaceIdentityInstruction<
     tokenAccount: TAccountMetas[1];
     /** The shield policy account */
     policy: TAccountMetas[2];
-    /** The account paying for the storage fees */
-    payer: TAccountMetas[3];
     /** The owner of the token account */
-    owner: TAccountMetas[4];
-    /** The system program */
-    systemProgram: TAccountMetas[5];
+    owner: TAccountMetas[3];
   };
   data: ReplaceIdentityInstructionData;
 };
@@ -253,7 +214,7 @@ export function parseReplaceIdentityInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedReplaceIdentityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -269,9 +230,7 @@ export function parseReplaceIdentityInstruction<
       mint: getNextAccount(),
       tokenAccount: getNextAccount(),
       policy: getNextAccount(),
-      payer: getNextAccount(),
       owner: getNextAccount(),
-      systemProgram: getNextAccount(),
     },
     data: getReplaceIdentityInstructionDataDecoder().decode(instruction.data),
   };
