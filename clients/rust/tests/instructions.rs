@@ -87,6 +87,7 @@ async fn test_policy_v2_lifecycle() {
         .instruction();
 
     // Create the policy account.
+    // PDA seeds are same for both Policy and PolicyV2
     let address = PolicyV2::find_pda(&mint.pubkey()).0;
     let create_policy_ix = CreatePolicyBuilder::new()
         .policy(address)
