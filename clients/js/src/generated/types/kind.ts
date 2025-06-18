@@ -17,6 +17,7 @@ import {
 
 export enum Kind {
   Policy,
+  PolicyV2,
 }
 
 export type KindArgs = Kind;

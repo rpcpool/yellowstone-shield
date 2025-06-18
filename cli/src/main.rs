@@ -44,7 +44,7 @@ async fn main() -> Result<(), CliError> {
     info!("--------------------------------");
     info!("🔍 Details");
     if let Some(policy) = policy {
-        match policy.strategy {
+        match policy.strategy() {
             0 => info!("  ❌ Strategy: Deny"),
             1 => info!("  ✅ Strategy: Allow"),
             _ => info!("  ❓ Strategy: Unknown"),

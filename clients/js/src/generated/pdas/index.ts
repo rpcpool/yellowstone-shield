@@ -7,3 +7,4 @@
  */
 
 export * from './policy';
+export * from './policyV2';

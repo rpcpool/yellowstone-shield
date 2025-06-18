@@ -13,7 +13,7 @@ account-dependencies = []
 
 [features]
 no-entrypoint = []
-test-sbf = []
+test-sbf = ["no-entrypoint"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -23,7 +23,7 @@ doctest = false
 [dependencies]
 borsh = { version = "1.5.1", features = ["derive"] }
 shank = "^0.4.2"
-num-derive = "^0.3"
+num-derive = "^0.4.2"
 num-traits = "^0.2"
 solana-program = { workspace = true }
 thiserror = "^1.0"

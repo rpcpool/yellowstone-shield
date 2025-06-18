@@ -1,3 +1,4 @@
+use borsh::BorshDeserialize;
 use log::info;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
@@ -15,9 +16,9 @@ use spl_token_metadata_interface::{
     borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
 };
 use yellowstone_shield_client::{
-    accounts::Policy,
+    accounts::{Policy, PolicyV2},
     instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
-    types::PermissionStrategy,
+    types::{Kind, PermissionStrategy},
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
     InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
     TransactionBuilder,
@@ -25,6 +26,20 @@ use yellowstone_shield_client::{
 
 use super::{RunCommand, RunResult};
 use crate::command::{CommandComplete, CommandContext, SolanaAccount};
+
+pub enum PolicyVersion {
+    V1(Policy),
+    V2(PolicyV2),
+}
+
+impl PolicyVersion {
+    pub fn strategy(&self) -> u8 {
+        match self {
+            PolicyVersion::V1(pv1) => pv1.strategy,
+            PolicyVersion::V2(pv2) => pv2.strategy,
+        }
+    }
+}
 
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder {
@@ -138,6 +153,7 @@ impl RunCommand for CreateCommandBuilder {
             .instruction();
 
         // Create the policy account.
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(&mint.pubkey());
         let create_policy_ix = CreatePolicyBuilder::new()
             .policy(address)
@@ -189,7 +205,14 @@ impl RunCommand for CreateCommandBuilder {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
+            Kind::PolicyV2 => {
+                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
+            }
+        };
 
         let mint_data = client.get_account(&mint.pubkey()).await?;
         let account_data: &[u8] = &mint_data.data;
@@ -236,6 +259,7 @@ impl RunCommand for DeleteCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
         let payer_token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
@@ -303,14 +327,25 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let CommandContext { keypair: _, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
 
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
-        let identities = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
+            Kind::PolicyV2 => {
+                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
+            }
+        };
+
+        let identities = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..])?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..])?,
+        };
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;

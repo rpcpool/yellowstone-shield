@@ -6,7 +6,8 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use spl_token_metadata_interface::state::TokenMetadata;
-use yellowstone_shield_client::accounts::Policy;
+
+use crate::policy::PolicyVersion;
 
 pub struct CommandContext {
     pub client: RpcClient,
@@ -14,7 +15,10 @@ pub struct CommandContext {
 }
 
 pub struct SolanaAccount<T>(pub Pubkey, pub Option<T>);
-pub struct CommandComplete(pub SolanaAccount<TokenMetadata>, pub SolanaAccount<Policy>);
+pub struct CommandComplete(
+    pub SolanaAccount<TokenMetadata>,
+    pub SolanaAccount<PolicyVersion>,
+);
 
 pub type RunResult = Result<CommandComplete>;
 

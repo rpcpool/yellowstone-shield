@@ -1,5 +1,6 @@
 use super::{CommandComplete, RunCommand, RunResult, SolanaAccount};
-use crate::command::CommandContext;
+use crate::{command::CommandContext, policy::PolicyVersion};
+use borsh::BorshDeserialize;
 use log::info;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
@@ -12,7 +13,10 @@ use spl_token_2022::{
 use spl_token_metadata_interface::{
     borsh::BorshDeserialize as TokenBorshDeserialize, state::TokenMetadata,
 };
-use yellowstone_shield_client::accounts::Policy;
+use yellowstone_shield_client::{
+    accounts::{Policy, PolicyV2},
+    types::Kind,
+};
 use yellowstone_shield_client::{
     instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
     TransactionBuilder,
@@ -62,6 +66,8 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
         let identities = self.identities.take().expect("identities must be set");
         let token_account = get_associated_token_address_with_program_id(
@@ -73,7 +79,12 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let current = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let current = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..]),
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..]),
+        }?;
 
         let add: Vec<Pubkey> = identities
             .into_iter()
@@ -116,7 +127,14 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
+            Kind::PolicyV2 => {
+                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
+            }
+        };
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;
@@ -173,6 +191,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
         let identities = self.identities.take().expect("identity must be set");
 
@@ -185,7 +204,12 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let current = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let current = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..]),
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..]),
+        }?;
 
         let remove: Vec<usize> = identities
             .into_iter()
@@ -232,7 +256,14 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
+            Kind::PolicyV2 => {
+                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
+            }
+        };
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;
