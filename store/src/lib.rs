@@ -14,11 +14,7 @@ use solana_client::{
 };
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
-use yellowstone_shield_client::{
-    accounts,
-    types::{Kind, PermissionStrategy},
-    PolicyTrait,
-};
+use yellowstone_shield_client::{accounts, types::PermissionStrategy, PolicyTrait};
 use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
 use yellowstone_vixen::{
     config::{BufferConfig, OptConfig, VixenConfig, YellowstoneConfig},

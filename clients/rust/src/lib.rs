@@ -106,9 +106,7 @@ impl PolicyTrait for generated::accounts::Policy {
 
         Ok(bytemuck::try_cast_slice::<_, Pubkey>(identities_data)
             .map_err(ParseError::from)?
-            .iter()
-            .cloned()
-            .collect())
+            .to_vec())
     }
 
     fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
