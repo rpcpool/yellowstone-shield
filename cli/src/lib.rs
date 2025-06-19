@@ -106,6 +106,7 @@ pub enum IdentitiesAction {
         #[arg(long)]
         mint: Pubkey,
         /// The identities to remove from the policy
+        #[arg(long)]
         identities_path: PathBuf,
     },
 }

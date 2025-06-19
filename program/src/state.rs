@@ -65,7 +65,7 @@ impl Policy {
 
     pub fn identities_len_from_buffer(acc_data_len: usize) -> usize {
         if acc_data_len > Policy::LEN && (acc_data_len - Policy::LEN) % BYTES_PER_PUBKEY == 0 {
-            return (acc_data_len - Policy::LEN) / BYTES_PER_PUBKEY;
+            (acc_data_len - Policy::LEN) / BYTES_PER_PUBKEY
         } else {
             0
         }
@@ -97,7 +97,7 @@ impl PolicyV2 {
 
     pub fn identities_len_from_buffer(acc_data_len: usize) -> usize {
         if acc_data_len > PolicyV2::LEN && (acc_data_len - PolicyV2::LEN) % BYTES_PER_PUBKEY == 0 {
-            return (acc_data_len - PolicyV2::LEN) / BYTES_PER_PUBKEY;
+            (acc_data_len - PolicyV2::LEN) / BYTES_PER_PUBKEY
         } else {
             0
         }

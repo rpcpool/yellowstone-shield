@@ -60,7 +60,7 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
     validate_policy_associated_accounts(owner, mint, token_account)?;
 
     let strategy = strategy as u8;
-    assert_strategy(strategy as u8)?;
+    assert_strategy(strategy)?;
 
     let nonce = find_and_validate_pda(
         "policy",
@@ -73,7 +73,7 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
         kind: Kind::PolicyV2 as u8,
         strategy,
         nonce,
-        mint: mint.key().clone(),
+        mint: *mint.key(),
         identities_len: [0; 4],
     };
 
@@ -81,7 +81,7 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
     let seed = seeds!(b"shield", b"policy", mint.key(), bump);
     let signer = Signer::from(&seed);
 
-    create_account(&policy, &payer, PolicyV2::LEN, &crate::ID, &[signer])?;
+    create_account(policy, payer, PolicyV2::LEN, &crate::ID, &[signer])?;
 
     let mut data = policy.try_borrow_mut_data()?;
 
@@ -332,9 +332,9 @@ fn validate_policy_associated_accounts(
         )
         .map_err(Into::<ShieldError>::into)?;
 
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
+    assert_ata("token_account", token_account, owner.key(), mint.key())?;
+    assert_mint_association("token_account", mint.key(), &account)?;
+    assert_token_owner("token_account", owner.key(), &account)?;
     assert_positive_amount("token_account", &account)?;
 
     Ok(())
