@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-parser"
-version = "0.3.0"
+version = "0.5.0"
 edition = "2021"
 description = "Parser for the Yellowstone Shield program"
 license = "Apache-2.0"
