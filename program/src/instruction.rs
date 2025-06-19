@@ -32,9 +32,7 @@ pub enum ShieldInstruction {
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
-    #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
-    #[account(4, writable, signer, name="owner", desc = "The owner of the token account")]
-    #[account(5, name="system_program", desc = "The system program")]
+    #[account(3, writable, signer, name="owner", desc = "The owner of the token account")]
     RemoveIdentity {
         index: usize,
     },
@@ -42,9 +40,7 @@ pub enum ShieldInstruction {
     #[account(0, name="mint", desc = "The token extensions mint account linked to the policy")]
     #[account(1, name="token_account", desc = "The authority over the policy based on token ownership of the mint")]
     #[account(2, writable, name="policy", desc = "The shield policy account")]
-    #[account(3, writable, signer, name="payer", desc = "The account paying for the storage fees")]
-    #[account(4, writable, signer, name="owner", desc = "The owner of the token account")]
-    #[account(5, name="system_program", desc = "The system program")]
+    #[account(3, writable, signer, name="owner", desc = "The owner of the token account")]
     ReplaceIdentity {
         index: usize,
         identity: Pubkey,

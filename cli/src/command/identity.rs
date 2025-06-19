@@ -19,7 +19,7 @@ use yellowstone_shield_client::{
 };
 use yellowstone_shield_client::{
     instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
-    TransactionBuilder,
+    PolicyTrait, TransactionBuilder,
 };
 
 const CHUNK_SIZE: usize = 20;
@@ -82,8 +82,8 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
         let current = match policy_version {
-            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..]),
-            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..]),
+            Kind::Policy => Policy::try_deserialize_identities(account_data),
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data),
         }?;
 
         let add: Vec<Pubkey> = identities
@@ -130,10 +130,8 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
         let policy = match policy_version {
-            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
-            Kind::PolicyV2 => {
-                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
-            }
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(account_data)?),
+            Kind::PolicyV2 => PolicyVersion::V2(PolicyV2::from_bytes(account_data)?),
         };
 
         let mint_data = client.get_account(mint).await?;
@@ -207,8 +205,8 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
         let current = match policy_version {
-            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..]),
-            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..]),
+            Kind::Policy => Policy::try_deserialize_identities(account_data),
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data),
         }?;
 
         let remove: Vec<usize> = identities
@@ -227,7 +225,6 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
                     .policy(address)
                     .mint(*mint)
                     .token_account(token_account)
-                    .payer(keypair.pubkey())
                     .owner(keypair.pubkey())
                     .index(index as u64)
                     .instruction();

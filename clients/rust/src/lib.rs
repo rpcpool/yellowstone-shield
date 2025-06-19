@@ -28,6 +28,8 @@ pub enum ParseError {
     InvalidKind,
     #[error("Invalid PodCastError")]
     InvalidPodCastError,
+    #[error("No mint")]
+    NoMint,
 }
 
 impl FromStr for generated::types::PermissionStrategy {
@@ -72,41 +74,81 @@ impl TryFrom<u8> for generated::types::Kind {
     }
 }
 
-impl generated::accounts::Policy {
-    pub fn current_identities_len(&self) -> u32 {
+pub trait PolicyTrait {
+    const LEN: usize;
+    fn current_identities_len(&self) -> u32;
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError>;
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError>;
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError>;
+    fn try_mint(&self) -> Result<Pubkey, ParseError>;
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized;
+}
+
+impl PolicyTrait for generated::accounts::Policy {
+    const LEN: usize = generated::accounts::Policy::LEN;
+
+    fn try_mint(&self) -> Result<Pubkey, ParseError> {
+        Err(ParseError::NoMint)
+    }
+
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        generated::accounts::Policy::from_bytes(&data[..Self::LEN])
+    }
+
+    fn current_identities_len(&self) -> u32 {
         u32::from_le_bytes(self.identities_len)
     }
 
-    pub fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
-        Ok(bytemuck::try_cast_slice(data)
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        let identities_data = &data[Self::LEN..];
+
+        Ok(bytemuck::try_cast_slice::<_, Pubkey>(identities_data)
             .map_err(ParseError::from)?
-            .to_vec())
+            .iter()
+            .cloned()
+            .collect())
     }
 
-    pub fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
         generated::types::Kind::try_from(self.kind)
     }
-    pub fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
         generated::types::PermissionStrategy::try_from(self.strategy)
     }
 }
 
-impl generated::accounts::PolicyV2 {
-    pub fn current_identities_len(&self) -> u32 {
+impl PolicyTrait for generated::accounts::PolicyV2 {
+    const LEN: usize = generated::accounts::PolicyV2::LEN;
+
+    fn try_mint(&self) -> Result<Pubkey, ParseError> {
+        Ok(self.mint)
+    }
+
+    fn current_identities_len(&self) -> u32 {
         u32::from_le_bytes(self.identities_len)
     }
 
-    pub fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
-        Ok(bytemuck::try_cast_slice(data)
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        let identities_data = &data[Self::LEN..];
+
+        Ok(bytemuck::try_cast_slice(identities_data)
             .map_err(ParseError::from)?
             .to_vec())
     }
 
-    pub fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
         generated::types::Kind::try_from(self.kind)
     }
-    pub fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
         generated::types::PermissionStrategy::try_from(self.strategy)
+    }
+
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        generated::accounts::PolicyV2::from_bytes(&data[..Self::LEN])
     }
 }
 

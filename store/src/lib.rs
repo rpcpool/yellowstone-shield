@@ -14,7 +14,11 @@ use solana_client::{
 };
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
-use yellowstone_shield_client::{accounts, types::PermissionStrategy};
+use yellowstone_shield_client::{
+    accounts,
+    types::{Kind, PermissionStrategy},
+    PolicyTrait,
+};
 use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
 use yellowstone_vixen::{
     config::{BufferConfig, OptConfig, VixenConfig, YellowstoneConfig},
@@ -253,11 +257,26 @@ impl PolicyRpcClient {
             .filter_map(|(address, account)| {
                 let data: &[u8] = &account.data;
 
-                let meta = accounts::Policy::from_bytes(&data[..accounts::Policy::LEN]).ok()?;
-                let identities =
-                    accounts::Policy::try_deserialize_identities(&data[accounts::Policy::LEN..])
-                        .ok()?;
-                let strategy = meta.try_strategy().ok()?;
+                let (strategy, identities) = match data[0] {
+                    0 => {
+                        let strategy = accounts::Policy::from_bytes(data)
+                            .ok()?
+                            .try_strategy()
+                            .ok()?;
+                        let identities = accounts::Policy::try_deserialize_identities(data).ok()?;
+                        Some((strategy, identities))
+                    }
+                    1 => {
+                        let strategy = accounts::PolicyV2::from_bytes(data)
+                            .ok()?
+                            .try_strategy()
+                            .ok()?;
+                        let identities =
+                            accounts::PolicyV2::try_deserialize_identities(data).ok()?;
+                        Some((strategy, identities))
+                    }
+                    _ => None,
+                }?;
 
                 let policy = Policy::new(strategy, identities);
 
@@ -378,6 +397,8 @@ pub struct PolicyStoreConfig {
 pub enum BuilderError {
     #[error("No config")]
     NoConfig,
+    #[error("Unable to deserialize policy")]
+    DeserializePolicy,
 }
 
 #[derive(Default)]

@@ -22,8 +22,8 @@ use yellowstone_shield_client::{
     accounts::PolicyV2,
     instructions::{AddIdentityBuilder, CreatePolicyBuilder, RemoveIdentityBuilder},
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
-    InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
-    TransactionBuilder,
+    InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
+    TokenExtensionsMintToBuilder, TransactionBuilder,
 };
 
 #[tokio::test]
@@ -215,7 +215,6 @@ async fn test_policy_v2_lifecycle() {
     let remove_identity_ix = RemoveIdentityBuilder::new()
         .policy(address)
         .mint(mint.pubkey())
-        .payer(context.payer.pubkey())
         .owner(context.payer.pubkey())
         .token_account(payer_token_account)
         .index(0)
@@ -254,7 +253,6 @@ async fn test_policy_v2_lifecycle() {
     let replace_identity_ix = ReplaceIdentityBuilder::new()
         .policy(address)
         .mint(mint.pubkey())
-        .payer(context.payer.pubkey())
         .owner(context.payer.pubkey())
         .token_account(payer_token_account)
         .index(0)
@@ -293,8 +291,8 @@ async fn test_policy_v2_lifecycle() {
     let mint_account_data = mint_account.data;
 
     let pod_mint = PodStateWithExtensions::<PodMint>::unpack(&mint_account_data).unwrap();
-    let mut mint_bytes = pod_mint.get_extension_bytes::<TokenMetadata>().unwrap();
-    let token_metadata = TokenMetadata::try_from_slice(&mut mint_bytes).unwrap();
+    let mint_bytes = pod_mint.get_extension_bytes::<TokenMetadata>().unwrap();
+    let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
     assert_eq!(token_metadata.name, "Test".to_string());
     assert_eq!(token_metadata.symbol, "TST".to_string());

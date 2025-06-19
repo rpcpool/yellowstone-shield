@@ -2,12 +2,13 @@ use borsh::BorshDeserialize;
 use bytemuck::bytes_of;
 use pinocchio::instruction::Signer;
 use pinocchio::memory::sol_memcpy;
+use pinocchio::program_error::ProgramError;
 use pinocchio::{account_info::AccountInfo, msg, pubkey::Pubkey, seeds, ProgramResult};
 
 use crate::assertions::{
-    assert_ata, assert_condition, assert_empty, assert_mint_association, assert_pda,
-    assert_positive_amount, assert_program_owner, assert_same_pubkeys, assert_signer,
-    assert_strategy, assert_token_owner, assert_writable,
+    assert_ata, assert_empty_and_owned_by_system, assert_mint_association, assert_positive_amount,
+    assert_program_owner, assert_signer, assert_strategy, assert_token_owner,
+    find_and_validate_pda, validate_pda,
 };
 use crate::error::ShieldError;
 use crate::instruction::ShieldInstruction;
@@ -50,53 +51,29 @@ pub fn process_instruction(
 }
 
 fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, _system_program, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
-    let nonce = assert_pda(
+    assert_empty_and_owned_by_system("policy", policy)?;
+
+    validate_policy_associated_accounts(owner, mint, token_account)?;
+
+    let strategy = strategy as u8;
+    assert_strategy(strategy)?;
+
+    let nonce = find_and_validate_pda(
         "policy",
         policy,
         &crate::ID,
         &[b"shield", b"policy", mint.key()],
     )?;
 
-    assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
-    assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
-    assert_writable("policy", policy)?;
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_program_owner("mint", mint, &spl_token_2022::ID.to_bytes())?;
-    assert_program_owner(
-        "token_account",
-        &token_account,
-        &spl_token_2022::ID.to_bytes(),
-    )?;
-
-    let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
-
-    assert_positive_amount("token_account", &account)?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
-    assert_empty("policy", &policy)?;
-
-    let strategy = strategy as u8;
-    assert_strategy(strategy)?;
-
     let record = PolicyV2 {
         kind: Kind::PolicyV2 as u8,
         strategy,
         nonce,
-        mint: mint.key().clone(),
+        mint: *mint.key(),
         identities_len: [0; 4],
     };
 
@@ -104,7 +81,7 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
     let seed = seeds!(b"shield", b"policy", mint.key(), bump);
     let signer = Signer::from(&seed);
 
-    create_account(&policy, &payer, PolicyV2::LEN, &crate::ID, &[signer])?;
+    create_account(policy, payer, PolicyV2::LEN, &crate::ID, &[signer])?;
 
     let mut data = policy.try_borrow_mut_data()?;
 
@@ -114,19 +91,11 @@ fn create_policy(accounts: &[AccountInfo], strategy: PermissionStrategy) -> Prog
 }
 
 fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, _system_program, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
-    let bump = assert_pda(
-        "policy",
-        policy,
-        &crate::ID,
-        &[b"shield", b"policy", mint.key()],
-    )?;
+    validate_policy_associated_accounts(owner, mint, token_account)?;
 
     let (
         identities_len_offset,
@@ -160,29 +129,12 @@ fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
         }
     };
 
-    assert_condition(bump == nonce, "Policy nonce mismatch")?;
-    assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
-    assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
-    assert_writable("policy", policy)?;
-    assert_program_owner("mint", mint, &spl_token_2022::ID.to_bytes())?;
-    assert_program_owner(
-        "token_account",
-        token_account,
-        &spl_token_2022::ID.to_bytes(),
+    validate_pda(
+        "policy",
+        policy,
+        &crate::ID,
+        &[b"shield", b"policy", mint.key(), &[nonce]],
     )?;
-    let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
-
-    assert_positive_amount("token_account", &account)?;
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
 
     realloc_account(policy, payer, policy.data_len() + BYTES_PER_PUBKEY)?;
 
@@ -213,12 +165,11 @@ fn add_identity(accounts: &[AccountInfo], identity: Pubkey) -> ProgramResult {
 }
 
 fn remove_identity(accounts: &[AccountInfo], index: usize) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, owner, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
+
+    validate_policy_associated_accounts(owner, mint, token_account)?;
 
     let mut data = policy.try_borrow_mut_data()?;
 
@@ -244,43 +195,18 @@ fn remove_identity(accounts: &[AccountInfo], index: usize) -> ProgramResult {
             }
         };
 
+    validate_pda(
+        "policy",
+        policy,
+        &crate::ID,
+        &[b"shield", b"policy", mint.key(), &[nonce]],
+    )?;
+
     let position = meta_len + index * BYTES_PER_PUBKEY;
 
     if position + BYTES_PER_PUBKEY > data.len() {
         return Err(ShieldError::InvalidIndexToReferenceIdentity.into());
     }
-
-    let bump = assert_pda(
-        "policy",
-        policy,
-        &crate::ID,
-        &[b"shield", b"policy", mint.key()],
-    )?;
-
-    assert_condition(bump == nonce, "Policy nonce mismatch")?;
-    assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
-    assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
-    assert_writable("policy", policy)?;
-    assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
-    assert_program_owner(
-        "token_account",
-        token_account,
-        &spl_token_2022::ID.to_bytes(),
-    )?;
-
-    let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
-
-    assert_positive_amount("token_account", &account)?;
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
 
     unsafe {
         sol_memcpy(
@@ -305,12 +231,11 @@ fn remove_identity(accounts: &[AccountInfo], index: usize) -> ProgramResult {
 }
 
 fn replace_identity(accounts: &[AccountInfo], index: usize, identity: Pubkey) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, owner, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
+
+    validate_policy_associated_accounts(owner, mint, token_account)?;
 
     let mut data = policy.try_borrow_mut_data()?;
 
@@ -336,43 +261,18 @@ fn replace_identity(accounts: &[AccountInfo], index: usize, identity: Pubkey) ->
             }
         };
 
+    validate_pda(
+        "policy",
+        policy,
+        &crate::ID,
+        &[b"shield", b"policy", mint.key(), &[nonce]],
+    )?;
+
     let position = meta_len + index * BYTES_PER_PUBKEY;
 
     if position + BYTES_PER_PUBKEY > data.len() {
         return Err(ShieldError::InvalidIndexToReferenceIdentity.into());
     }
-
-    let bump = assert_pda(
-        "policy",
-        policy,
-        &crate::ID,
-        &[b"shield", b"policy", mint.key()],
-    )?;
-
-    assert_condition(bump == nonce, "Policy nonce mismatch")?;
-    assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
-    assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
-    assert_writable("policy", policy)?;
-    assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
-    assert_program_owner(
-        "token_account",
-        token_account,
-        &spl_token_2022::ID.to_bytes(),
-    )?;
-
-    let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
-
-    assert_positive_amount("token_account", &account)?;
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
 
     let is_new_identity = data[position..position + BYTES_PER_PUBKEY] == Pubkey::default();
 
@@ -401,19 +301,24 @@ fn replace_identity(accounts: &[AccountInfo], index: usize, identity: Pubkey) ->
 }
 
 fn close_policy(accounts: &[AccountInfo]) -> ProgramResult {
-    let mint = &accounts[0];
-    let token_account = &accounts[1];
-    let policy = &accounts[2];
-    let payer = &accounts[3];
-    let owner = &accounts[4];
-    let system_program = &accounts[5];
+    let [mint, token_account, policy, payer, owner, _system_program, ..] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
-    assert_same_pubkeys("system_program", system_program, &pinocchio_system::ID)?;
-    assert_signer("payer", payer)?;
+    validate_policy_associated_accounts(owner, mint, token_account)?;
+
+    close_account(policy, payer)?;
+
+    Ok(())
+}
+
+fn validate_policy_associated_accounts(
+    owner: &AccountInfo,
+    mint: &AccountInfo,
+    token_account: &AccountInfo,
+) -> ProgramResult {
     assert_signer("owner", owner)?;
-    assert_writable("payer", payer)?;
-    assert_writable("policy", policy)?;
-    assert_program_owner("mint", mint, &spl_token_2022::ID.to_bytes())?;
+    assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
     assert_program_owner(
         "token_account",
         token_account,
@@ -427,12 +332,10 @@ fn close_policy(accounts: &[AccountInfo]) -> ProgramResult {
         )
         .map_err(Into::<ShieldError>::into)?;
 
+    assert_ata("token_account", token_account, owner.key(), mint.key())?;
+    assert_mint_association("token_account", mint.key(), &account)?;
+    assert_token_owner("token_account", owner.key(), &account)?;
     assert_positive_amount("token_account", &account)?;
-    assert_ata("token_account", token_account, &owner.key(), &mint.key())?;
-    assert_token_owner("token_account", &owner.key(), &account)?;
-    assert_mint_association("token_account", &mint.key(), &account)?;
-
-    close_account(policy, payer)?;
 
     Ok(())
 }
