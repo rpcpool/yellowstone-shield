@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Yellowstone Shield CLI is a command-line tool for managing access policies for Solana identities, such as validators, wallets, or programs. It allows users to create and manage policies, add or remove identites, and configure various settings related to the policy.
+The Yellowstone Shield CLI is a command-line tool for managing access policies for Solana identities, such as validators, wallets, or programs. It allows users to create and manage policies, add, update and remove identites, and configure various settings related to the policy.
 
 ## Installation
 
@@ -50,6 +50,15 @@ The CLI provides several commands to interact with the shield policies and ident
 
   - `--mint <MINT>`: The mint address linked to the shield policy.
   - `--identities-path <IDENTITIES>`: File path to a list of public keys, each on a new line, to be added.
+
+- **Update Identities**
+
+  ```bash
+  yellowstone-shield identities update --mint <MINT> --identities-path <IDENTITIES>
+  ```
+
+  - `--mint <MINT>`: The mint address linked to the shield policy.
+  - `--identities-path <IDENTITIES>`: File path to a list of public keys, each on a new line, to be updated/replaced.
 
 - **Remove Identities**
 
