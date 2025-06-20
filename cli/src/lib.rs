@@ -100,7 +100,7 @@ pub enum IdentitiesAction {
         #[arg(long)]
         identities_path: PathBuf,
     },
-    /// Update Identities in a policy
+    /// Update/Replace Identities for a Policy
     Update {
         /// The mint address associated with the policy
         #[arg(long)]

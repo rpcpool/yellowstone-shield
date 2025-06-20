@@ -75,7 +75,10 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
 
         // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
-        let identities = self.identities.take().expect("identities must be set");
+        let mut identities = self.identities.take().expect("identities must be set");
+        let mut seen = std::collections::HashSet::new();
+        identities.retain(|pk| seen.insert(*pk));
+
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
@@ -92,12 +95,51 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
             Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data),
         }?;
 
-        let add: Vec<Pubkey> = identities
+        let empty_identity_indices = current
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, p)| {
+                if p == &Pubkey::default() {
+                    return Some(idx);
+                }
+                None
+            })
+            .collect::<Vec<usize>>();
+
+        let mut add_or_replace: Vec<Pubkey> = identities
             .into_iter()
             .filter(|identity| !current.contains(identity))
             .collect();
 
-        send_batched_tx(&client, &keypair, &add, CHUNK_SIZE, |identity| {
+        let mut replace = Vec::new();
+
+        for i in empty_identity_indices {
+            if let Some(iden) = add_or_replace.pop() {
+                replace.push((i, iden));
+            }
+        }
+
+        // REPLACE
+        send_batched_tx(
+            &client,
+            &keypair,
+            &replace,
+            CHUNK_SIZE,
+            |(idx, identity)| {
+                ReplaceIdentityBuilder::new()
+                    .policy(address)
+                    .mint(*mint)
+                    .token_account(token_account)
+                    .owner(keypair.pubkey())
+                    .identity(*identity)
+                    .index(*idx as u64)
+                    .instruction()
+            },
+        )
+        .await?;
+
+        // ADD
+        send_batched_tx(&client, &keypair, &add_or_replace, CHUNK_SIZE, |identity| {
             AddIdentityBuilder::new()
                 .policy(address)
                 .mint(*mint)
@@ -180,10 +222,9 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
         // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
 
-        let identities = self
-            .identities
-            .take()
-            .expect("identity_with_index must be set");
+        let mut identities = self.identities.take().expect("identities must be set");
+        let mut seen = std::collections::HashSet::new();
+        identities.retain(|pk| seen.insert(*pk));
 
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
@@ -197,9 +238,9 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
         let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
         let current = match policy_version {
-            Kind::Policy => Policy::try_deserialize_identities(&account_data[Policy::LEN..]),
-            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(&account_data[PolicyV2::LEN..]),
-        }?;
+            Kind::Policy => Policy::try_deserialize_identities(account_data)?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
+        };
 
         let current_set: HashSet<_> = current.iter().collect();
 
@@ -216,13 +257,15 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
             .iter()
             .enumerate()
             .filter_map(|(idx, p)| {
-                if p == &Pubkey::default() || !identities_set.contains(p) {
-                    Some(idx)
-                } else {
-                    None
+                if p == &Pubkey::default() {
+                    return Some((idx, true));
                 }
+                if !identities_set.contains(p) {
+                    return Some((idx, false));
+                }
+                None
             })
-            .collect::<VecDeque<usize>>();
+            .collect::<VecDeque<(usize, bool)>>();
 
         let len_current = current.len();
         let len_identities = identities.len();
@@ -232,18 +275,29 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
 
         let mut remove = Vec::new();
         for _ in 0..len_diff {
-            if let Some(idx) = iden_to_be_replaced_or_deleted_indices.pop_back() {
-                remove.push(idx);
+            if let Some((idx, already_deleted)) = iden_to_be_replaced_or_deleted_indices.pop_back()
+            {
+                if !already_deleted {
+                    remove.push(idx);
+                }
             }
         }
 
         let mut replace = Vec::new();
-        while let (Some(idx), Some(identity)) = (
-            iden_to_be_replaced_or_deleted_indices.pop_front(),
-            iden_to_replace_or_add.pop_front(),
-        ) {
+
+        let min_len = usize::min(
+            iden_to_be_replaced_or_deleted_indices.len(),
+            iden_to_replace_or_add.len(),
+        );
+
+        for i in 0..min_len {
+            let (idx, _) = iden_to_be_replaced_or_deleted_indices[i];
+            let identity = iden_to_replace_or_add[i];
             replace.push((idx, identity));
         }
+
+        iden_to_be_replaced_or_deleted_indices.drain(0..min_len);
+        iden_to_replace_or_add.drain(0..min_len);
 
         let add: Vec<_> = iden_to_replace_or_add.into_iter().collect();
 
@@ -360,7 +414,10 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let mint = self.mint.expect("mint must be set");
         // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
-        let identities = self.identities.take().expect("identity must be set");
+
+        let mut identities = self.identities.take().expect("identities must be set");
+        let mut seen = std::collections::HashSet::new();
+        identities.retain(|pk| seen.insert(*pk));
 
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
