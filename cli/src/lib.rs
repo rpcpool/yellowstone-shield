@@ -100,6 +100,16 @@ pub enum IdentitiesAction {
         #[arg(long)]
         identities_path: PathBuf,
     },
+    /// Update/Replace Identities for a Policy
+    Update {
+        /// The mint address associated with the policy
+        #[arg(long)]
+        mint: Pubkey,
+        /// The identities to update/replace
+        #[arg(long)]
+        identities_path: PathBuf,
+    },
+
     /// Remove identities from a policy
     Remove {
         /// The mint address associated with the policy
@@ -174,6 +184,21 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
                     .collect();
 
                 identity::AddBatchCommandBuilder::new()
+                    .mint(mint)
+                    .identities(identities)
+                    .run(context)
+                    .await
+            }
+            IdentitiesAction::Update {
+                mint,
+                identities_path,
+            } => {
+                let identities: Vec<Pubkey> = read_path(identities_path)?
+                    .lines()
+                    .filter_map(|s| Pubkey::from_str(s.trim()).ok())
+                    .collect();
+
+                identity::UpdateBatchCommandBuilder::new()
                     .mint(mint)
                     .identities(identities)
                     .run(context)
