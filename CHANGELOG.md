@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Enhanced `add` command to **automatically replace removed identities** instead of appending, when available
+- Include displaying identity details while logging policy details after command completion
 
 ## 0.5.0 - 06/19/2025
 

@@ -1,9 +1,10 @@
 use std::collections::{HashSet, VecDeque};
 
-use super::{CommandComplete, RunCommand, RunResult, SolanaAccount};
+use super::{RunCommand, RunResult};
 use crate::{
     command::{send_batched_tx, CommandContext},
     policy::PolicyVersion,
+    CommandComplete, LogPolicy, SolanaAccount,
 };
 use borsh::BorshDeserialize;
 
@@ -164,11 +165,18 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         };
 
         let mint_data = client.get_account(mint).await?;
-        let account_data: &[u8] = &mint_data.data;
+        let mint_account_data: &[u8] = &mint_data.data;
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(mint_account_data).unwrap();
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        let identities = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(account_data)?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
+        };
+
+        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
@@ -358,11 +366,18 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
         };
 
         let mint_data = client.get_account(mint).await?;
-        let account_data: &[u8] = &mint_data.data;
+        let mint_account_data: &[u8] = &mint_data.data;
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(mint_account_data).unwrap();
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        let identities = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(account_data)?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
+        };
+
+        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
@@ -468,11 +483,18 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         };
 
         let mint_data = client.get_account(mint).await?;
-        let account_data: &[u8] = &mint_data.data;
+        let mint_account_data: &[u8] = &mint_data.data;
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(mint_account_data).unwrap();
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        let identities = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(account_data)?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
+        };
+
+        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
