@@ -3,12 +3,15 @@ mod command;
 use anyhow::{Context, Result};
 use bs58::decode;
 use clap_derive::{Parser as DeriveParser, Subcommand};
+use log::info;
 use serde_json::from_str as parse_json_str;
 use solana_cli_config::Config;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
+use spl_token_metadata_interface::state::TokenMetadata;
+use std::fmt;
 use std::fs::read_to_string as read_path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -16,6 +19,8 @@ use std::{str::FromStr, time::Duration};
 use yellowstone_shield_client::types::PermissionStrategy;
 
 pub use command::*;
+
+use crate::command::policy::PolicyVersion;
 
 #[derive(Debug, DeriveParser)]
 #[command(
@@ -230,4 +235,70 @@ fn parse_keypair(keypair_path: &str) -> Result<Keypair, CliError> {
         .map_err(|_| CliError::ConfigFilePathError)?;
 
     Keypair::from_bytes(&secret_bytes).map_err(|_| CliError::Keypair)
+}
+
+pub struct LogPolicy<'a> {
+    token_mint: &'a Pubkey,
+    token_metadata: &'a TokenMetadata,
+    policy_address: &'a Pubkey,
+    policy_info: &'a PolicyVersion,
+    identities: Option<&'a Vec<Pubkey>>,
+}
+
+impl<'a> LogPolicy<'a> {
+    pub fn new(
+        token_mint: &'a Pubkey,
+        token_metadata: &'a TokenMetadata,
+        policy_address: &'a Pubkey,
+        policy_info: &'a PolicyVersion,
+        identities: Option<&'a Vec<Pubkey>>,
+    ) -> Self {
+        LogPolicy {
+            token_mint,
+            token_metadata,
+            policy_address,
+            policy_info,
+            identities,
+        }
+    }
+
+    fn log(&self) {
+        info!("{}", self);
+    }
+}
+
+impl<'a> fmt::Display for LogPolicy<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "")?;
+        writeln!(f, "")?;
+        writeln!(f, "📜 Policy")?;
+        writeln!(f, "--------------------------------")?;
+        writeln!(f, "🏠 Addresses")?;
+        writeln!(f, "  📜 Policy: {}", self.policy_address)?;
+        writeln!(f, "  🪙 Mint: {}", self.token_mint)?;
+        writeln!(f, "--------------------------------")?;
+        writeln!(f, "🔍 Details")?;
+        let strategy = match self.policy_info.strategy() {
+            0 => "❌ Strategy: Deny",
+            1 => "✅ Strategy: Allow",
+            _ => "❓ Strategy: Unknown",
+        };
+        writeln!(f, "  {}", strategy)?;
+        writeln!(f, "  🏷️  Name: {}", self.token_metadata.name)?;
+        writeln!(f, "  🔖 Symbol: {}", self.token_metadata.symbol)?;
+        writeln!(f, "  🌐 URI: {}", self.token_metadata.uri)?;
+        writeln!(f, "--------------------------------")?;
+        if let Some(identities) = self.identities {
+            writeln!(f, "  🔑 Identities in policy:")?;
+            if !identities.is_empty() {
+                for (i, identity) in identities.iter().enumerate() {
+                    writeln!(f, "    {}. {}", i, identity)?;
+                }
+            } else {
+                writeln!(f, "    []")?;
+            }
+            writeln!(f, "--------------------------------")?;
+        }
+        Ok(())
+    }
 }

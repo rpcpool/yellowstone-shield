@@ -25,8 +25,9 @@ use yellowstone_shield_client::{
 };
 
 use super::{RunCommand, RunResult};
-use crate::command::{CommandComplete, CommandContext, SolanaAccount};
+use crate::{command::CommandContext, CommandComplete, LogPolicy, SolanaAccount};
 
+#[derive(Debug)]
 pub enum PolicyVersion {
     V1(Policy),
     V2(PolicyV2),
@@ -195,12 +196,14 @@ impl RunCommand for CreateCommandBuilder {
             .recent_blockhash(last_blockhash)
             .transaction();
 
-        client
+        let signature = client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
                 CommitmentConfig::confirmed(),
             )
             .await?;
+
+        info!("Transaction signature: {}", signature);
 
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
@@ -215,11 +218,13 @@ impl RunCommand for CreateCommandBuilder {
         };
 
         let mint_data = client.get_account(&mint.pubkey()).await?;
-        let account_data: &[u8] = &mint_data.data;
+        let mint_account_data: &[u8] = &mint_data.data;
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(mint_account_data).unwrap();
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        LogPolicy::new(&mint.pubkey(), &token_metadata, &address, &policy, None).log();
 
         Ok(CommandComplete(
             SolanaAccount(mint.pubkey(), Some(token_metadata)),
@@ -352,10 +357,7 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
-        info!("Identities in policy:");
-        for (i, identity) in identities.iter().enumerate() {
-            info!("  {}. {}", i, identity);
-        }
+        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
