@@ -7,9 +7,9 @@ use log::info;
 use serde_json::from_str as parse_json_str;
 use solana_cli_config::Config;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
+use solana_commitment_config::{CommitmentConfig, ParseCommitmentLevelError};
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
 use spl_token_metadata_interface::state::TokenMetadata;
 use std::fmt;
 use std::fs::read_to_string as read_path;
@@ -135,7 +135,7 @@ pub enum CliError {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
     #[error(transparent)]
-    ParseCommitmentLevelError(#[from] solana_sdk::commitment_config::ParseCommitmentLevelError),
+    ParseCommitmentLevelError(#[from] ParseCommitmentLevelError),
     #[error("unable to parse keypair")]
     Keypair,
 }

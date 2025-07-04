@@ -11,10 +11,18 @@ clap_derive = "4.5.32"
 yellowstone-shield-client = { workspace = true, features = [
   "token-extensions",
 ] }
-solana-sdk = "2.1.11"
-solana-cli = "2.1.11"
-solana-cli-config = "2.1.11"
-solana-client = "2.1.11"
+# Agave Crates
+solana-cli = { workspace = true }
+solana-cli-config = { workspace = true }
+solana-client = { workspace = true }
+# Solana SDK (decoupled from Agave)
+solana-keypair = { workspace = true }
+solana-pubkey = { workspace = true }
+solana-instruction = { workspace = true }
+solana-message = { workspace = true }
+solana-signer = { workspace = true }
+solana-commitment-config = { workspace = true }
+# End of Solana SDK
 env_logger = "0.11.3"
 log = "0.4.21"
 serde_json = "1.0.117"
