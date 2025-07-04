@@ -1,12 +1,11 @@
 use borsh::BorshDeserialize;
 use log::info;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    pubkey::Pubkey,
-    signature::{Keypair, Signer},
-};
-use spl_associated_token_account::get_associated_token_address_with_program_id;
+use solana_commitment_config::CommitmentConfig;
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use solana_signer::Signer;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::{
     extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
     pod::PodMint,

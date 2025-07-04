@@ -3,8 +3,9 @@ mod generated;
 use bytemuck::PodCastError;
 pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
-use solana_program::pubkey::Pubkey;
-use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
+use solana_keypair::Keypair;
+use solana_program::{example_mocks::solana_sdk::system_instruction, hash::Hash, pubkey::Pubkey, rent::Rent};
+use solana_transaction::Transaction;
 use std::str::FromStr;
 
 #[cfg(feature = "token-extensions")]
@@ -210,7 +211,7 @@ impl<'a> CreateAccountBuilder<'a> {
         let space = self.space.expect("space is not set");
         let lamports = Rent::default().minimum_balance(self.rent.expect("rent is not set"));
 
-        solana_sdk::system_instruction::create_account(
+        system_instruction::create_account(
             self.payer.expect("payer is not set"),
             self.account.expect("mint is not set"),
             lamports,
@@ -475,7 +476,7 @@ pub struct TransactionBuilder<'a> {
     instructions: Vec<solana_program::instruction::Instruction>,
     signers: Vec<&'a Keypair>,
     payer: Option<&'a Pubkey>,
-    recent_blockhash: Option<solana_sdk::hash::Hash>,
+    recent_blockhash: Option<Hash>,
 }
 
 impl<'a> TransactionBuilder<'a> {
@@ -524,7 +525,7 @@ impl<'a> TransactionBuilder<'a> {
 
     /// Set the recent blockhash for the transaction
     #[inline(always)]
-    pub fn recent_blockhash(&mut self, recent_blockhash: solana_sdk::hash::Hash) -> &mut Self {
+    pub fn recent_blockhash(&mut self, recent_blockhash: Hash) -> &mut Self {
         self.recent_blockhash = Some(recent_blockhash);
         self
     }

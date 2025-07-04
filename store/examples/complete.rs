@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use clap::Parser;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_pubkey::pubkey;
-use solana_sdk::pubkey::Pubkey;
+use solana_pubkey::Pubkey;
 use yellowstone_shield_cli::{
     run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
 };

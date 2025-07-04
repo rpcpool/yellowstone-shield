@@ -5,11 +5,11 @@ use anyhow::Result;
 use log::info;
 use solana_client::client_error::ClientError;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::instruction::Instruction;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
+use solana_commitment_config::CommitmentConfig;
+use solana_instruction::Instruction;
+use solana_signer::Signer;
+use solana_pubkey::Pubkey;
+use solana_keypair::Keypair;
 use spl_token_metadata_interface::state::TokenMetadata;
 use yellowstone_shield_client::TransactionBuilder;
 
