@@ -15,7 +15,7 @@ anyhow = "1.0.97"
 # Solana SDK (decoupled from Agave)
 # See: https://github.com/anza-xyz/solana-sdk
 solana-pubkey = "~2.2.1"
-solana-transaction = "~2.2.1"
+solana-transaction = { version = "~2.2.1", features = ["bincode"] }
 solana-instruction = "~2.2.1"
 solana-commitment-config = "~2.2.1"
 solana-keypair = "~2.2.1"

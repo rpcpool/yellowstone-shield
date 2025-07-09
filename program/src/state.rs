@@ -7,9 +7,20 @@ use crate::{error::ShieldError, BYTES_PER_PUBKEY};
 
 pub trait ZeroCopyLoad: Size + Pod {
     #[inline(always)]
+    /// Return the State from the given bytes.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that `bytes` contains a valid representation of the State.
     unsafe fn from_bytes(bytes: &[u8]) -> Result<&Self, ProgramError> {
         bytemuck::try_from_bytes::<Self>(bytes).map_err(|_| ProgramError::InvalidAccountData)
     }
+
+    /// Return the State from the given account_info.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that account_info contains data which is a valid representation of the State.
     unsafe fn load(account_info: &AccountInfo) -> Result<&Self, ProgramError> {
         let data = account_info.borrow_data_unchecked();
         Self::from_bytes(&data[..Self::LEN])

@@ -4,7 +4,9 @@ use bytemuck::PodCastError;
 pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
 use solana_keypair::Keypair;
-use solana_program::{example_mocks::solana_sdk::system_instruction, hash::Hash, pubkey::Pubkey, rent::Rent};
+use solana_program::{
+    example_mocks::solana_sdk::system_instruction, hash::Hash, pubkey::Pubkey, rent::Rent,
+};
 use solana_transaction::Transaction;
 use std::str::FromStr;
 
