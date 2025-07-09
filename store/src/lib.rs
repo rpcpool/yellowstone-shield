@@ -12,8 +12,8 @@ use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
 };
-use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
-
+use solana_pubkey::Pubkey;
+use solana_commitment_config::CommitmentConfig;
 use yellowstone_shield_client::{accounts, types::PermissionStrategy, PolicyTrait};
 use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
 use yellowstone_vixen::{
@@ -464,7 +464,7 @@ impl PolicyStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use solana_sdk::pubkey::Pubkey;
+    use solana_pubkey::Pubkey;
     use yellowstone_shield_parser::accounts_parser::Policy;
 
     #[test]
