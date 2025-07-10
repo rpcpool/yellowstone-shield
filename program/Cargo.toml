@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
@@ -21,19 +21,19 @@ doctest = false
 
 
 [dependencies]
-borsh = { version = "1.5.1", features = ["derive"] }
-shank = "^0.4.2"
-num-derive = "^0.4.2"
-num-traits = "^0.2"
+borsh = { workspace = true, features = ["derive"] }
+shank = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
 solana-program = { workspace = true }
-thiserror = "^1.0"
-spl-associated-token-account = { version = "6", features = ["no-entrypoint"] }
-spl-token = { version = "7", features = ["no-entrypoint"] }
-spl-token-2022 = { version = "7", features = ["no-entrypoint"] }
-spl-token-group-interface = { version = "0.5" }
-spl-token-metadata-interface = { version = "0.6" }
-spl-pod = { version = "0.5" }
-bytemuck = "1.22.0"
-pinocchio = { version = "0.8.1", features = ["std"] }
-pinocchio-system = "0.2.3"
-pinocchio-pubkey = "0.2.4"
+thiserror = { workspace = true }
+spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
+spl-token = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+spl-token-group-interface = { workspace = true }
+spl-token-metadata-interface = { workspace = true }
+spl-pod = { workspace = true }
+bytemuck = { workspace = true }
+pinocchio = { workspace = true, features = ["std"] }
+pinocchio-system = { workspace = true }
+pinocchio-pubkey = { workspace = true}

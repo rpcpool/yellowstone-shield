@@ -6,29 +6,30 @@ description = "Policy store for the Yellowstone Shield program"
 license = "Apache-2.0"
 
 [dependencies]
-arc-swap = "1.6"
-hashbrown = "0.14"
-parking_lot = "0.12"
+arc-swap = { workspace = true } 
+hashbrown = { workspace = true } 
+parking_lot = { workspace = true } 
 yellowstone-shield-client = { workspace = true }
 solana-client = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-commitment-config = { workspace = true }
-log = "~0.4.21"
-tokio = { version = "1", features = ["full"] }
-thiserror = "~1.0.69"
+log = { workspace = true } 
+tokio = { workspace = true, features = ["full"] }
+thiserror = { workspace = true } 
 anyhow = { workspace = true }
-borsh_0_10 = { version = "^0.10", package = "borsh" }
+borsh = { workspace = true, features = ["derive"] }
+# borsh_0_10 = { workspace = true }
 yellowstone-vixen = { workspace = true }
 yellowstone-shield-parser = { workspace = true, features = [] }
-serde = { version = "^1.0", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 solana-account-decoder-client-types = { workspace = true }
 
 [dev-dependencies]
-toml = "~0.8.2"
-clap = "~4.5.32"
-clap_derive = "~4.5.32"
+toml = { workspace = true } 
+clap = { workspace = true } 
+clap_derive = { workspace = true } 
 yellowstone-shield-cli = { workspace = true }
-env_logger = "~0.11.3"
+env_logger = { workspace = true } 
 solana-cli = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-pubkey = { workspace = true }

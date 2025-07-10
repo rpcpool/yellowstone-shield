@@ -4,16 +4,14 @@ use solana_commitment_config::CommitmentConfig;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
     extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
     pod::PodMint,
     state::Mint,
 };
-use spl_token_metadata_interface::{
-    borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
-};
+use spl_token_metadata_interface::state::TokenMetadata;
 use yellowstone_shield_client::{
     accounts::{Policy, PolicyV2},
     instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
@@ -356,7 +354,7 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
-        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
+        LogPolicy::new(mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),

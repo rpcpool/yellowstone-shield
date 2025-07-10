@@ -15,9 +15,7 @@ use spl_token_2022::{
     extension::{BaseStateWithExtensions, PodStateWithExtensions},
     pod::PodMint,
 };
-use spl_token_metadata_interface::{
-    borsh::BorshDeserialize as TokenBorshDeserialize, state::TokenMetadata,
-};
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use yellowstone_shield_client::{
     accounts::{Policy, PolicyV2},
@@ -176,7 +174,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
             Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
         };
 
-        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
+        LogPolicy::new(mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
@@ -377,7 +375,7 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
             Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
         };
 
-        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
+        LogPolicy::new(mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),
@@ -494,7 +492,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
             Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
         };
 
-        LogPolicy::new(&mint, &token_metadata, &address, &policy, Some(&identities)).log();
+        LogPolicy::new(mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),

@@ -7,9 +7,9 @@ use solana_client::client_error::ClientError;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_commitment_config::CommitmentConfig;
 use solana_instruction::Instruction;
-use solana_signer::Signer;
-use solana_pubkey::Pubkey;
 use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use solana_signer::Signer;
 use spl_token_metadata_interface::state::TokenMetadata;
 use yellowstone_shield_client::TransactionBuilder;
 
@@ -45,7 +45,7 @@ where
     F: FnMut(&T) -> Instruction,
 {
     for batch in items.chunks(chunk_size) {
-        let instructions: Vec<_> = batch.iter().map(|item| instruction_builder(item)).collect();
+        let instructions: Vec<_> = batch.iter().map(&mut instruction_builder).collect();
 
         if instructions.is_empty() {
             continue;
