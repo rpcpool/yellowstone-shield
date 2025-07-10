@@ -5,7 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh_0_10::BorshDeserialize;
+use borsh::BorshDeserialize;
 use yellowstone_shield_client::instructions::{
     AddIdentity as AddIdentityIxAccounts, AddIdentityInstructionArgs as AddIdentityIxData,
     CreatePolicy as CreatePolicyIxAccounts, CreatePolicyInstructionArgs as CreatePolicyIxData,

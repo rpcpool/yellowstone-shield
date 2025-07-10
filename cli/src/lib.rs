@@ -267,10 +267,10 @@ impl<'a> LogPolicy<'a> {
     }
 }
 
-impl<'a> fmt::Display for LogPolicy<'a> {
+impl fmt::Display for LogPolicy<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "")?;
-        writeln!(f, "")?;
+        writeln!(f)?;
+        writeln!(f)?;
         writeln!(f, "📜 Policy")?;
         writeln!(f, "--------------------------------")?;
         writeln!(f, "🏠 Addresses")?;

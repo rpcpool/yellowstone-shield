@@ -10120,7 +10120,7 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-shield"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "borsh 1.5.7",
  "bytemuck",
@@ -10142,11 +10142,11 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-shield-cli"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "async-trait",
- "borsh 0.10.4",
+ "borsh 1.5.7",
  "bs58",
  "clap 4.5.41",
  "clap_derive",
@@ -10173,11 +10173,11 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-shield-client"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anchor-lang",
  "assert_matches",
- "borsh 0.10.4",
+ "borsh 1.5.7",
  "bytemuck",
  "num-derive",
  "num-traits",
@@ -10199,9 +10199,9 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-shield-parser"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
- "borsh 0.10.4",
+ "borsh 1.5.7",
  "solana-program",
  "yellowstone-shield-client",
  "yellowstone-vixen-core",
@@ -10213,7 +10213,7 @@ version = "0.5.2"
 dependencies = [
  "anyhow",
  "arc-swap",
- "borsh 0.10.4",
+ "borsh 1.5.7",
  "clap 4.5.41",
  "clap_derive",
  "env_logger 0.11.8",
