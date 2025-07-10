@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.5.1
+
+### Changed
+
+- Restructure crates dependencies to use workspace dependencies instead.
+
 ### Added
 
 - New `update` command to batch update or replace the policy identities list.
