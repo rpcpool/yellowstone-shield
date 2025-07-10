@@ -57,7 +57,7 @@ tokio = "1"
 toml = "~0.8.2"
 yellowstone-vixen = "0.2.0"
 yellowstone-vixen-core = "0.2.0"
-yellowstone-shield = { path = "program", version = "0.5.1" }
+yellowstone-shield = { path = "program" }
 yellowstone-shield-cli = { path = "cli", version = "0.5.1" }
 yellowstone-shield-client = { path = "clients/rust", version = "0.5.1" }
 yellowstone-shield-parser = { path = "parser", version = "0.5.1" }

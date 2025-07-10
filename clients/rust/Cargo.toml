@@ -6,6 +6,7 @@ repository = "https://github.com/rpcpool/yellowstone-shield"
 edition = "2021"
 readme = "README.md"
 license = "Apache-2.0"
+publish = true
 
 [features]
 test-sbf = []
