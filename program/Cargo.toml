@@ -4,7 +4,6 @@ version = "0.5.1"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
-publish = true
 
 [package.metadata.solana]
 program-id = "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W"
