@@ -5,7 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use solana_program::{pubkey, pubkey::Pubkey};
+use solana_pubkey::{pubkey, Pubkey};
 
 /// `shield` program ID.
 pub const SHIELD_ID: Pubkey = pubkey!("b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W");

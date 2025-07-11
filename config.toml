@@ -1,3 +1,6 @@
-[yellowstone]
-endpoint = "http://127.0.0.1:10000"
-timeout = 30
+[rpc]
+endpoint = "http://0.0.0.0:8899"
+
+[grpc]
+endpoint = "http://0.0.0.0:10000"
+timeout = 60
