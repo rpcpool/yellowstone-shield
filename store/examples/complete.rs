@@ -44,7 +44,7 @@ async fn main() {
     local
         .run_until(async {
             let good = pubkey!("7kos12TGQYnX62cdu52tre53X6Y7ZicGsbwpNz1d3ESj");
-            let bad = pubkey!("HApPge4oeRUgKcmEAjs1PuYV4ZcTXjZoLzJFpBnENywm");
+            let bad = pubkey!("7k7dkWcqtpm5RSkMpLRfqMbhv9WSHuFi9iGCmAhYf2bD");
 
             let other = Pubkey::new_unique();
 

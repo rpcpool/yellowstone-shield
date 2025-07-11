@@ -4,6 +4,7 @@ version = "0.5.1"
 edition = "2021"
 description = "Yellowstone Shield CLI"
 license = "Apache-2.0"
+publish = true
 
 [dependencies]
 clap = { workspace = true } 

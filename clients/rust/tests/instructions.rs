@@ -1,8 +1,8 @@
 #![cfg(feature = "test-sbf")]
 use borsh::BorshDeserialize;
 use solana_keypair::Keypair;
-use solana_program::pubkey::Pubkey;
 use solana_program_test::{tokio, ProgramTest};
+use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;

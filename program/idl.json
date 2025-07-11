@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0",
+  "version": "0.5.1",
   "name": "yellowstone_shield",
   "instructions": [
     {
@@ -615,8 +615,6 @@
   ],
   "metadata": {
     "origin": "shank",
-    "address": "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W",
-    "binaryVersion": "0.4.3",
-    "libVersion": "^0.4.2"
+    "address": "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W"
   }
 }

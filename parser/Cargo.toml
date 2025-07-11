@@ -4,6 +4,7 @@ version = "0.5.1"
 edition = "2021"
 description = "Parser for the Yellowstone Shield program"
 license = "Apache-2.0"
+publish = true
 
 [dependencies]
 yellowstone-shield-client = { workspace = true }

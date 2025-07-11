@@ -150,14 +150,13 @@ pub enum ShieldError {
     InvalidIndexToReferenceIdentity = 0x2D,
 }
 
-#[allow(deprecated)]
-impl solana_program::program_error::PrintProgramError for ShieldError {
+impl solana_program_error::PrintProgramError for ShieldError {
     fn print<E>(&self) {
-        solana_program::msg!(&self.to_string());
+        solana_msg::msg!(&self.to_string());
     }
 }
 
-impl<T> solana_program::decode_error::DecodeError<T> for ShieldError {
+impl<T> solana_decode_error::DecodeError<T> for ShieldError {
     fn type_of() -> &'static str {
         "ShieldError"
     }

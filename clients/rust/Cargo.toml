@@ -6,10 +6,11 @@ repository = "https://github.com/rpcpool/yellowstone-shield"
 edition = "2021"
 readme = "README.md"
 license = "Apache-2.0"
+publish = true
 
 [features]
 test-sbf = []
-fetch = []
+fetch = ["dep:solana-client"]
 anchor-idl-build = []
 anchor = ["dep:anchor-lang"]
 serde = ["dep:serde", "dep:serde_with"]
@@ -22,13 +23,24 @@ token-extensions = [
 
 [dependencies]
 anchor-lang = { workspace = true, optional = true }
-borsh = { workspace = true }
+borsh = { workspace = true, features = ["derive"] }
 num-derive = { workspace = true }
 num-traits = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_with = { workspace = true, optional = true }
-solana-program = { workspace = true }
 solana-keypair = { workspace = true }
+solana-pubkey = { workspace = true, features = ["curve25519", "borsh"] }
+solana-account-info = { workspace = true }
+solana-program-entrypoint = { workspace = true }
+solana-cpi = { workspace = true }
+solana-instruction = { workspace = true }
+solana-program-error = { workspace = true }
+solana-client = { workspace = true, optional = true }
+solana-decode-error = { workspace = true }
+solana-rent = { workspace = true }
+solana-msg = { workspace = true }
+solana-system-interface = { workspace = true }
+solana-hash = { workspace = true }
 solana-transaction = { workspace = true }
 spl-token-2022 = { workspace = true, features = [
   "no-entrypoint",
@@ -39,7 +51,6 @@ spl-associated-token-account = { workspace = true, features = [
 ], optional = true }
 spl-token-metadata-interface = { workspace = true, optional = true }
 spl-pod = { workspace = true, optional = true }
-bytemuck = { workspace = true }
 solana-signer.workspace = true
 
 [dev-dependencies]
