@@ -28,7 +28,6 @@
     "@codama/renderers-js": "^1.2.14",
     "@codama/renderers-rust": "^1.1.0",
     "@iarna/toml": "^2.2.5",
-    "@metaplex-foundation/shank-js": "^0.1.7",
     "codama": "^1.3.0",
     "typescript": "^5.8.3",
     "zx": "^7.2.4"
