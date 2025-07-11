@@ -3,12 +3,14 @@ name = "yellowstone-shield-cli"
 version = "0.5.1"
 edition = "2021"
 description = "Yellowstone Shield CLI"
+repository = "https://github.com/rpcpool/yellowstone-shield"
+readme = "README.md"
 license = "Apache-2.0"
 publish = true
 
 [dependencies]
-clap = { workspace = true } 
-clap_derive = { workspace = true } 
+clap = { workspace = true }
+clap_derive = { workspace = true }
 yellowstone-shield-client = { workspace = true, features = [
   "token-extensions",
 ] }
@@ -25,15 +27,17 @@ solana-signer = { workspace = true }
 solana-commitment-config = { workspace = true }
 # End of Solana SDK
 env_logger = { workspace = true }
-log = { workspace = true } 
-serde_json = { workspace = true } 
-bs58 = { workspace = true } 
-async-trait = { workspace = true } 
+log = { workspace = true }
+serde_json = { workspace = true }
+bs58 = { workspace = true }
+async-trait = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-thiserror = { workspace = true } 
+thiserror = { workspace = true }
 anyhow = { workspace = true }
 spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
-spl-associated-token-account = { workspace = true, features = ["no-entrypoint"] }
-borsh = { workspace = true } 
+spl-associated-token-account = { workspace = true, features = [
+  "no-entrypoint",
+] }
+borsh = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
-spl-pod = { workspace = true } 
+spl-pod = { workspace = true }

@@ -2,20 +2,21 @@
 name = "yellowstone-shield-store"
 version = "0.5.2"
 edition = "2021"
+readme = "README.md"
 description = "Policy store for the Yellowstone Shield program"
 license = "Apache-2.0"
 
 [dependencies]
-arc-swap = { workspace = true } 
-hashbrown = { workspace = true } 
-parking_lot = { workspace = true } 
+arc-swap = { workspace = true }
+hashbrown = { workspace = true }
+parking_lot = { workspace = true }
 yellowstone-shield-client = { workspace = true }
 solana-client = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-commitment-config = { workspace = true }
-log = { workspace = true } 
+log = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-thiserror = { workspace = true } 
+thiserror = { workspace = true }
 anyhow = { workspace = true }
 borsh = { workspace = true, features = ["derive"] }
 # borsh_0_10 = { workspace = true }
@@ -25,11 +26,11 @@ serde = { workspace = true, features = ["derive"] }
 solana-account-decoder-client-types = { workspace = true }
 
 [dev-dependencies]
-toml = { workspace = true } 
-clap = { workspace = true } 
-clap_derive = { workspace = true } 
+toml = { workspace = true }
+clap = { workspace = true }
+clap_derive = { workspace = true }
 yellowstone-shield-cli = { workspace = true }
-env_logger = { workspace = true } 
+env_logger = { workspace = true }
 solana-cli = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-pubkey = { workspace = true }
