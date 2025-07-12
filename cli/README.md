@@ -29,7 +29,7 @@ The CLI provides several commands to interact with the shield policies and ident
 
 ### Metadata
 
-Before creating a new Policy, plan ahead by creating a URI-addressable JSON file containing the metadata for your Policy. The Policy metadata should use the format shown in this example:
+Before creating a new Policy, plan ahead by creating a URI-addressable JSON file containing the metadata for your Policy. The Policy metadata should use the format shown in this example (https://gateway.irys.xyz/CdxWAuxk483JsqJdbE8cSKkZEMTJ1EKpDsUWmqGTaFu8):
 
 ```
 {
