@@ -61,6 +61,8 @@ After uploading your metadata to a publicly accessible URI, you will use the URI
   - `--uri <URI>`: The URI of the policy.
   - `-h, --help`: Print help.
 
+After creating a new Policy, you will receive CLI output including the Mint address required in the following steps.
+
 - **Add Identities**
 
   ```bash
