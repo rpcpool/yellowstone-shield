@@ -14,6 +14,8 @@ cd yellowstone-shield
 cargo build --release --bin yellowstone-shield-cli
 ```
 
+The binary should be located at `./target/release/yellowstone-shield-cli`.
+
 ## Usage
 
 The CLI provides several commands to interact with the shield policies and identities. Below are the available commands and their options:
@@ -24,6 +26,23 @@ The CLI provides several commands to interact with the shield policies and ident
 - `-T, --timeout <SECONDS>`: Set the timeout duration (default is 90 seconds).
 - `-l, --log-level <LEVEL>`: Set the log level (default is "off").
 - `-k, --keypair <FILE>`: Path to the owner keypair file.
+
+### Metadata
+
+Before creating a new Policy, plan ahead by creating a URI-addressable JSON file containing the metadata for your Policy. The Policy metadata should use the format shown in this example:
+
+```
+{
+  "name": "Top 25 Validators by Stake",
+  "symbol": "TV25",
+  "description": "A Yellowstone Shield policy of the top 25 validators by stake.",
+  "image": "https://gateway.irys.xyz/Hhdy76nXVpNBCg1pVLtpctaZXbpnSufWggbyiMFUoCTh",
+  "external_url": "https://triton.one",
+  "attributes": []
+}
+```
+
+After uploading your metadata to a publicly accessible URI, you will use the URI with the `--uri` parameter when creating the Policy.
 
 ### Commands
 
