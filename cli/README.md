@@ -11,8 +11,10 @@ To install the CLI, ensure you have Rust and Cargo installed on your system. The
 ```bash
 git clone https://github.com/rpcpool/yellowstone-shield
 cd yellowstone-shield
-cargo build --release --bin cli
+cargo build --release --bin yellowstone-shield-cli
 ```
+
+The binary should be located at `./target/release/yellowstone-shield-cli`.
 
 ## Usage
 
@@ -25,6 +27,23 @@ The CLI provides several commands to interact with the shield policies and ident
 - `-l, --log-level <LEVEL>`: Set the log level (default is "off").
 - `-k, --keypair <FILE>`: Path to the owner keypair file.
 
+### Metadata
+
+Before creating a new Policy, plan ahead by creating a URI-addressable JSON file containing the metadata for your Policy. The Policy metadata should use the format shown in this example (https://gateway.irys.xyz/CdxWAuxk483JsqJdbE8cSKkZEMTJ1EKpDsUWmqGTaFu8):
+
+```
+{
+  "name": "Top 25 Validators by Stake",
+  "symbol": "TV25",
+  "description": "A Yellowstone Shield policy of the top 25 validators by stake.",
+  "image": "https://gateway.irys.xyz/Hhdy76nXVpNBCg1pVLtpctaZXbpnSufWggbyiMFUoCTh",
+  "external_url": "https://triton.one",
+  "attributes": []
+}
+```
+
+After uploading your metadata to a publicly accessible URI, you will use the URI with the `--uri` parameter when creating the Policy.
+
 ### Commands
 
 - **Create a Policy**
@@ -34,13 +53,15 @@ The CLI provides several commands to interact with the shield policies and ident
   ```
 
   - `-r, --rpc <RPC>`: RPC endpoint URL to override using the Solana config.
-  - `--strategy <STRATEGY>`: The strategy to use for the policy.
+  - `--strategy <STRATEGY>`: The strategy to use for the policy. Valid options are 'allow' or 'deny'.
   - `-l, --log-level <LOG_LEVEL>`: Log level (default is "off").
   - `--name <NAME>`: The name of the policy.
   - `-k, --keypair <KEYPAIR>`: Path to the owner keypair file.
   - `--symbol <SYMBOL>`: The symbol of the policy.
   - `--uri <URI>`: The URI of the policy.
   - `-h, --help`: Print help.
+
+After creating a new Policy, you will receive CLI output including the Mint address required in the following steps.
 
 - **Add Identities**
 
