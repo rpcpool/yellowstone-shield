@@ -11,7 +11,7 @@ To install the CLI, ensure you have Rust and Cargo installed on your system. The
 ```bash
 git clone https://github.com/rpcpool/yellowstone-shield
 cd yellowstone-shield
-cargo build --release --bin cli
+cargo build --release --bin yellowstone-shield-cli
 ```
 
 ## Usage
