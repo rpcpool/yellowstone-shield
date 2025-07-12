@@ -53,7 +53,7 @@ After uploading your metadata to a publicly accessible URI, you will use the URI
   ```
 
   - `-r, --rpc <RPC>`: RPC endpoint URL to override using the Solana config.
-  - `--strategy <STRATEGY>`: The strategy to use for the policy.
+  - `--strategy <STRATEGY>`: The strategy to use for the policy. Valid options are 'allow' or 'deny'.
   - `-l, --log-level <LOG_LEVEL>`: Log level (default is "off").
   - `--name <NAME>`: The name of the policy.
   - `-k, --keypair <KEYPAIR>`: Path to the owner keypair file.
