@@ -22,10 +22,10 @@ The CLI provides several commands to interact with the shield policies and ident
 
 ### General Options
 
-- `-r, --rpc <URL>`: Specify the RPC endpoint URL.
+- `-r, --rpc <URL>`: RPC endpoint url to override using the Solana config.
 - `-T, --timeout <SECONDS>`: Set the timeout duration (default is 90 seconds).
 - `-l, --log-level <LEVEL>`: Set the log level (default is "off").
-- `-k, --keypair <FILE>`: Path to the owner keypair file.
+- `-k, --keypair <FILE>`: Path to the local owner keypair file -- not a hardware wallet.
 
 ### Metadata
 
@@ -49,14 +49,14 @@ After uploading your metadata to a publicly accessible URI, you will use the URI
 - **Create a Policy**
 
   ```bash
-  yellowstone-shield policy create [OPTIONS] --strategy <STRATEGY> --name <NAME> --symbol <SYMBOL> --uri <URI>
+  yellowstone-shield-cli policy create [OPTIONS] --strategy <STRATEGY> --name <NAME> --symbol <SYMBOL> --uri <URI>
   ```
 
   - `-r, --rpc <RPC>`: RPC endpoint URL to override using the Solana config.
   - `--strategy <STRATEGY>`: The strategy to use for the policy. Valid options are 'allow' or 'deny'.
   - `-l, --log-level <LOG_LEVEL>`: Log level (default is "off").
   - `--name <NAME>`: The name of the policy.
-  - `-k, --keypair <KEYPAIR>`: Path to the owner keypair file.
+  - `-k, --keypair <KEYPAIR>`: Path to the local owner keypair file -- not a hardware wallet.
   - `--symbol <SYMBOL>`: The symbol of the policy.
   - `--uri <URI>`: The URI of the policy.
   - `-h, --help`: Print help.
@@ -66,7 +66,7 @@ After creating a new Policy, you will receive CLI output including the Mint addr
 - **Add Identities**
 
   ```bash
-  yellowstone-shield identities add --mint <MINT> --identities-path <IDENTITIES>
+  yellowstone-shield-cli identities add --mint <MINT> --identities-path <IDENTITIES>
   ```
 
   - `--mint <MINT>`: The mint address linked to the shield policy.
@@ -75,7 +75,7 @@ After creating a new Policy, you will receive CLI output including the Mint addr
 - **Update Identities**
 
   ```bash
-  yellowstone-shield identities update --mint <MINT> --identities-path <IDENTITIES>
+  yellowstone-shield-cli identities update --mint <MINT> --identities-path <IDENTITIES>
   ```
 
   - `--mint <MINT>`: The mint address linked to the shield policy.
@@ -84,7 +84,7 @@ After creating a new Policy, you will receive CLI output including the Mint addr
 - **Remove Identities**
 
   ```bash
-  yellowstone-shield identities remove --mint <MINT> --identities-path <IDENTITIES>
+  yellowstone-shield-cli identities remove --mint <MINT> --identities-path <IDENTITIES>
   ```
 
   - `--mint <MINT>`: The mint address linked to the shield policy.
