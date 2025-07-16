@@ -3,6 +3,7 @@ name = "yellowstone-shield-parser"
 version = "0.5.1"
 edition = "2021"
 description = "Parser for the Yellowstone Shield program"
+repository = "https://github.com/rpcpool/yellowstone-shield"
 license = "Apache-2.0"
 readme = "./../README.md"
 publish = true

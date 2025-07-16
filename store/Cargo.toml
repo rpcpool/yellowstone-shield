@@ -4,6 +4,7 @@ version = "0.5.2"
 edition = "2021"
 readme = "README.md"
 description = "Policy store for the Yellowstone Shield program"
+repository = "https://github.com/rpcpool/yellowstone-shield"
 license = "Apache-2.0"
 
 [dependencies]
