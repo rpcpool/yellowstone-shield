@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-cli"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 description = "Yellowstone Shield CLI"
 repository = "https://github.com/rpcpool/yellowstone-shield"
