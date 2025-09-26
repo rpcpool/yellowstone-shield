@@ -30,7 +30,7 @@ impl yellowstone_vixen_core::Parser for InstructionParser {
     type Input = yellowstone_vixen_core::instruction::InstructionUpdate;
     type Output = ShieldProgramIx;
 
-    fn id(&self) -> std::borrow::Cow<str> {
+    fn id(&self) -> std::borrow::Cow<'static, str> {
         "Shield::InstructionParser".into()
     }
 

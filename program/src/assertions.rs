@@ -31,7 +31,7 @@ pub fn assert_program_owner(
         account_name,
         account.key(),
         owner,
-        unsafe { account.owner() },
+        account.owner(),
     );
     Err(ShieldError::InvalidProgramOwner.into())
 }
@@ -112,7 +112,7 @@ pub fn assert_empty_and_owned_by_system(
     account_name: &str,
     account: &AccountInfo,
 ) -> ProgramResult {
-    if !(account.data_is_empty() && unsafe { account.owner() } == &pinocchio_system::ID) {
+    if !(account.data_is_empty() && account.owner() == &pinocchio_system::ID) {
         msg!(
             "Account \"{}\" [{:?}] must be empty and owned by system_program",
             account_name,

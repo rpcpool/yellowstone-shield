@@ -75,7 +75,7 @@ impl yellowstone_vixen_core::Parser for AccountParser {
     type Input = yellowstone_vixen_core::AccountUpdate;
     type Output = ShieldProgramState;
 
-    fn id(&self) -> std::borrow::Cow<str> {
+    fn id(&self) -> std::borrow::Cow<'static, str> {
         "shield::AccountParser".into()
     }
 
