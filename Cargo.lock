@@ -11032,6 +11032,7 @@ dependencies = [
  "yellowstone-shield-client",
  "yellowstone-shield-parser",
  "yellowstone-vixen",
+ "yellowstone-vixen-yellowstone-grpc-source",
 ]
 
 [[package]]
@@ -11067,6 +11068,24 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "yellowstone-grpc-proto",
+]
+
+[[package]]
+name = "yellowstone-vixen-yellowstone-grpc-source"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2c3ce30c4c2addad95a8c63a2ed27ae6afd6c3070e96bb6e3f795777616e523"
+dependencies = [
+ "async-trait",
+ "clap 4.5.48",
+ "futures-util",
+ "serde",
+ "tokio",
+ "tracing",
+ "yellowstone-grpc-client",
+ "yellowstone-grpc-proto",
+ "yellowstone-vixen",
+ "yellowstone-vixen-core",
 ]
 
 [[package]]
