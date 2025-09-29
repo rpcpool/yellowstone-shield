@@ -421,7 +421,6 @@ impl PolicyStoreBuilder {
         let snapshot = Arc::new(ArcSwap::from_pointee(Snapshot::new(&cache)));
 
         let (sender, mut receiver) = tokio::sync::mpsc::channel::<ShieldProgramState>(10_000);
-
         let vixen = VixenConfig {
             yellowstone: config.grpc,
             buffer: BufferConfig::default(),
