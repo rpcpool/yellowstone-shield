@@ -55,7 +55,7 @@ solana-client = "2.2.1"
 solana-account-decoder-client-types = "2.2.1"
 solana-program-test = "2.2.1"
 spl-associated-token-account = "6.0.0"
-spl-pod = "0.6.0"
+spl-pod = "0.5.1"
 spl-token = { version = "8.0.0" }
 spl-token-group-interface = "0.7.0"
 spl-token-metadata-interface = "0.7.0"
