@@ -8435,42 +8435,6 @@ dependencies = [
 
 [[package]]
 name = "solana-zk-sdk"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dffbd0b7537f4249d69b74c632f8eac1d2726572022791f9ead65a67d3f6905"
-dependencies = [
- "aes-gcm-siv",
- "base64 0.22.1",
- "bincode",
- "bytemuck",
- "bytemuck_derive",
- "curve25519-dalek 4.1.3",
- "itertools 0.12.1",
- "js-sys",
- "merlin",
- "num-derive",
- "num-traits",
- "rand 0.8.5",
- "serde",
- "serde_derive",
- "serde_json",
- "sha3",
- "solana-derivation-path 2.2.1",
- "solana-instruction 2.3.0",
- "solana-pubkey 2.4.0",
- "solana-sdk-ids 2.2.1",
- "solana-seed-derivable 2.2.1",
- "solana-seed-phrase 2.2.1",
- "solana-signature 2.3.0",
- "solana-signer 2.2.1",
- "subtle",
- "thiserror 2.0.17",
- "wasm-bindgen",
- "zeroize",
-]
-
-[[package]]
-name = "solana-zk-sdk"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9602bcb1f7af15caef92b91132ec2347e1c51a72ecdbefdaefa3eac4b8711475"
@@ -8758,24 +8722,6 @@ dependencies = [
  "solana-program-option 2.2.1",
  "solana-pubkey 2.4.0",
  "solana-zk-sdk 2.3.11",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "spl-pod"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e3fd93444b7db9eb3465b1c98af4bbb35445bd36f6db8323db835a500c41f45"
-dependencies = [
- "bytemuck",
- "bytemuck_derive",
- "num-derive",
- "num-traits",
- "num_enum",
- "solana-program-error 2.2.2",
- "solana-program-option 2.2.1",
- "solana-pubkey 2.4.0",
- "solana-zk-sdk 3.0.0",
  "thiserror 2.0.17",
 ]
 
@@ -10920,7 +10866,7 @@ dependencies = [
  "shank",
  "solana-program",
  "spl-associated-token-account 6.0.0",
- "spl-pod 0.6.0",
+ "spl-pod 0.5.1",
  "spl-token 8.0.0",
  "spl-token-2022 9.0.0",
  "spl-token-group-interface 0.7.1",
@@ -10951,7 +10897,7 @@ dependencies = [
  "solana-pubkey 2.4.0",
  "solana-signer 2.2.1",
  "spl-associated-token-account 6.0.0",
- "spl-pod 0.6.0",
+ "spl-pod 0.5.1",
  "spl-token-2022 9.0.0",
  "spl-token-metadata-interface 0.7.0",
  "thiserror 2.0.17",
@@ -10987,7 +10933,7 @@ dependencies = [
  "solana-system-interface",
  "solana-transaction",
  "spl-associated-token-account 6.0.0",
- "spl-pod 0.6.0",
+ "spl-pod 0.5.1",
  "spl-token-2022 9.0.0",
  "spl-token-metadata-interface 0.7.0",
  "thiserror 2.0.17",
