@@ -57,7 +57,7 @@ pub fn realloc_account(
         transfer_lamports_from_pdas(target_account, funding_account, lamports_diff)?;
     }
 
-    target_account.resize(new_size)
+    target_account.realloc(new_size, false)
 }
 
 // /// Close an account.
@@ -76,7 +76,7 @@ pub fn close_account(
     unsafe {
         target_account.assign(&pinocchio_system::ID);
     }
-    target_account.resize(0)
+    target_account.realloc(0, false)
 }
 
 pub fn transfer_lamports_from_pdas(

@@ -6,6 +6,7 @@
 //!
 
 use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]

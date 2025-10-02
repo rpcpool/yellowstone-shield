@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-store"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 readme = "README.md"
 description = "Policy store for the Yellowstone Shield program"
@@ -20,7 +20,6 @@ tokio = { workspace = true, features = ["full"] }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 borsh = { workspace = true, features = ["derive"] }
-# borsh_0_10 = { workspace = true }
 yellowstone-vixen = { workspace = true }
 yellowstone-vixen-yellowstone-grpc-source = { workspace = true }
 yellowstone-shield-parser = { workspace = true, features = [] }
@@ -33,6 +32,5 @@ clap = { workspace = true }
 clap_derive = { workspace = true }
 yellowstone-shield-cli = { workspace = true }
 env_logger = { workspace = true }
-solana-cli = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-pubkey = { workspace = true }

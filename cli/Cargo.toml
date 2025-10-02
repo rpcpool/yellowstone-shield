@@ -1,6 +1,6 @@
 [package]
 name = "yellowstone-shield-cli"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2021"
 description = "Yellowstone Shield CLI"
 repository = "https://github.com/rpcpool/yellowstone-shield"
@@ -15,7 +15,7 @@ yellowstone-shield-client = { workspace = true, features = [
   "token-extensions",
 ] }
 # Agave Crates
-solana-cli = { workspace = true }
+# solana-cli = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-client = { workspace = true }
 # Solana SDK (decoupled from Agave)
