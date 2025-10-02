@@ -234,7 +234,7 @@ fn parse_keypair(keypair_path: &str) -> Result<Keypair, CliError> {
         .or_else(|_| decode(&secret_string.trim()).into_vec())
         .map_err(|_| CliError::ConfigFilePathError)?;
 
-    Keypair::from_bytes(&secret_bytes).map_err(|_| CliError::Keypair)
+    Keypair::try_from(secret_bytes.as_slice()).map_err(|_| CliError::Keypair)
 }
 
 pub struct LogPolicy<'a> {
