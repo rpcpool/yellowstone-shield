@@ -37,7 +37,7 @@ async fn main() {
 
     let policy_store = PolicyStore::build()
         .config(config)
-        .run(&local)
+        .run()
         .await
         .unwrap();
 

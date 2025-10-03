@@ -5,7 +5,7 @@ use arc_swap::ArcSwap;
 use hashbrown::{HashMap, HashSet};
 use parking_lot::RwLock;
 use serde::Deserialize;
-use tokio::{sync::mpsc::Sender, task::LocalSet};
+use tokio::sync::mpsc::Sender;
 
 use solana_account_decoder_client_types::UiAccountEncoding;
 use solana_client::{
@@ -410,7 +410,7 @@ impl PolicyStoreBuilder {
         self
     }
 
-    pub async fn run(&mut self, local: &LocalSet) -> Result<PolicyStore> {
+    pub async fn run(&mut self) -> Result<PolicyStore> {
         let config = self.config.take().ok_or(BuilderError::NoConfig)?;
         let rpc = RpcClient::new(config.rpc.endpoint);
 
@@ -437,19 +437,17 @@ impl PolicyStoreBuilder {
         let cache = Arc::clone(&cache);
 
         let subscription_snapshot = Arc::clone(&snapshot);
-        local.spawn_local(Box::pin(async move {
-            tokio::task::spawn_local(async move {
-                if let Err(e) = runtime.try_run_async().await {
-                    log::error!("Vixen runtime error: {:?}", e);
-                }
-            });
-
-            while let Some(value) = receiver.recv().await {
-                let ShieldProgramState::Policy(slot, pubkey, policy) = value;
-                cache.insert(pubkey, slot, policy);
-                subscription_snapshot.store(Arc::new(Snapshot::new(&cache)));
+        tokio::task::spawn_local(async move {
+            if let Err(e) = runtime.try_run_async().await {
+                log::error!("Vixen runtime error: {:?}", e);
             }
-        }) as SubscriptionTask);
+        });
+
+        while let Some(value) = receiver.recv().await {
+            let ShieldProgramState::Policy(slot, pubkey, policy) = value;
+            cache.insert(pubkey, slot, policy);
+            subscription_snapshot.store(Arc::new(Snapshot::new(&cache)));
+        }
 
         Ok(PolicyStore::new(snapshot))
     }
