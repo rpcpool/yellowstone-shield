@@ -3,12 +3,15 @@ mod command;
 use anyhow::{Context, Result};
 use bs58::decode;
 use clap_derive::{Parser as DeriveParser, Subcommand};
+use log::info;
 use serde_json::from_str as parse_json_str;
 use solana_cli_config::Config;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
+use solana_commitment_config::{CommitmentConfig, ParseCommitmentLevelError};
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use spl_token_metadata_interface::state::TokenMetadata;
+use std::fmt;
 use std::fs::read_to_string as read_path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -16,6 +19,8 @@ use std::{str::FromStr, time::Duration};
 use yellowstone_shield_client::types::PermissionStrategy;
 
 pub use command::*;
+
+use crate::command::policy::PolicyVersion;
 
 #[derive(Debug, DeriveParser)]
 #[command(
@@ -100,12 +105,23 @@ pub enum IdentitiesAction {
         #[arg(long)]
         identities_path: PathBuf,
     },
+    /// Update/Replace Identities for a Policy
+    Update {
+        /// The mint address associated with the policy
+        #[arg(long)]
+        mint: Pubkey,
+        /// The identities to update/replace
+        #[arg(long)]
+        identities_path: PathBuf,
+    },
+
     /// Remove identities from a policy
     Remove {
         /// The mint address associated with the policy
         #[arg(long)]
         mint: Pubkey,
         /// The identities to remove from the policy
+        #[arg(long)]
         identities_path: PathBuf,
     },
 }
@@ -119,7 +135,7 @@ pub enum CliError {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
     #[error(transparent)]
-    ParseCommitmentLevelError(#[from] solana_sdk::commitment_config::ParseCommitmentLevelError),
+    ParseCommitmentLevelError(#[from] ParseCommitmentLevelError),
     #[error("unable to parse keypair")]
     Keypair,
 }
@@ -178,6 +194,21 @@ pub async fn run(config: Arc<Config>, command: Command) -> RunResult {
                     .run(context)
                     .await
             }
+            IdentitiesAction::Update {
+                mint,
+                identities_path,
+            } => {
+                let identities: Vec<Pubkey> = read_path(identities_path)?
+                    .lines()
+                    .filter_map(|s| Pubkey::from_str(s.trim()).ok())
+                    .collect();
+
+                identity::UpdateBatchCommandBuilder::new()
+                    .mint(mint)
+                    .identities(identities)
+                    .run(context)
+                    .await
+            }
             IdentitiesAction::Remove {
                 mint,
                 identities_path,
@@ -203,5 +234,71 @@ fn parse_keypair(keypair_path: &str) -> Result<Keypair, CliError> {
         .or_else(|_| decode(&secret_string.trim()).into_vec())
         .map_err(|_| CliError::ConfigFilePathError)?;
 
-    Keypair::from_bytes(&secret_bytes).map_err(|_| CliError::Keypair)
+    Keypair::try_from(secret_bytes.as_slice()).map_err(|_| CliError::Keypair)
+}
+
+pub struct LogPolicy<'a> {
+    token_mint: &'a Pubkey,
+    token_metadata: &'a TokenMetadata,
+    policy_address: &'a Pubkey,
+    policy_info: &'a PolicyVersion,
+    identities: Option<&'a Vec<Pubkey>>,
+}
+
+impl<'a> LogPolicy<'a> {
+    pub fn new(
+        token_mint: &'a Pubkey,
+        token_metadata: &'a TokenMetadata,
+        policy_address: &'a Pubkey,
+        policy_info: &'a PolicyVersion,
+        identities: Option<&'a Vec<Pubkey>>,
+    ) -> Self {
+        LogPolicy {
+            token_mint,
+            token_metadata,
+            policy_address,
+            policy_info,
+            identities,
+        }
+    }
+
+    fn log(&self) {
+        info!("{}", self);
+    }
+}
+
+impl fmt::Display for LogPolicy<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f)?;
+        writeln!(f)?;
+        writeln!(f, "📜 Policy")?;
+        writeln!(f, "--------------------------------")?;
+        writeln!(f, "🏠 Addresses")?;
+        writeln!(f, "  📜 Policy: {}", self.policy_address)?;
+        writeln!(f, "  🪙 Mint: {}", self.token_mint)?;
+        writeln!(f, "--------------------------------")?;
+        writeln!(f, "🔍 Details")?;
+        let strategy = match self.policy_info.strategy() {
+            0 => "❌ Strategy: Deny",
+            1 => "✅ Strategy: Allow",
+            _ => "❓ Strategy: Unknown",
+        };
+        writeln!(f, "  {}", strategy)?;
+        writeln!(f, "  🏷️  Name: {}", self.token_metadata.name)?;
+        writeln!(f, "  🔖 Symbol: {}", self.token_metadata.symbol)?;
+        writeln!(f, "  🌐 URI: {}", self.token_metadata.uri)?;
+        writeln!(f, "--------------------------------")?;
+        if let Some(identities) = self.identities {
+            writeln!(f, "  🔑 Identities in policy:")?;
+            if !identities.is_empty() {
+                for (i, identity) in identities.iter().enumerate() {
+                    writeln!(f, "    {}. {}", i, identity)?;
+                }
+            } else {
+                writeln!(f, "    []")?;
+            }
+            writeln!(f, "--------------------------------")?;
+        }
+        Ok(())
+    }
 }

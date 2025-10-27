@@ -7,7 +7,6 @@
  */
 
 import {
-  BASE_ACCOUNT_SIZE,
   combineCodec,
   getStructDecoder,
   getStructEncoder,
@@ -30,16 +29,8 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
-import { getPolicySize } from '../accounts';
-import { findPolicyPda } from '../pdas';
 import { SHIELD_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  expectSome,
-  getAccountMetaFactory,
-  type IInstructionWithByteDelta,
-  type ResolvedAccount,
-} from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const REMOVE_IDENTITY_DISCRIMINATOR = 2;
 
@@ -52,11 +43,7 @@ export type RemoveIdentityInstruction<
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountPolicy extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountOwner extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -71,17 +58,10 @@ export type RemoveIdentityInstruction<
       TAccountPolicy extends string
         ? WritableAccount<TAccountPolicy>
         : TAccountPolicy,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
       TAccountOwner extends string
         ? WritableSignerAccount<TAccountOwner> &
             IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -120,58 +100,43 @@ export function getRemoveIdentityInstructionDataCodec(): Codec<
   );
 }
 
-export type RemoveIdentityAsyncInput<
+export type RemoveIdentityInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountPolicy extends string = string,
-  TAccountPayer extends string = string,
   TAccountOwner extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** The token extensions mint account linked to the policy */
   mint: Address<TAccountMint>;
   /** The authority over the policy based on token ownership of the mint */
   tokenAccount: Address<TAccountTokenAccount>;
   /** The shield policy account */
-  policy?: Address<TAccountPolicy>;
-  /** The account paying for the storage fees */
-  payer: TransactionSigner<TAccountPayer>;
+  policy: Address<TAccountPolicy>;
   /** The owner of the token account */
-  owner?: TransactionSigner<TAccountOwner>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
+  owner: TransactionSigner<TAccountOwner>;
   index: RemoveIdentityInstructionDataArgs['index'];
 };
 
-export async function getRemoveIdentityInstructionAsync<
+export function getRemoveIdentityInstruction<
   TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountPolicy extends string,
-  TAccountPayer extends string,
   TAccountOwner extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
 >(
-  input: RemoveIdentityAsyncInput<
+  input: RemoveIdentityInput<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
+    TAccountOwner
   >,
   config?: { programAddress?: TProgramAddress }
-): Promise<
-  RemoveIdentityInstruction<
-    TProgramAddress,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  > &
-    IInstructionWithByteDelta
+): RemoveIdentityInstruction<
+  TProgramAddress,
+  TAccountMint,
+  TAccountTokenAccount,
+  TAccountPolicy,
+  TAccountOwner
 > {
   // Program address.
   const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
@@ -181,9 +146,7 @@ export async function getRemoveIdentityInstructionAsync<
     mint: { value: input.mint ?? null, isWritable: false },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
     policy: { value: input.policy ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -193,35 +156,13 @@ export async function getRemoveIdentityInstructionAsync<
   // Original args.
   const args = { ...input };
 
-  // Resolve default values.
-  if (!accounts.policy.value) {
-    accounts.policy.value = await findPolicyPda({
-      mint: expectAddress(accounts.mint.value),
-    });
-  }
-  if (!accounts.owner.value) {
-    accounts.owner.value = expectSome(accounts.payer.value);
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
-  // Bytes created or reallocated by the instruction.
-  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
-    (a, b) => a + b,
-    0
-  );
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.policy),
-      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getRemoveIdentityInstructionDataEncoder().encode(
@@ -232,125 +173,10 @@ export async function getRemoveIdentityInstructionAsync<
     TAccountMint,
     TAccountTokenAccount,
     TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
+    TAccountOwner
   >;
 
-  return Object.freeze({ ...instruction, byteDelta });
-}
-
-export type RemoveIdentityInput<
-  TAccountMint extends string = string,
-  TAccountTokenAccount extends string = string,
-  TAccountPolicy extends string = string,
-  TAccountPayer extends string = string,
-  TAccountOwner extends string = string,
-  TAccountSystemProgram extends string = string,
-> = {
-  /** The token extensions mint account linked to the policy */
-  mint: Address<TAccountMint>;
-  /** The authority over the policy based on token ownership of the mint */
-  tokenAccount: Address<TAccountTokenAccount>;
-  /** The shield policy account */
-  policy: Address<TAccountPolicy>;
-  /** The account paying for the storage fees */
-  payer: TransactionSigner<TAccountPayer>;
-  /** The owner of the token account */
-  owner?: TransactionSigner<TAccountOwner>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
-  index: RemoveIdentityInstructionDataArgs['index'];
-};
-
-export function getRemoveIdentityInstruction<
-  TAccountMint extends string,
-  TAccountTokenAccount extends string,
-  TAccountPolicy extends string,
-  TAccountPayer extends string,
-  TAccountOwner extends string,
-  TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
->(
-  input: RemoveIdentityInput<
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
-): RemoveIdentityInstruction<
-  TProgramAddress,
-  TAccountMint,
-  TAccountTokenAccount,
-  TAccountPolicy,
-  TAccountPayer,
-  TAccountOwner,
-  TAccountSystemProgram
-> &
-  IInstructionWithByteDelta {
-  // Program address.
-  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
-
-  // Original accounts.
-  const originalAccounts = {
-    mint: { value: input.mint ?? null, isWritable: false },
-    tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
-    policy: { value: input.policy ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
-
-  // Original args.
-  const args = { ...input };
-
-  // Resolve default values.
-  if (!accounts.owner.value) {
-    accounts.owner.value = expectSome(accounts.payer.value);
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
-  // Bytes created or reallocated by the instruction.
-  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
-    (a, b) => a + b,
-    0
-  );
-
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-  const instruction = {
-    accounts: [
-      getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.tokenAccount),
-      getAccountMeta(accounts.policy),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.owner),
-      getAccountMeta(accounts.systemProgram),
-    ],
-    programAddress,
-    data: getRemoveIdentityInstructionDataEncoder().encode(
-      args as RemoveIdentityInstructionDataArgs
-    ),
-  } as RemoveIdentityInstruction<
-    TProgramAddress,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountPolicy,
-    TAccountPayer,
-    TAccountOwner,
-    TAccountSystemProgram
-  >;
-
-  return Object.freeze({ ...instruction, byteDelta });
+  return instruction;
 }
 
 export type ParsedRemoveIdentityInstruction<
@@ -365,12 +191,8 @@ export type ParsedRemoveIdentityInstruction<
     tokenAccount: TAccountMetas[1];
     /** The shield policy account */
     policy: TAccountMetas[2];
-    /** The account paying for the storage fees */
-    payer: TAccountMetas[3];
     /** The owner of the token account */
-    owner: TAccountMetas[4];
-    /** The system program */
-    systemProgram: TAccountMetas[5];
+    owner: TAccountMetas[3];
   };
   data: RemoveIdentityInstructionData;
 };
@@ -383,7 +205,7 @@ export function parseRemoveIdentityInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedRemoveIdentityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -399,9 +221,7 @@ export function parseRemoveIdentityInstruction<
       mint: getNextAccount(),
       tokenAccount: getNextAccount(),
       policy: getNextAccount(),
-      payer: getNextAccount(),
       owner: getNextAccount(),
-      systemProgram: getNextAccount(),
     },
     data: getRemoveIdentityInstructionDataDecoder().decode(instruction.data),
   };

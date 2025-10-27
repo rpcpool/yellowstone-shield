@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use crate::processor;
 use pinocchio::{account_info::AccountInfo, entrypoint, msg, pubkey::Pubkey, ProgramResult};
 

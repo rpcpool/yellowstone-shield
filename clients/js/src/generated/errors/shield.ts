@@ -102,6 +102,10 @@ export const SHIELD_ERROR__INCORRECT_AUTHORITY = 0x29; // 41
 export const SHIELD_ERROR__GENERIC_ERROR = 0x2a; // 42
 /** InvalidStrategy: Invalid strategy */
 export const SHIELD_ERROR__INVALID_STRATEGY = 0x2b; // 43
+/** InvalidPolicyKind: Invalid Policy Kind */
+export const SHIELD_ERROR__INVALID_POLICY_KIND = 0x2c; // 44
+/** InvalidIndexToReferenceIdentity: Invalid Index To Reference Identity */
+export const SHIELD_ERROR__INVALID_INDEX_TO_REFERENCE_IDENTITY = 0x2d; // 45
 
 export type ShieldError =
   | typeof SHIELD_ERROR__ACCOUNT_ALREADY_INITIALIZED
@@ -131,8 +135,10 @@ export type ShieldError =
   | typeof SHIELD_ERROR__INVALID_ACCOUNT_OWNER
   | typeof SHIELD_ERROR__INVALID_ARGUMENT
   | typeof SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT
+  | typeof SHIELD_ERROR__INVALID_INDEX_TO_REFERENCE_IDENTITY
   | typeof SHIELD_ERROR__INVALID_INSTRUCTION_DATA
   | typeof SHIELD_ERROR__INVALID_PDA
+  | typeof SHIELD_ERROR__INVALID_POLICY_KIND
   | typeof SHIELD_ERROR__INVALID_PROGRAM_OWNER
   | typeof SHIELD_ERROR__INVALID_REALLOC
   | typeof SHIELD_ERROR__INVALID_SEEDS
@@ -179,8 +185,10 @@ if (process.env.NODE_ENV !== 'production') {
     [SHIELD_ERROR__INVALID_ACCOUNT_OWNER]: `Invalid account owner`,
     [SHIELD_ERROR__INVALID_ARGUMENT]: `Invalid argument`,
     [SHIELD_ERROR__INVALID_ASSOCIATED_TOKEN_ACCOUNT]: `Invalid associated token account`,
+    [SHIELD_ERROR__INVALID_INDEX_TO_REFERENCE_IDENTITY]: `Invalid Index To Reference Identity`,
     [SHIELD_ERROR__INVALID_INSTRUCTION_DATA]: `Invalid instruction data`,
     [SHIELD_ERROR__INVALID_PDA]: `Invalid PDA derivation`,
+    [SHIELD_ERROR__INVALID_POLICY_KIND]: `Invalid Policy Kind`,
     [SHIELD_ERROR__INVALID_PROGRAM_OWNER]: `Invalid program owner. This likely mean the provided account does not exist`,
     [SHIELD_ERROR__INVALID_REALLOC]: `Invalid realloc`,
     [SHIELD_ERROR__INVALID_SEEDS]: `Invalid seeds`,

@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use clap::Parser;
-use log::info;
 use solana_cli_config::{Config, CONFIG_FILE};
-use yellowstone_shield_cli::{run, Args, CliError, CommandComplete, SolanaAccount};
+use yellowstone_shield_cli::{run, Args, CliError};
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {
@@ -33,29 +32,7 @@ async fn main() -> Result<(), CliError> {
 
     let config = Arc::new(config);
 
-    let CommandComplete(SolanaAccount(mint, token_metadata), SolanaAccount(address, policy)) =
-        run(config, args.command).await?;
-
-    info!("📜 Policy");
-    info!("--------------------------------");
-    info!("🏠 Addresses");
-    info!("  📜 Policy: {}", address);
-    info!("  🔑 Mint: {}", mint);
-    info!("--------------------------------");
-    info!("🔍 Details");
-    if let Some(policy) = policy {
-        match policy.strategy {
-            0 => info!("  ❌ Strategy: Deny"),
-            1 => info!("  ✅ Strategy: Allow"),
-            _ => info!("  ❓ Strategy: Unknown"),
-        }
-    }
-    if let Some(token_metadata) = token_metadata {
-        info!("  🏷️ Name: {}", token_metadata.name);
-        info!("  🔖 Symbol: {}", token_metadata.symbol);
-        info!("  🌐 URI: {}", token_metadata.uri);
-        info!("--------------------------------");
-    }
+    run(config, args.command).await?;
 
     Ok(())
 }

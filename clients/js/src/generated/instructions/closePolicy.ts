@@ -7,6 +7,7 @@
  */
 
 import {
+  BASE_ACCOUNT_SIZE,
   combineCodec,
   getStructDecoder,
   getStructEncoder,
@@ -27,8 +28,16 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import { getPolicySize } from '../accounts';
+import { findPolicyPda } from '../pdas';
 import { SHIELD_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  expectSome,
+  getAccountMetaFactory,
+  type IInstructionWithByteDelta,
+  type ResolvedAccount,
+} from '../shared';
 
 export const CLOSE_POLICY_DISCRIMINATOR = 4;
 
@@ -100,6 +109,120 @@ export function getClosePolicyInstructionDataCodec(): Codec<
   );
 }
 
+export type ClosePolicyAsyncInput<
+  TAccountMint extends string = string,
+  TAccountTokenAccount extends string = string,
+  TAccountPolicy extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  /** The token extensions mint account linked to the policy */
+  mint: Address<TAccountMint>;
+  /** The authority over the policy based on token ownership of the mint */
+  tokenAccount: Address<TAccountTokenAccount>;
+  /** The shield policy account */
+  policy?: Address<TAccountPolicy>;
+  /** The account paying for the storage fees */
+  payer: TransactionSigner<TAccountPayer>;
+  /** The owner of the token account */
+  owner?: TransactionSigner<TAccountOwner>;
+  /** The system program */
+  systemProgram?: Address<TAccountSystemProgram>;
+};
+
+export async function getClosePolicyInstructionAsync<
+  TAccountMint extends string,
+  TAccountTokenAccount extends string,
+  TAccountPolicy extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address = typeof SHIELD_PROGRAM_ADDRESS,
+>(
+  input: ClosePolicyAsyncInput<
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  ClosePolicyInstruction<
+    TProgramAddress,
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  > &
+    IInstructionWithByteDelta
+> {
+  // Program address.
+  const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    mint: { value: input.mint ?? null, isWritable: false },
+    tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
+    policy: { value: input.policy ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.policy.value) {
+    accounts.policy.value = await findPolicyPda({
+      mint: expectAddress(accounts.mint.value),
+    });
+  }
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  // Bytes created or reallocated by the instruction.
+  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
+    (a, b) => a + b,
+    0
+  );
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.tokenAccount),
+      getAccountMeta(accounts.policy),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getClosePolicyInstructionDataEncoder().encode({}),
+  } as ClosePolicyInstruction<
+    TProgramAddress,
+    TAccountMint,
+    TAccountTokenAccount,
+    TAccountPolicy,
+    TAccountPayer,
+    TAccountOwner,
+    TAccountSystemProgram
+  >;
+
+  return Object.freeze({ ...instruction, byteDelta });
+}
+
 export type ClosePolicyInput<
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
@@ -117,7 +240,7 @@ export type ClosePolicyInput<
   /** The account paying for the storage fees */
   payer: TransactionSigner<TAccountPayer>;
   /** The owner of the token account */
-  owner: TransactionSigner<TAccountOwner>;
+  owner?: TransactionSigner<TAccountOwner>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -148,7 +271,8 @@ export function getClosePolicyInstruction<
   TAccountPayer,
   TAccountOwner,
   TAccountSystemProgram
-> {
+> &
+  IInstructionWithByteDelta {
   // Program address.
   const programAddress = config?.programAddress ?? SHIELD_PROGRAM_ADDRESS;
 
@@ -167,10 +291,19 @@ export function getClosePolicyInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.owner.value) {
+    accounts.owner.value = expectSome(accounts.payer.value);
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+
+  // Bytes created or reallocated by the instruction.
+  const byteDelta: number = [getPolicySize() + BASE_ACCOUNT_SIZE].reduce(
+    (a, b) => a + b,
+    0
+  );
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -194,7 +327,7 @@ export function getClosePolicyInstruction<
     TAccountSystemProgram
   >;
 
-  return instruction;
+  return Object.freeze({ ...instruction, byteDelta });
 }
 
 export type ParsedClosePolicyInstruction<

@@ -24,4 +24,5 @@ use num_derive::FromPrimitive;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     Policy,
+    PolicyV2,
 }

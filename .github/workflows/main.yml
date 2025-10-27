@@ -125,6 +125,9 @@ jobs:
           cargo-cache-key: cargo-programs
           cargo-cache-local-key: cargo-local
 
+      - name: Install shank CLI
+        run: cargo install shank-cli
+
       - name: Generate IDLs
         run: pnpm generate:idls
 

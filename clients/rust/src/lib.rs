@@ -1,10 +1,14 @@
 mod generated;
 
-use bytemuck::PodCastError;
 pub use generated::programs::SHIELD_ID as ID;
 pub use generated::*;
-use solana_program::pubkey::Pubkey;
-use solana_sdk::{rent::Rent, signer::keypair::Keypair, transaction::Transaction};
+use solana_hash::Hash;
+use solana_instruction::Instruction;
+use solana_keypair::Keypair;
+use solana_pubkey::{Pubkey, PUBKEY_BYTES};
+use solana_rent::Rent;
+use solana_system_interface::instruction as system_instruction;
+use solana_transaction::Transaction;
 use std::str::FromStr;
 
 #[cfg(feature = "token-extensions")]
@@ -26,8 +30,12 @@ pub enum ParseError {
     InvalidStrategy,
     #[error("Invalid kind")]
     InvalidKind,
-    #[error("Invalid PodCastError")]
-    InvalidPodCastError,
+    #[error("No mint")]
+    NoMint,
+    #[error("Invalid data")]
+    InvalidData,
+    #[error("IO error occurred: {0}")]
+    Io(#[from] std::io::Error),
 }
 
 impl FromStr for generated::types::PermissionStrategy {
@@ -54,39 +62,107 @@ impl TryFrom<u8> for generated::types::PermissionStrategy {
     }
 }
 
-impl From<PodCastError> for ParseError {
-    fn from(_: PodCastError) -> Self {
-        Self::InvalidPodCastError
-    }
-}
-
 impl TryFrom<u8> for generated::types::Kind {
     type Error = ParseError;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(generated::types::Kind::Policy),
+            1 => Ok(generated::types::Kind::PolicyV2),
             _ => Err(ParseError::InvalidKind),
         }
     }
 }
 
-impl generated::accounts::Policy {
-    pub fn identities_len(&self) -> u32 {
+pub trait PolicyTrait {
+    const LEN: usize;
+    fn current_identities_len(&self) -> u32;
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError>;
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError>;
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError>;
+    fn try_mint(&self) -> Result<Pubkey, ParseError>;
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized;
+}
+
+impl PolicyTrait for generated::accounts::Policy {
+    const LEN: usize = generated::accounts::Policy::LEN;
+
+    fn try_mint(&self) -> Result<Pubkey, ParseError> {
+        Err(ParseError::NoMint)
+    }
+
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        generated::accounts::Policy::from_bytes(&data[..Self::LEN])
+    }
+
+    fn current_identities_len(&self) -> u32 {
         u32::from_le_bytes(self.identities_len)
     }
 
-    pub fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
-        Ok(bytemuck::try_cast_slice(data)
-            .map_err(ParseError::from)?
-            .to_vec())
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        let identities_data = &data[Self::LEN..];
+
+        if identities_data.len() % PUBKEY_BYTES != 0 {
+            return Err(ParseError::InvalidData);
+        }
+
+        let identities = identities_data
+            .chunks_exact(PUBKEY_BYTES)
+            .map(Pubkey::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| ParseError::InvalidData)?;
+
+        Ok(identities)
     }
 
-    pub fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
         generated::types::Kind::try_from(self.kind)
     }
-    pub fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
         generated::types::PermissionStrategy::try_from(self.strategy)
+    }
+}
+
+impl PolicyTrait for generated::accounts::PolicyV2 {
+    const LEN: usize = generated::accounts::PolicyV2::LEN;
+
+    fn try_mint(&self) -> Result<Pubkey, ParseError> {
+        Ok(self.mint)
+    }
+
+    fn current_identities_len(&self) -> u32 {
+        u32::from_le_bytes(self.identities_len)
+    }
+
+    fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
+        let identities_data = &data[Self::LEN..];
+
+        if identities_data.len() % PUBKEY_BYTES != 0 {
+            return Err(ParseError::InvalidData);
+        }
+
+        let identities = identities_data
+            .chunks_exact(PUBKEY_BYTES)
+            .map(Pubkey::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| ParseError::InvalidData)?;
+
+        Ok(identities)
+    }
+
+    fn try_kind(&self) -> Result<generated::types::Kind, ParseError> {
+        generated::types::Kind::try_from(self.kind)
+    }
+
+    fn try_strategy(&self) -> Result<generated::types::PermissionStrategy, ParseError> {
+        generated::types::PermissionStrategy::try_from(self.strategy)
+    }
+
+    fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        generated::accounts::PolicyV2::from_bytes(&data[..Self::LEN])
     }
 }
 
@@ -146,11 +222,11 @@ impl<'a> CreateAccountBuilder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         let space = self.space.expect("space is not set");
         let lamports = Rent::default().minimum_balance(self.rent.expect("rent is not set"));
 
-        solana_sdk::system_instruction::create_account(
+        system_instruction::create_account(
             self.payer.expect("payer is not set"),
             self.account.expect("mint is not set"),
             lamports,
@@ -207,7 +283,7 @@ impl<'a> InitializeMint2Builder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         initialize_mint2(
             self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
@@ -266,7 +342,7 @@ impl<'a> MetadataPointerInitializeBuilder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         initialize_metadata_pointer(
             self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
@@ -323,7 +399,7 @@ impl<'a> CreateAsscoiatedTokenAccountBuilder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         let owner = self.owner.expect("owner is not set");
         let mint = self.mint.expect("mint is not set");
         let payer = self.payer.expect("payer is not set");
@@ -398,7 +474,7 @@ impl<'a> TokenExtensionsMintToBuilder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         mint_to(
             self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint is not set"),
@@ -412,10 +488,10 @@ impl<'a> TokenExtensionsMintToBuilder<'a> {
 }
 
 pub struct TransactionBuilder<'a> {
-    instructions: Vec<solana_program::instruction::Instruction>,
+    instructions: Vec<Instruction>,
     signers: Vec<&'a Keypair>,
     payer: Option<&'a Pubkey>,
-    recent_blockhash: Option<solana_sdk::hash::Hash>,
+    recent_blockhash: Option<Hash>,
 }
 
 impl<'a> TransactionBuilder<'a> {
@@ -430,20 +506,14 @@ impl<'a> TransactionBuilder<'a> {
 
     /// Set the entire list of instructions for the transaction
     #[inline(always)]
-    pub fn instructions(
-        &mut self,
-        instructions: Vec<solana_program::instruction::Instruction>,
-    ) -> &mut Self {
+    pub fn instructions(&mut self, instructions: Vec<Instruction>) -> &mut Self {
         self.instructions = instructions;
         self
     }
 
     /// Add an instruction to the transaction
     #[inline(always)]
-    pub fn instruction(
-        &mut self,
-        instruction: solana_program::instruction::Instruction,
-    ) -> &mut Self {
+    pub fn instruction(&mut self, instruction: Instruction) -> &mut Self {
         self.instructions.push(instruction);
         self
     }
@@ -464,7 +534,7 @@ impl<'a> TransactionBuilder<'a> {
 
     /// Set the recent blockhash for the transaction
     #[inline(always)]
-    pub fn recent_blockhash(&mut self, recent_blockhash: solana_sdk::hash::Hash) -> &mut Self {
+    pub fn recent_blockhash(&mut self, recent_blockhash: Hash) -> &mut Self {
         self.recent_blockhash = Some(recent_blockhash);
         self
     }
@@ -554,7 +624,7 @@ impl<'a> InitializeMetadataBuilder<'a> {
         self
     }
 
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> Instruction {
         initialize_metadata(
             self.token_program.unwrap_or(&TOKEN_22_PROGRAM_ID),
             self.mint.expect("mint_pubkey is not set"),

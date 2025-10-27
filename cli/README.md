@@ -4,7 +4,7 @@ A command-line interface for managing Yellowstone Shield access control policies
 
 ## Overview
 
-Yellowstone Shield provides a token-based access control system where policies are tied to SPL token mints. Each policy can maintain a list of authorized identities (public keys) with either Allow or Deny strategies.
+The Yellowstone Shield CLI is a command-line tool for managing access policies for Solana identities, such as validators, wallets, or programs. It allows users to create and manage policies, add, update and remove identites, and configure various settings related to the policy.
 
 ## Installation
 
@@ -35,6 +35,8 @@ solana config set --url https://api.mainnet-beta.solana.com
 solana config set --keypair ~/.config/solana/id.json
 ```
 
+The binary should be located at `./target/release/yellowstone-shield-cli`.
+
 ## Usage
 
 ### Global Options
@@ -44,6 +46,28 @@ solana config set --keypair ~/.config/solana/id.json
 - `-l, --log-level <LEVEL>` - Set log verbosity (default: "off")
 
 ### Policy Commands
+
+- `-r, --rpc <URL>`: RPC endpoint url to override using the Solana config.
+- `-T, --timeout <SECONDS>`: Set the timeout duration (default is 90 seconds).
+- `-l, --log-level <LEVEL>`: Set the log level (default is "off").
+- `-k, --keypair <FILE>`: Path to the local owner keypair file -- not a hardware wallet.
+
+### Metadata
+
+Before creating a new Policy, plan ahead by creating a URI-addressable JSON file containing the metadata for your Policy. The Policy metadata should use the format shown in this example (https://gateway.irys.xyz/CdxWAuxk483JsqJdbE8cSKkZEMTJ1EKpDsUWmqGTaFu8):
+
+```
+{
+  "name": "Top 25 Validators by Stake",
+  "symbol": "TV25",
+  "description": "A Yellowstone Shield policy of the top 25 validators by stake.",
+  "image": "https://gateway.irys.xyz/Hhdy76nXVpNBCg1pVLtpctaZXbpnSufWggbyiMFUoCTh",
+  "external_url": "https://triton.one",
+  "attributes": []
+}
+```
+
+After uploading your metadata to a publicly accessible URI, you will use the URI with the `--uri` parameter when creating the Policy.
 
 #### Create a Policy
 

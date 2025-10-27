@@ -38,6 +38,23 @@ codama.update(
   })
 );
 
+codama.update(
+  c.updateAccountsVisitor({
+    policy_v2: {
+      size: 39,
+      seeds: [
+        c.constantPdaSeedNodeFromString('utf8', 'shield'),
+        c.constantPdaSeedNodeFromString('utf8', 'policy'),
+        c.variablePdaSeedNode(
+          'mint',
+          c.publicKeyTypeNode(),
+          'The mint of the token extension account'
+        ),
+      ],
+    },
+  })
+);
+
 // Update instructions.
 codama.update(
   c.updateInstructionsVisitor({
@@ -55,7 +72,7 @@ codama.update(
         owner: { defaultValue: c.accountValueNode('payer') },
       },
     },
-    removeIdentity: {
+    closePolicy: {
       byteDeltas: [c.instructionByteDeltaNode(c.accountLinkNode('policy'))],
       accounts: {
         policy: { defaultValue: c.pdaValueNode('policy') },

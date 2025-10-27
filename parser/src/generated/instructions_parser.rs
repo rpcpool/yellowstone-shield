@@ -5,7 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh_0_10::BorshDeserialize;
+use borsh::BorshDeserialize;
 use yellowstone_shield_client::instructions::{
     AddIdentity as AddIdentityIxAccounts, AddIdentityInstructionArgs as AddIdentityIxData,
     CreatePolicy as CreatePolicyIxAccounts, CreatePolicyInstructionArgs as CreatePolicyIxData,
@@ -30,7 +30,7 @@ impl yellowstone_vixen_core::Parser for InstructionParser {
     type Input = yellowstone_vixen_core::instruction::InstructionUpdate;
     type Output = ShieldProgramIx;
 
-    fn id(&self) -> std::borrow::Cow<str> {
+    fn id(&self) -> std::borrow::Cow<'static, str> {
         "Shield::InstructionParser".into()
     }
 
@@ -100,9 +100,7 @@ impl InstructionParser {
                     mint: ix.accounts[0].0.into(),
                     token_account: ix.accounts[1].0.into(),
                     policy: ix.accounts[2].0.into(),
-                    payer: ix.accounts[3].0.into(),
                     owner: ix.accounts[4].0.into(),
-                    system_program: ix.accounts[5].0.into(),
                 };
                 let de_ix_data: RemoveIdentityIxData = BorshDeserialize::deserialize(&mut ix_data)?;
                 Ok(ShieldProgramIx::RemoveIdentity(ix_accounts, de_ix_data))

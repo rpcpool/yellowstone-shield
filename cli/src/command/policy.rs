@@ -1,9 +1,9 @@
+use borsh::BorshDeserialize;
 use log::info;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    pubkey::Pubkey,
-    signature::{Keypair, Signer},
-};
+use solana_commitment_config::CommitmentConfig;
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use solana_signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
@@ -11,20 +11,33 @@ use spl_token_2022::{
     pod::PodMint,
     state::Mint,
 };
-use spl_token_metadata_interface::{
-    borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
-};
+use spl_token_metadata_interface::state::TokenMetadata;
 use yellowstone_shield_client::{
-    accounts::Policy,
+    accounts::{Policy, PolicyV2},
     instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
-    types::PermissionStrategy,
+    types::{Kind, PermissionStrategy},
     CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
-    InitializeMint2Builder, MetadataPointerInitializeBuilder, TokenExtensionsMintToBuilder,
-    TransactionBuilder,
+    InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
+    TokenExtensionsMintToBuilder, TransactionBuilder,
 };
 
 use super::{RunCommand, RunResult};
-use crate::command::{CommandComplete, CommandContext, SolanaAccount};
+use crate::{command::CommandContext, CommandComplete, LogPolicy, SolanaAccount};
+
+#[derive(Debug)]
+pub enum PolicyVersion {
+    V1(Policy),
+    V2(PolicyV2),
+}
+
+impl PolicyVersion {
+    pub fn strategy(&self) -> u8 {
+        match self {
+            PolicyVersion::V1(pv1) => pv1.strategy,
+            PolicyVersion::V2(pv2) => pv2.strategy,
+        }
+    }
+}
 
 /// Builder for creating a new policy
 pub struct CreateCommandBuilder {
@@ -138,6 +151,7 @@ impl RunCommand for CreateCommandBuilder {
             .instruction();
 
         // Create the policy account.
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(&mint.pubkey());
         let create_policy_ix = CreatePolicyBuilder::new()
             .policy(address)
@@ -179,24 +193,35 @@ impl RunCommand for CreateCommandBuilder {
             .recent_blockhash(last_blockhash)
             .transaction();
 
-        client
+        let signature = client
             .send_and_confirm_transaction_with_spinner_and_commitment(
                 &tx,
                 CommitmentConfig::confirmed(),
             )
             .await?;
 
+        info!("Transaction signature: {}", signature);
+
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
+
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(&account_data[..Policy::LEN])?),
+            Kind::PolicyV2 => {
+                PolicyVersion::V2(PolicyV2::from_bytes(&account_data[..PolicyV2::LEN])?)
+            }
+        };
 
         let mint_data = client.get_account(&mint.pubkey()).await?;
-        let account_data: &[u8] = &mint_data.data;
+        let mint_account_data: &[u8] = &mint_data.data;
 
-        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(account_data).unwrap();
+        let mint_pod = PodStateWithExtensions::<PodMint>::unpack(mint_account_data).unwrap();
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
+
+        LogPolicy::new(&mint.pubkey(), &token_metadata, &address, &policy, None).log();
 
         Ok(CommandComplete(
             SolanaAccount(mint.pubkey(), Some(token_metadata)),
@@ -236,6 +261,7 @@ impl RunCommand for DeleteCommandBuilder<'_> {
         let CommandContext { keypair, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
         let payer_token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
@@ -303,14 +329,23 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let CommandContext { keypair: _, client } = context;
 
         let mint = self.mint.expect("mint must be set");
+        // PDA seeds are same for both Policy and PolicyV2
         let (address, _) = Policy::find_pda(mint);
 
         let account_data = client.get_account(&address).await?;
         let account_data: &[u8] = &account_data.data;
 
-        let policy = Policy::from_bytes(&account_data[..Policy::LEN])?;
+        let policy_version = Kind::try_from_slice(&[account_data[0]])?;
 
-        let identities = Policy::try_deserialize_identities(&account_data[Policy::LEN..])?;
+        let policy = match policy_version {
+            Kind::Policy => PolicyVersion::V1(Policy::from_bytes(account_data)?),
+            Kind::PolicyV2 => PolicyVersion::V2(PolicyV2::from_bytes(account_data)?),
+        };
+
+        let identities = match policy_version {
+            Kind::Policy => Policy::try_deserialize_identities(account_data)?,
+            Kind::PolicyV2 => PolicyV2::try_deserialize_identities(account_data)?,
+        };
 
         let mint_data = client.get_account(mint).await?;
         let account_data: &[u8] = &mint_data.data;
@@ -319,10 +354,7 @@ impl RunCommand for ShowCommandBuilder<'_> {
         let mint_bytes = mint_pod.get_extension_bytes::<TokenMetadata>().unwrap();
         let token_metadata = TokenMetadata::try_from_slice(mint_bytes).unwrap();
 
-        info!("Identities in policy:");
-        for (i, identity) in identities.iter().enumerate() {
-            info!("  {}. {}", i, identity);
-        }
+        LogPolicy::new(mint, &token_metadata, &address, &policy, Some(&identities)).log();
 
         Ok(CommandComplete(
             SolanaAccount(*mint, Some(token_metadata)),

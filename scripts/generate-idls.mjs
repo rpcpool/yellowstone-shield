@@ -1,22 +1,12 @@
 #!/usr/bin/env zx
 import 'zx/globals';
-import { generateIdl } from '@metaplex-foundation/shank-js';
 import { getCargo, getProgramFolders } from './utils.mjs';
 
-const binaryInstallDir = path.join(__dirname, '..', '.cargo');
 
-getProgramFolders().forEach((folder) => {
+for (const folder of getProgramFolders()) {
   const cargo = getCargo(folder);
-  const isShank = Object.keys(cargo.dependencies).includes('shank');
   const programDir = path.join(__dirname, '..', folder);
+  const programId = cargo.package.metadata.solana['program-id'];
 
-  generateIdl({
-    generator: isShank ? 'shank' : 'anchor',
-    programName: cargo.package.name.replace(/-/g, '_'),
-    programId: cargo.package.metadata.solana['program-id'],
-    idlDir: programDir,
-    idlName: 'idl',
-    programDir,
-    binaryInstallDir,
-  });
-});
+  await $`shank idl --program-id="${programId}" --crate-root="${programDir}" --out-filename="idl.json" --out-dir="${programDir}"`
+}

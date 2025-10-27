@@ -136,6 +136,12 @@ pub enum ShieldError {
     // 43 - Invalid strategy
     #[error("Invalid strategy")]
     InvalidStrategy,
+    // 44 - Invalid Policy Kind
+    #[error("Invalid Policy Kind")]
+    InvalidPolicyKind,
+    // 45 - Invalid Index To Reference Identity
+    #[error("Invalid Index To Reference Identity")]
+    InvalidIndexToReferenceIdentity,
 }
 
 impl From<std::io::Error> for ShieldError {

@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use clap::Parser;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_pubkey::pubkey;
-use solana_sdk::pubkey::Pubkey;
+use solana_pubkey::Pubkey;
 use yellowstone_shield_cli::{
     run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
 };
@@ -37,14 +37,14 @@ async fn main() {
 
     let policy_store = PolicyStore::build()
         .config(config)
-        .run(&local)
+        .run()
         .await
         .unwrap();
 
     local
         .run_until(async {
             let good = pubkey!("7kos12TGQYnX62cdu52tre53X6Y7ZicGsbwpNz1d3ESj");
-            let bad = pubkey!("HApPge4oeRUgKcmEAjs1PuYV4ZcTXjZoLzJFpBnENywm");
+            let bad = pubkey!("7k7dkWcqtpm5RSkMpLRfqMbhv9WSHuFi9iGCmAhYf2bD");
 
             let other = Pubkey::new_unique();
 

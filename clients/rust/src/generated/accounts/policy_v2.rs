@@ -11,22 +11,27 @@ use solana_pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Policy {
+pub struct PolicyV2 {
     pub kind: u8,
     pub strategy: u8,
     pub nonce: u8,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub mint: Pubkey,
     pub identities_len: [u8; 4],
 }
 
-impl Policy {
-    pub const LEN: usize = 7;
+impl PolicyV2 {
+    pub const LEN: usize = 39;
 
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
-    ///   0. `Policy::PREFIX.0`
-    ///   1. `Policy::PREFIX.1`
+    ///   0. `PolicyV2::PREFIX.0`
+    ///   1. `PolicyV2::PREFIX.1`
     ///   2. mint (`Pubkey`)
     pub const PREFIX: (&'static [u8], &'static [u8]) = ("shield".as_bytes(), "policy".as_bytes());
 
@@ -59,7 +64,7 @@ impl Policy {
     }
 }
 
-impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for Policy {
+impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for PolicyV2 {
     type Error = std::io::Error;
 
     fn try_from(account_info: &solana_account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
@@ -69,30 +74,30 @@ impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for Policy {
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_policy(
+pub fn fetch_policy_v2(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_pubkey::Pubkey,
-) -> Result<crate::shared::DecodedAccount<Policy>, std::io::Error> {
-    let accounts = fetch_all_policy(rpc, &[*address])?;
+) -> Result<crate::shared::DecodedAccount<PolicyV2>, std::io::Error> {
+    let accounts = fetch_all_policy_v2(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_policy(
+pub fn fetch_all_policy_v2(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_pubkey::Pubkey],
-) -> Result<Vec<crate::shared::DecodedAccount<Policy>>, std::io::Error> {
+) -> Result<Vec<crate::shared::DecodedAccount<PolicyV2>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<Policy>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<PolicyV2>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         let account = accounts[i].as_ref().ok_or(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Account not found: {}", address),
         ))?;
-        let data = Policy::from_bytes(&account.data)?;
+        let data = PolicyV2::from_bytes(&account.data)?;
         decoded_accounts.push(crate::shared::DecodedAccount {
             address,
             account: account.clone(),
@@ -103,27 +108,27 @@ pub fn fetch_all_policy(
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_maybe_policy(
+pub fn fetch_maybe_policy_v2(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_pubkey::Pubkey,
-) -> Result<crate::shared::MaybeAccount<Policy>, std::io::Error> {
-    let accounts = fetch_all_maybe_policy(rpc, &[*address])?;
+) -> Result<crate::shared::MaybeAccount<PolicyV2>, std::io::Error> {
+    let accounts = fetch_all_maybe_policy_v2(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_maybe_policy(
+pub fn fetch_all_maybe_policy_v2(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_pubkey::Pubkey],
-) -> Result<Vec<crate::shared::MaybeAccount<Policy>>, std::io::Error> {
+) -> Result<Vec<crate::shared::MaybeAccount<PolicyV2>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<Policy>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<PolicyV2>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         if let Some(account) = accounts[i].as_ref() {
-            let data = Policy::from_bytes(&account.data)?;
+            let data = PolicyV2::from_bytes(&account.data)?;
             decoded_accounts.push(crate::shared::MaybeAccount::Exists(
                 crate::shared::DecodedAccount {
                     address,
@@ -139,26 +144,26 @@ pub fn fetch_all_maybe_policy(
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for Policy {
+impl anchor_lang::AccountDeserialize for PolicyV2 {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for Policy {}
+impl anchor_lang::AccountSerialize for PolicyV2 {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for Policy {
+impl anchor_lang::Owner for PolicyV2 {
     fn owner() -> Pubkey {
         crate::SHIELD_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for Policy {}
+impl anchor_lang::IdlBuild for PolicyV2 {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for Policy {
+impl anchor_lang::Discriminator for PolicyV2 {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

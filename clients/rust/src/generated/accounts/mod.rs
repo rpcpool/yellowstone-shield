@@ -6,5 +6,7 @@
 //!
 
 pub(crate) mod r#policy;
+pub(crate) mod r#policy_v2;
 
 pub use self::r#policy::*;
+pub use self::r#policy_v2::*;
