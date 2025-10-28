@@ -39,7 +39,7 @@ solana-client = { workspace = true, optional = true }
 solana-decode-error = { workspace = true }
 solana-rent = { workspace = true }
 solana-msg = { workspace = true }
-solana-system-interface = { workspace = true }
+solana-system-interface = { workspace = true, features = ["bincode"] }
 solana-hash = { workspace = true }
 solana-transaction = { workspace = true }
 spl-token-2022-interface = { workspace = true, optional = true }

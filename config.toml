@@ -3,4 +3,5 @@ endpoint = "http://0.0.0.0:8899"
 
 [grpc]
 endpoint = "http://0.0.0.0:10000"
-timeout = 60
+timeout = "60s"
+connect_timeout = "10s"

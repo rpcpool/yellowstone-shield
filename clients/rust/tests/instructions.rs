@@ -5,16 +5,14 @@ use {
     solana_program_test::{tokio, ProgramTest},
     solana_pubkey::Pubkey,
     solana_signer::Signer,
-    spl_associated_token_account::get_associated_token_address_with_program_id,
+    spl_associated_token_account_interface::address::get_associated_token_address_with_program_id,
     spl_pod::optional_keys::OptionalNonZeroPubkey,
     spl_token_2022_interface::{
         extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
         pod::PodMint,
         state::Mint,
     },
-    spl_token_metadata_interface::{
-        borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
-    },
+    spl_token_metadata_interface::state::TokenMetadata,
     yellowstone_shield_client::{
         accounts::PolicyV2,
         instructions::{
