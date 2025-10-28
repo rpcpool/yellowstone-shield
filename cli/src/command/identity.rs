@@ -1,30 +1,26 @@
-use std::collections::{HashSet, VecDeque};
-
-use super::{RunCommand, RunResult};
-use crate::{
-    command::{send_batched_tx, CommandContext},
-    policy::PolicyVersion,
-    CommandComplete, LogPolicy, SolanaAccount,
-};
-use borsh::BorshDeserialize;
-
-use solana_pubkey::Pubkey;
-use solana_signer::Signer;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_token_2022::{
-    extension::{BaseStateWithExtensions, PodStateWithExtensions},
-    pod::PodMint,
-};
-use spl_token_metadata_interface::state::TokenMetadata;
-
-use yellowstone_shield_client::{
-    accounts::{Policy, PolicyV2},
-    instructions::ReplaceIdentityBuilder,
-    types::Kind,
-};
-use yellowstone_shield_client::{
-    instructions::{AddIdentityBuilder, RemoveIdentityBuilder},
-    PolicyTrait,
+use {
+    super::{RunCommand, RunResult},
+    crate::{
+        command::{send_batched_tx, CommandContext},
+        policy::PolicyVersion,
+        CommandComplete, LogPolicy, SolanaAccount,
+    },
+    borsh::BorshDeserialize,
+    solana_pubkey::Pubkey,
+    solana_signer::Signer,
+    spl_associated_token_account_interface::address::get_associated_token_address_with_program_id,
+    spl_token_2022_interface::{
+        extension::{BaseStateWithExtensions, PodStateWithExtensions},
+        pod::PodMint,
+    },
+    spl_token_metadata_interface::state::TokenMetadata,
+    std::collections::{HashSet, VecDeque},
+    yellowstone_shield_client::{
+        accounts::{Policy, PolicyV2},
+        instructions::{AddIdentityBuilder, RemoveIdentityBuilder, ReplaceIdentityBuilder},
+        types::Kind,
+        PolicyTrait,
+    },
 };
 
 const CHUNK_SIZE: usize = 20;
@@ -81,7 +77,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;
@@ -235,7 +231,7 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;
@@ -435,7 +431,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;

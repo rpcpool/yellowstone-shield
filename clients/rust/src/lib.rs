@@ -1,28 +1,26 @@
 mod generated;
 
-pub use generated::programs::SHIELD_ID as ID;
-pub use generated::*;
-use solana_hash::Hash;
-use solana_instruction::Instruction;
-use solana_keypair::Keypair;
-use solana_pubkey::{Pubkey, PUBKEY_BYTES};
-use solana_rent::Rent;
-use solana_system_interface::instruction as system_instruction;
-use solana_transaction::Transaction;
-use std::str::FromStr;
-
+pub use generated::{programs::SHIELD_ID as ID, *};
 #[cfg(feature = "token-extensions")]
-use spl_associated_token_account::instruction::create_associated_token_account;
-
+use spl_associated_token_account_interface::instruction::create_associated_token_account;
 #[cfg(feature = "token-extensions")]
-use spl_token_2022::{
+use spl_token_2022_interface::{
     extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer,
     instruction::{initialize_mint2, mint_to},
     ID as TOKEN_22_PROGRAM_ID,
 };
-
 #[cfg(feature = "token-extensions")]
 use spl_token_metadata_interface::instruction::initialize as initialize_metadata;
+use {
+    solana_hash::Hash,
+    solana_instruction::Instruction,
+    solana_keypair::Keypair,
+    solana_pubkey::{Pubkey, PUBKEY_BYTES},
+    solana_rent::Rent,
+    solana_system_interface::instruction as system_instruction,
+    solana_transaction::Transaction,
+    std::str::FromStr,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {

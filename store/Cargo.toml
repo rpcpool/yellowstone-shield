@@ -11,26 +11,27 @@ license = "Apache-2.0"
 arc-swap = { workspace = true }
 hashbrown = { workspace = true }
 parking_lot = { workspace = true }
-yellowstone-shield-client = { workspace = true }
+yellowstone-shield = { workspace = true, features = ["no-entrypoint"] }
 solana-client = { workspace = true }
 solana-pubkey = { workspace = true }
 solana-commitment-config = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 thiserror = { workspace = true }
-anyhow = { workspace = true }
 borsh = { workspace = true, features = ["derive"] }
-yellowstone-vixen = { workspace = true }
-yellowstone-vixen-yellowstone-grpc-source = { workspace = true }
+yellowstone-grpc-client = { workspace = true }
+yellowstone-grpc-proto = { workspace = true }
 yellowstone-shield-parser = { workspace = true, features = [] }
 serde = { workspace = true, features = ["derive"] }
+humantime-serde = "1.1"
 solana-account-decoder-client-types = { workspace = true }
+futures = { workspace = true }
 
 [dev-dependencies]
 toml = { workspace = true }
-clap = { workspace = true }
-clap_derive = { workspace = true }
-yellowstone-shield-cli = { workspace = true }
 env_logger = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-pubkey = { workspace = true }
+yellowstone-shield-cli = { workspace = true }
+yellowstone-shield-client = { path = "../clients/rust" }
+clap = { workspace = true, features = ["derive"] }

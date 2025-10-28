@@ -1,9 +1,10 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use bytemuck::{Pod, Zeroable};
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
-use shank::ShankAccount;
-
-use crate::{error::ShieldError, BYTES_PER_PUBKEY};
+use {
+    crate::{error::ShieldError, BYTES_PER_PUBKEY},
+    borsh::{BorshDeserialize, BorshSerialize},
+    bytemuck::{Pod, Zeroable},
+    pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey},
+    shank::ShankAccount,
+};
 
 pub trait ZeroCopyLoad: Size + Pod {
     #[inline(always)]

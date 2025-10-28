@@ -5,9 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
-use thiserror::Error;
+use {num_derive::FromPrimitive, thiserror::Error};
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum ShieldError {
@@ -151,15 +149,8 @@ pub enum ShieldError {
     InvalidIndexToReferenceIdentity = 0x2D,
 }
 
-#[allow(deprecated)]
-impl solana_program_error::PrintProgramError for ShieldError {
-    fn print<E>(&self) {
-        solana_msg::msg!(&self.to_string());
-    }
-}
-
-impl<T> solana_decode_error::DecodeError<T> for ShieldError {
-    fn type_of() -> &'static str {
-        "ShieldError"
+impl From<ShieldError> for solana_program_error::ProgramError {
+    fn from(e: ShieldError) -> Self {
+        solana_program_error::ProgramError::Custom(e as u32)
     }
 }

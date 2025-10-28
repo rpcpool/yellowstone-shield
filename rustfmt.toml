@@ -1,6 +1,9 @@
+edition = "2021"
 max_width = 100
 reorder_imports = true
 reorder_modules = true
+imports_granularity = "One"
+group_imports = "One"
 
 # == Nightly only. ==
 # imports_indent = "Block"

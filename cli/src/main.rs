@@ -1,9 +1,10 @@
-use std::sync::Arc;
-
-use anyhow::Result;
-use clap::Parser;
-use solana_cli_config::{Config, CONFIG_FILE};
-use yellowstone_shield_cli::{run, Args, CliError};
+use {
+    anyhow::Result,
+    clap::Parser,
+    solana_cli_config::{Config, CONFIG_FILE},
+    std::sync::Arc,
+    yellowstone_shield_cli::{run, Args, CliError},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), CliError> {

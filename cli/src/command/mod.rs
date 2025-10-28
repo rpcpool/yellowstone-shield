@@ -1,19 +1,19 @@
 pub mod identity;
 pub mod policy;
 
-use anyhow::Result;
-use log::info;
-use solana_client::client_error::ClientError;
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_commitment_config::CommitmentConfig;
-use solana_instruction::Instruction;
-use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
-use solana_signer::Signer;
-use spl_token_metadata_interface::state::TokenMetadata;
-use yellowstone_shield_client::TransactionBuilder;
-
-use crate::policy::PolicyVersion;
+use {
+    crate::policy::PolicyVersion,
+    anyhow::Result,
+    log::info,
+    solana_client::{client_error::ClientError, nonblocking::rpc_client::RpcClient},
+    solana_commitment_config::CommitmentConfig,
+    solana_instruction::Instruction,
+    solana_keypair::Keypair,
+    solana_pubkey::Pubkey,
+    solana_signer::Signer,
+    spl_token_metadata_interface::state::TokenMetadata,
+    yellowstone_shield_client::TransactionBuilder,
+};
 
 pub struct CommandContext {
     pub client: RpcClient,

@@ -1,13 +1,13 @@
-use std::{path::PathBuf, sync::Arc};
-
-use clap::Parser;
-use solana_cli_config::{Config, CONFIG_FILE};
-use solana_pubkey::pubkey;
-use solana_pubkey::Pubkey;
-use yellowstone_shield_cli::{
-    run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
+use {
+    clap::Parser,
+    solana_cli_config::{Config, CONFIG_FILE},
+    solana_pubkey::{pubkey, Pubkey},
+    std::{path::PathBuf, sync::Arc},
+    yellowstone_shield_cli::{
+        run, Command, CommandComplete, IdentitiesAction, PolicyAction, SolanaAccount,
+    },
+    yellowstone_shield_store::{PolicyStore, PolicyStoreConfig, PolicyStoreTrait},
 };
-use yellowstone_shield_store::{PolicyStore, PolicyStoreConfig, PolicyStoreTrait};
 
 #[derive(Parser)]
 struct Opts {
@@ -35,11 +35,7 @@ async fn main() {
 
     let local = tokio::task::LocalSet::new();
 
-    let policy_store = PolicyStore::build()
-        .config(config)
-        .run()
-        .await
-        .unwrap();
+    let policy_store = PolicyStore::build().config(config).run().await.unwrap();
 
     local
         .run_until(async {

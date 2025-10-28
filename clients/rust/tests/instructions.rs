@@ -1,28 +1,31 @@
 #![cfg(feature = "test-sbf")]
-use borsh::BorshDeserialize;
-use solana_keypair::Keypair;
-use solana_program_test::{tokio, ProgramTest};
-use solana_pubkey::Pubkey;
-use solana_signer::Signer;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
-    extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
-    pod::PodMint,
-    state::Mint,
-};
-use spl_token_metadata_interface::{
-    borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
-};
-
-use yellowstone_shield_client::instructions::{ClosePolicyBuilder, ReplaceIdentityBuilder};
-use yellowstone_shield_client::types::{Kind, PermissionStrategy};
-use yellowstone_shield_client::{
-    accounts::PolicyV2,
-    instructions::{AddIdentityBuilder, CreatePolicyBuilder, RemoveIdentityBuilder},
-    CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
-    InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
-    TokenExtensionsMintToBuilder, TransactionBuilder,
+use {
+    borsh::BorshDeserialize,
+    solana_keypair::Keypair,
+    solana_program_test::{tokio, ProgramTest},
+    solana_pubkey::Pubkey,
+    solana_signer::Signer,
+    spl_associated_token_account::get_associated_token_address_with_program_id,
+    spl_pod::optional_keys::OptionalNonZeroPubkey,
+    spl_token_2022_interface::{
+        extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
+        pod::PodMint,
+        state::Mint,
+    },
+    spl_token_metadata_interface::{
+        borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
+    },
+    yellowstone_shield_client::{
+        accounts::PolicyV2,
+        instructions::{
+            AddIdentityBuilder, ClosePolicyBuilder, CreatePolicyBuilder, RemoveIdentityBuilder,
+            ReplaceIdentityBuilder,
+        },
+        types::{Kind, PermissionStrategy},
+        CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
+        InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
+        TokenExtensionsMintToBuilder, TransactionBuilder,
+    },
 };
 
 #[tokio::test]
@@ -37,7 +40,7 @@ async fn test_policy_v2_lifecycle() {
     let payer_token_account = get_associated_token_address_with_program_id(
         &context.payer.pubkey(),
         &mint.pubkey(),
-        &spl_token_2022::ID,
+        &spl_token_2022_interface::ID,
     );
     // Calculate the space required for the mint account with extensions.
     let mint_size =
@@ -59,7 +62,7 @@ async fn test_policy_v2_lifecycle() {
         .account(&mint.pubkey())
         .space(mint_size)
         .rent(rent)
-        .owner(&spl_token_2022::id())
+        .owner(&spl_token_2022_interface::id())
         .instruction();
 
     // Initialize metadata pointer extension.
@@ -156,7 +159,7 @@ async fn test_policy_v2_lifecycle() {
     assert!(payer_token_account_data.is_some());
 
     let payer_token_account_data = payer_token_account_data.unwrap();
-    assert_eq!(payer_token_account_data.owner, spl_token_2022::ID);
+    assert_eq!(payer_token_account_data.owner, spl_token_2022_interface::ID);
 
     let first = Pubkey::new_unique();
 

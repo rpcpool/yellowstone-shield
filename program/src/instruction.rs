@@ -1,8 +1,9 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use pinocchio::pubkey::Pubkey;
-use shank::ShankInstruction;
-
-use crate::state::PermissionStrategy;
+use {
+    crate::state::PermissionStrategy,
+    borsh::{BorshDeserialize, BorshSerialize},
+    pinocchio::pubkey::Pubkey,
+    shank::ShankInstruction,
+};
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankInstruction)]
 #[rustfmt::skip]

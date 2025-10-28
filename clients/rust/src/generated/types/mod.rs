@@ -8,5 +8,4 @@
 pub(crate) mod r#kind;
 pub(crate) mod r#permission_strategy;
 
-pub use self::r#kind::*;
-pub use self::r#permission_strategy::*;
+pub use self::{r#kind::*, r#permission_strategy::*};

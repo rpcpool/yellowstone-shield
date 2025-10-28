@@ -28,11 +28,9 @@ num-derive = { workspace = true }
 num-traits = { workspace = true }
 solana-program = { workspace = true }
 thiserror = { workspace = true }
-spl-associated-token-account = { workspace = true, features = [
-  "no-entrypoint",
-] }
+spl-associated-token-account-interface = { workspace = true }
 spl-token = { workspace = true, features = ["no-entrypoint"] }
-spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
+spl-token-2022-interface = { workspace = true }
 spl-token-group-interface = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
 spl-pod = { workspace = true }

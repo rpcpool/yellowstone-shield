@@ -11,9 +11,9 @@ publish = true
 [dependencies]
 clap = { workspace = true }
 clap_derive = { workspace = true }
-yellowstone-shield-client = { workspace = true, features = [
-  "token-extensions",
-] }
+yellowstone-shield = { workspace = true, features = ["no-entrypoint"] }
+yellowstone-shield-parser = { workspace = true }
+yellowstone-shield-client = { path = "../clients/rust", features = ["token-extensions"] }
 # Agave Crates
 # solana-cli = { workspace = true }
 solana-cli-config = { workspace = true }
@@ -34,10 +34,8 @@ async-trait = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
-spl-token-2022 = { workspace = true, features = ["no-entrypoint"] }
-spl-associated-token-account = { workspace = true, features = [
-  "no-entrypoint",
-] }
+spl-token-2022-interface = { workspace = true }
+spl-associated-token-account-interface = { workspace = true }
 borsh = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
 spl-pod = { workspace = true }

@@ -5,9 +5,10 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
-use solana_pubkey::Pubkey;
+use {
+    borsh::{BorshDeserialize, BorshSerialize},
+    solana_pubkey::Pubkey,
+};
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -165,5 +166,5 @@ impl anchor_lang::IdlBuild for PolicyV2 {}
 
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::Discriminator for PolicyV2 {
-    const DISCRIMINATOR: [u8; 8] = [0; 8];
+    const DISCRIMINATOR: &[u8] = &[0; 8];
 }

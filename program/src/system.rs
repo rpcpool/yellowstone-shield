@@ -1,13 +1,14 @@
-use pinocchio::{
-    account_info::AccountInfo,
-    instruction::Signer,
-    pubkey::Pubkey,
-    sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+use {
+    crate::error::ShieldError,
+    pinocchio::{
+        account_info::AccountInfo,
+        instruction::Signer,
+        pubkey::Pubkey,
+        sysvars::{rent::Rent, Sysvar},
+        ProgramResult,
+    },
+    pinocchio_system::instructions::{CreateAccount, Transfer},
 };
-use pinocchio_system::instructions::{CreateAccount, Transfer};
-
-use crate::error::ShieldError;
 
 /// Create a new account from the given size.
 #[inline(always)]
@@ -57,7 +58,7 @@ pub fn realloc_account(
         transfer_lamports_from_pdas(target_account, funding_account, lamports_diff)?;
     }
 
-    target_account.realloc(new_size, false)
+    target_account.resize(new_size)
 }
 
 // /// Close an account.
@@ -76,7 +77,7 @@ pub fn close_account(
     unsafe {
         target_account.assign(&pinocchio_system::ID);
     }
-    target_account.realloc(0, false)
+    target_account.resize(0)
 }
 
 pub fn transfer_lamports_from_pdas(

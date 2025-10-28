@@ -1,26 +1,25 @@
 mod command;
 
-use anyhow::{Context, Result};
-use bs58::decode;
-use clap_derive::{Parser as DeriveParser, Subcommand};
-use log::info;
-use serde_json::from_str as parse_json_str;
-use solana_cli_config::Config;
-use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_commitment_config::{CommitmentConfig, ParseCommitmentLevelError};
-use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
-use spl_token_metadata_interface::state::TokenMetadata;
-use std::fmt;
-use std::fs::read_to_string as read_path;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::{str::FromStr, time::Duration};
-use yellowstone_shield_client::types::PermissionStrategy;
-
 pub use command::*;
-
-use crate::command::policy::PolicyVersion;
+use {
+    crate::command::policy::PolicyVersion,
+    anyhow::{Context, Result},
+    bs58::decode,
+    clap_derive::{Parser as DeriveParser, Subcommand},
+    log::info,
+    serde_json::from_str as parse_json_str,
+    solana_cli_config::Config,
+    solana_client::nonblocking::rpc_client::RpcClient,
+    solana_commitment_config::{CommitmentConfig, ParseCommitmentLevelError},
+    solana_keypair::Keypair,
+    solana_pubkey::Pubkey,
+    spl_token_metadata_interface::state::TokenMetadata,
+    std::{
+        fmt, fs::read_to_string as read_path, path::PathBuf, str::FromStr, sync::Arc,
+        time::Duration,
+    },
+    yellowstone_shield_client::types::PermissionStrategy,
+};
 
 #[derive(Debug, DeriveParser)]
 #[command(

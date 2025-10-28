@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.6.0
+
+### Added
+- Custom program ID configuration support
+- gRPC client configuration options (connection timeouts, HTTP/2 keep-alive, window sizes)
+
+### Changed
+- Removed Vixen dependency, now using gRPC and parsing accounts directly
+- Updated to Agave v3 (from v2.3)
+- Updated to Solana SDK 3.x (from 2.x)
+- Migrated to SPL interface libraries (spl-token-2022-interface, spl-associated-token-account-interface)
+- Updated Codama renderers to 1.2.7
+
+### Fixed
+- Various compatibility issues for SDK 3.x migration
+- Deprecated trait implementations in generated code
+- Account resizing method updates
+- BorshIoError enum variant handling
+
+### Breaking Changes
+This release requires code updates due to major dependency changes:
+- Vixen framework no longer used
+- Solana SDK 2.x to 3.x migration
+- SPL token library interface changes
+
 ## 0.5.1
 
 ### Changed

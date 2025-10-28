@@ -1,12 +1,14 @@
-use crate::error::ShieldError;
-use pinocchio::{
-    account_info::AccountInfo,
-    msg,
-    program_error::ProgramError,
-    pubkey::{create_program_address, find_program_address, Pubkey},
-    ProgramResult,
+use {
+    crate::error::ShieldError,
+    pinocchio::{
+        account_info::AccountInfo,
+        msg,
+        program_error::ProgramError,
+        pubkey::{create_program_address, find_program_address, Pubkey},
+        ProgramResult,
+    },
+    spl_token_2022_interface::extension::StateWithExtensions,
 };
-use spl_token_2022::extension::StateWithExtensions;
 
 /// Assert that the given strategy is valid.
 pub fn assert_strategy(strategy: u8) -> ProgramResult {
@@ -31,7 +33,7 @@ pub fn assert_program_owner(
         account_name,
         account.key(),
         owner,
-        unsafe { account.owner() },
+        account.owner(),
     );
     Err(ShieldError::InvalidProgramOwner.into())
 }
@@ -112,7 +114,7 @@ pub fn assert_empty_and_owned_by_system(
     account_name: &str,
     account: &AccountInfo,
 ) -> ProgramResult {
-    if !(account.data_is_empty() && unsafe { account.owner() } == &pinocchio_system::ID) {
+    if !(account.data_is_empty() && account.owner() == &pinocchio_system::ID) {
         msg!(
             "Account \"{}\" [{:?}] must be empty and owned by system_program",
             account_name,
@@ -211,7 +213,7 @@ pub fn assert_same_pubkeys(
 // Assert that the given amount is positive.
 pub fn assert_positive_amount(
     account_name: &str,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if account.base.amount == 0 {
         msg!("Account \"{}\" must have a positive amount", account_name,);
@@ -225,7 +227,7 @@ pub fn assert_positive_amount(
 pub fn assert_token_owner(
     account_name: &str,
     expected: &Pubkey,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if *expected != account.base.owner.to_bytes() {
         msg!(
@@ -243,7 +245,7 @@ pub fn assert_token_owner(
 pub fn assert_mint_association(
     account_name: &str,
     expected: &Pubkey,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if &account.base.mint.to_bytes() != expected {
         msg!(
@@ -264,8 +266,8 @@ pub fn assert_ata(
     mint: &Pubkey,
 ) -> ProgramResult {
     let (ata, _) = find_program_address(
-        &[owner, &spl_token_2022::ID.to_bytes(), mint],
-        &spl_associated_token_account::ID.to_bytes(),
+        &[owner, &spl_token_2022_interface::ID.to_bytes(), mint],
+        &spl_associated_token_account_interface::program::ID.to_bytes(),
     );
     if account.key() != &ata {
         msg!(

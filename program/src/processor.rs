@@ -1,22 +1,25 @@
-use borsh::BorshDeserialize;
-use bytemuck::bytes_of;
-use pinocchio::instruction::Signer;
-use pinocchio::memory::sol_memcpy;
-use pinocchio::program_error::ProgramError;
-use pinocchio::{account_info::AccountInfo, msg, pubkey::Pubkey, seeds, ProgramResult};
-
-use crate::assertions::{
-    assert_ata, assert_empty_and_owned_by_system, assert_mint_association, assert_positive_amount,
-    assert_program_owner, assert_signer, assert_strategy, assert_token_owner,
-    find_and_validate_pda, validate_pda,
+use {
+    crate::{
+        assertions::{
+            assert_ata, assert_empty_and_owned_by_system, assert_mint_association,
+            assert_positive_amount, assert_program_owner, assert_signer, assert_strategy,
+            assert_token_owner, find_and_validate_pda, validate_pda,
+        },
+        error::ShieldError,
+        instruction::ShieldInstruction,
+        state::{
+            Kind, PermissionStrategy, Policy, PolicyV2, Size, ZeroCopyLoad, IDENTITIES_LEN_SIZE,
+        },
+        system::{close_account, create_account, realloc_account},
+        BYTES_PER_PUBKEY,
+    },
+    borsh::BorshDeserialize,
+    bytemuck::bytes_of,
+    pinocchio::{
+        account_info::AccountInfo, instruction::Signer, memory::sol_memcpy, msg,
+        program_error::ProgramError, pubkey::Pubkey, seeds, ProgramResult,
+    },
 };
-use crate::error::ShieldError;
-use crate::instruction::ShieldInstruction;
-use crate::state::{
-    Kind, PermissionStrategy, Policy, PolicyV2, Size, ZeroCopyLoad, IDENTITIES_LEN_SIZE,
-};
-use crate::system::{close_account, create_account, realloc_account};
-use crate::BYTES_PER_PUBKEY;
 
 pub fn process_instruction(
     _program_id: &Pubkey,
@@ -318,19 +321,18 @@ fn validate_policy_associated_accounts(
     token_account: &AccountInfo,
 ) -> ProgramResult {
     assert_signer("owner", owner)?;
-    assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
+    assert_program_owner("mint", mint, &spl_token_2022_interface::id().to_bytes())?;
     assert_program_owner(
         "token_account",
         token_account,
-        &spl_token_2022::ID.to_bytes(),
+        &spl_token_2022_interface::ID.to_bytes(),
     )?;
 
     let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
+    let account = spl_token_2022_interface::extension::StateWithExtensions::<
+        spl_token_2022_interface::state::Account,
+    >::unpack(token_account_data)
+    .map_err(|_| ShieldError::InvalidAccountData)?;
 
     assert_ata("token_account", token_account, owner.key(), mint.key())?;
     assert_mint_association("token_account", mint.key(), &account)?;
