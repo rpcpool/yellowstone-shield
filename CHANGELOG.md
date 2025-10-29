@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.6.0
+
+### Added
+- gRPC client configuration options (connection timeouts, HTTP/2 keep-alive, window sizes)
+
+### Changed
+- Removed Vixen dependency, now using gRPC and parsing accounts directly
+- **Store & Parser bumped to v0.8.0** - Updated to use Solana v3 with interface versions
+- **Client & CLI remain at v0.7.0** - Kept on Solana v2.2.x with spl-token-2022 v9.0.0 for stability
+- **Program remains at v0.7.0** - Kept on Solana v2.2.1 with pinocchio
+
 ## 0.5.1
 
 ### Changed
