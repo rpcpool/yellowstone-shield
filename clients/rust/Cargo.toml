@@ -28,34 +28,35 @@ num-derive = { workspace = true }
 num-traits = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_with = { workspace = true, optional = true }
-solana-keypair = { workspace = true }
-solana-pubkey = { workspace = true, features = ["curve25519", "borsh"] }
-solana-account-info = { workspace = true }
-solana-program-entrypoint = { workspace = true }
-solana-cpi = { workspace = true }
-solana-instruction = { workspace = true }
-solana-program-error = { workspace = true }
-solana-client = { workspace = true, optional = true }
-solana-decode-error = { workspace = true }
-solana-rent = { workspace = true }
-solana-msg = { workspace = true }
-solana-system-interface = { workspace = true }
-solana-hash = { workspace = true }
-solana-transaction = { workspace = true }
-spl-token-2022 = { workspace = true, features = [
+# Pin client to Solana v2.2.x (keep compatible with program)
+solana-keypair = "2.2.1"
+solana-pubkey = { version = "2.2.1", features = ["curve25519", "borsh"] }
+solana-account-info = "2.2.1"
+solana-program-entrypoint = "2.2.1"
+solana-cpi = "2.2.1"
+solana-instruction = "2.2.1"
+solana-program-error = "2.2.1"
+solana-client = { version = "2.2.1", optional = true }
+solana-decode-error = "2.2.1"
+solana-rent = "2.2.1"
+solana-msg = "2.2.1"
+solana-hash = "2.2.1"
+solana-program = "2.2.1"
+solana-transaction = { version = "2.2.0", features = ["bincode"] }
+solana-signer = "2.2.1"
+spl-token-2022 = { version = "9.0.0", features = [
   "no-entrypoint",
 ], optional = true }
 thiserror = { workspace = true }
-spl-associated-token-account = { workspace = true, features = [
+spl-associated-token-account = { version = "7.0.0", features = [
   "no-entrypoint",
 ], optional = true }
-spl-token-metadata-interface = { workspace = true, optional = true }
-spl-pod = { workspace = true, optional = true }
-solana-signer.workspace = true
+spl-token-metadata-interface = { version = "0.7.0", optional = true }
+spl-pod = { version = "0.5.1", optional = true }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
-solana-program-test = { workspace = true }
+solana-program-test = "2.2.1"
 yellowstone-shield = { workspace = true }
 
 [dev-dependencies.yellowstone-shield-client]

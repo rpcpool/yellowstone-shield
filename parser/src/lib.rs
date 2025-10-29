@@ -1,3 +1,2 @@
-mod generated;
-
-pub use generated::*;
+pub mod accounts;
+pub mod instructions;

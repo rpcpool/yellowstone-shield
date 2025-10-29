@@ -7,7 +7,7 @@ use solana_instruction::Instruction;
 use solana_keypair::Keypair;
 use solana_pubkey::{Pubkey, PUBKEY_BYTES};
 use solana_rent::Rent;
-use solana_system_interface::instruction as system_instruction;
+use solana_program::system_instruction;
 use solana_transaction::Transaction;
 use std::str::FromStr;
 

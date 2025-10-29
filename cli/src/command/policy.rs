@@ -1,28 +1,29 @@
-use borsh::BorshDeserialize;
-use log::info;
-use solana_commitment_config::CommitmentConfig;
-use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
-use solana_signer::Signer;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
-    extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
-    pod::PodMint,
-    state::Mint,
+use {
+    super::{RunCommand, RunResult},
+    crate::{command::CommandContext, CommandComplete, LogPolicy, SolanaAccount},
+    borsh::BorshDeserialize,
+    log::info,
+    solana_commitment_config::CommitmentConfig,
+    solana_keypair::Keypair,
+    solana_pubkey::Pubkey,
+    solana_signer::Signer,
+    spl_associated_token_account::get_associated_token_address_with_program_id,
+    spl_pod::optional_keys::OptionalNonZeroPubkey,
+    spl_token_2022::{
+        extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
+        pod::PodMint,
+        state::Mint,
+    },
+    spl_token_metadata_interface::state::TokenMetadata,
+    yellowstone_shield_client::{
+        accounts::{Policy, PolicyV2},
+        instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
+        types::{Kind, PermissionStrategy},
+        CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
+        InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
+        TokenExtensionsMintToBuilder, TransactionBuilder,
+    },
 };
-use spl_token_metadata_interface::state::TokenMetadata;
-use yellowstone_shield_client::{
-    accounts::{Policy, PolicyV2},
-    instructions::{ClosePolicyBuilder, CreatePolicyBuilder},
-    types::{Kind, PermissionStrategy},
-    CreateAccountBuilder, CreateAsscoiatedTokenAccountBuilder, InitializeMetadataBuilder,
-    InitializeMint2Builder, MetadataPointerInitializeBuilder, PolicyTrait,
-    TokenExtensionsMintToBuilder, TransactionBuilder,
-};
-
-use super::{RunCommand, RunResult};
-use crate::{command::CommandContext, CommandComplete, LogPolicy, SolanaAccount};
 
 #[derive(Debug)]
 pub enum PolicyVersion {

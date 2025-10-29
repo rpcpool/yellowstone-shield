@@ -1,26 +1,25 @@
-use std::sync::Arc;
-
-use anyhow::Result;
-use arc_swap::ArcSwap;
-use hashbrown::{HashMap, HashSet};
-use parking_lot::RwLock;
-use serde::Deserialize;
-use tokio::sync::mpsc::Sender;
-
-use solana_account_decoder_client_types::UiAccountEncoding;
-use solana_client::{
-    nonblocking::rpc_client::RpcClient,
-    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+use {
+    arc_swap::ArcSwap,
+    futures::StreamExt,
+    hashbrown::{HashMap, HashSet},
+    parking_lot::RwLock,
+    serde::Deserialize,
+    solana_account_decoder_client_types::UiAccountEncoding,
+    solana_client::{
+        nonblocking::rpc_client::RpcClient,
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+    },
+    solana_commitment_config::CommitmentConfig,
+    solana_pubkey::Pubkey,
+    std::{sync::Arc, time::Duration},
+    yellowstone_grpc_client::GeyserGrpcClient,
+    yellowstone_grpc_proto::geyser::{
+        subscribe_update::UpdateOneof, SubscribeRequest, SubscribeRequestFilterAccounts,
+    },
+    yellowstone_shield_parser::accounts::{
+        PermissionStrategy, Policy, ShieldProgramState, ID as PROGRAM_ID,
+    },
 };
-use solana_commitment_config::CommitmentConfig;
-use solana_pubkey::Pubkey;
-use yellowstone_shield_client::{accounts, types::PermissionStrategy, PolicyTrait};
-use yellowstone_shield_parser::accounts_parser::{AccountParser, Policy, ShieldProgramState};
-use yellowstone_vixen::{
-    config::{BufferConfig, VixenConfig},
-    CommitmentLevel, Pipeline, Runtime,
-};
-use yellowstone_vixen_yellowstone_grpc_source::{YellowstoneGrpcConfig, YellowstoneGrpcSource};
 
 pub struct SlotCacheItem<T> {
     slot: u64,
@@ -193,7 +192,11 @@ impl Snapshot {
     /// # Returns
     ///
     /// `true` if the identity is allowed by any of the specified policies, `false` otherwise.
-    pub fn is_allowed(&self, policies: &[Pubkey], identity: &Pubkey) -> Result<bool, CheckError> {
+    pub fn is_allowed(
+        &self,
+        policies: &[Pubkey],
+        identity: &Pubkey,
+    ) -> std::result::Result<bool, CheckError> {
         let mut not_found = true;
 
         for address in policies.iter() {
@@ -253,31 +256,18 @@ impl PolicyRpcClient {
             .into_iter()
             .filter_map(|(address, account)| {
                 let data: &[u8] = &account.data;
+                let owner = &account.owner;
 
-                let (strategy, identities) = match data[0] {
-                    0 => {
-                        let strategy = accounts::Policy::from_bytes(data)
-                            .ok()?
-                            .try_strategy()
-                            .ok()?;
-                        let identities = accounts::Policy::try_deserialize_identities(data).ok()?;
-                        Some((strategy, identities))
+                match yellowstone_shield_parser::accounts::parse_account(slot, address, owner, data, Some(program_id))
+                {
+                    Ok(ShieldProgramState::Policy(_slot, _pubkey, policy)) => {
+                        Some((address, policy))
                     }
-                    1 => {
-                        let strategy = accounts::PolicyV2::from_bytes(data)
-                            .ok()?
-                            .try_strategy()
-                            .ok()?;
-                        let identities =
-                            accounts::PolicyV2::try_deserialize_identities(data).ok()?;
-                        Some((strategy, identities))
+                    Err(e) => {
+                        log::warn!("Failed to parse policy account {}: {}", address, e);
+                        None
                     }
-                    _ => None,
-                }?;
-
-                let policy = Policy::new(strategy, identities);
-
-                Some((address, policy))
+                }
             })
             .collect::<Vec<_>>();
 
@@ -294,29 +284,6 @@ impl From<PoliciesSlotRpcResponse> for PolicyCache {
         }
 
         cache
-    }
-}
-
-#[derive(Debug)]
-pub struct PolicyHandler {
-    sender: Sender<yellowstone_shield_parser::accounts_parser::ShieldProgramState>,
-}
-
-impl PolicyHandler {
-    pub fn new(
-        sender: Sender<yellowstone_shield_parser::accounts_parser::ShieldProgramState>,
-    ) -> Self {
-        Self { sender }
-    }
-}
-
-impl yellowstone_vixen::Handler<ShieldProgramState> for PolicyHandler {
-    async fn handle(&self, value: &ShieldProgramState) -> yellowstone_vixen::HandlerResult<()> {
-        if let Err(e) = self.sender.send(value.clone()).await {
-            log::error!("Failed to send value: {:?}", e);
-        }
-
-        Ok(())
     }
 }
 
@@ -379,23 +346,96 @@ impl PolicyStoreTrait for MockPolicyStore {
 
 pub type SubscriptionTask = std::pin::Pin<Box<dyn std::future::Future<Output = ()> + 'static>>;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct PolicyStoreRpcConfig {
     pub endpoint: String,
 }
 
-#[derive(Deserialize)]
-pub struct PolicyStoreConfig {
-    pub rpc: PolicyStoreRpcConfig,
-    pub grpc: YellowstoneGrpcConfig,
+#[derive(Deserialize, Clone)]
+pub struct PolicyStoreGrpcConfig {
+    pub endpoint: String,
+    #[serde(rename = "x-token")]
+    pub x_token: Option<String>,
+
+    #[serde(with = "humantime_serde", default = "default_timeout")]
+    pub timeout: Duration,
+
+    #[serde(with = "humantime_serde", default = "default_connect_timeout")]
+    pub connect_timeout: Duration,
+
+    #[serde(default = "default_tcp_nodelay")]
+    pub tcp_nodelay: bool,
+
+    #[serde(default = "default_http2_adaptive_window")]
+    pub http2_adaptive_window: bool,
+
+    #[serde(default = "default_http2_keep_alive")]
+    pub http2_keep_alive: bool,
+
+    #[serde(with = "humantime_serde")]
+    pub http2_keep_alive_interval: Option<Duration>,
+
+    #[serde(with = "humantime_serde")]
+    pub http2_keep_alive_timeout: Option<Duration>,
+
+    pub http2_keep_alive_while_idle: Option<bool>,
+
+    pub initial_connection_window_size: Option<u32>,
+
+    pub initial_stream_window_size: Option<u32>,
 }
 
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum BuilderError {
-    #[error("No config")]
+fn default_timeout() -> Duration {
+    Duration::from_secs(60)
+}
+
+fn default_connect_timeout() -> Duration {
+    Duration::from_secs(10)
+}
+
+fn default_tcp_nodelay() -> bool {
+    true
+}
+
+fn default_http2_adaptive_window() -> bool {
+    true
+}
+
+fn default_http2_keep_alive() -> bool {
+    false
+}
+
+
+#[derive(Deserialize, Clone)]
+pub struct PolicyStoreConfig {
+    pub rpc: PolicyStoreRpcConfig,
+    pub grpc: PolicyStoreGrpcConfig,
+    /// Optional custom program ID. If not specified, uses the default Shield program ID
+    pub program_id: Option<Pubkey>,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    #[error("No config provided")]
     NoConfig,
     #[error("Unable to deserialize policy")]
     DeserializePolicy,
+    #[error("RPC error: {0}")]
+    RpcError(String),
+    #[error("gRPC client error: {0}")]
+    GrpcClientError(String),
+    #[error("gRPC connection error: {0}")]
+    GrpcConnectionError(String),
+    #[error("gRPC subscription error: {0}")]
+    GrpcSubscriptionError(String),
+}
+
+pub type Result<T> = std::result::Result<T, StoreError>;
+
+impl From<solana_client::client_error::ClientError> for StoreError {
+    fn from(e: solana_client::client_error::ClientError) -> Self {
+        StoreError::RpcError(e.to_string())
+    }
 }
 
 #[derive(Default)]
@@ -411,43 +451,158 @@ impl PolicyStoreBuilder {
     }
 
     pub async fn run(&mut self) -> Result<PolicyStore> {
-        let config = self.config.take().ok_or(BuilderError::NoConfig)?;
+        let config = self.config.take().ok_or(StoreError::NoConfig)?;
         let rpc = RpcClient::new(config.rpc.endpoint);
 
-        let policies = PolicyRpcClient::new(rpc)
-            .list(&yellowstone_shield_client::ID)
-            .await?;
+        // Use custom program ID if provided, otherwise use default
+        let program_id = config.program_id.as_ref().unwrap_or(&PROGRAM_ID);
+        let policies = PolicyRpcClient::new(rpc).list(program_id).await?;
 
         let cache = Arc::new(policies.into());
         let snapshot = Arc::new(ArcSwap::from_pointee(Snapshot::new(&cache)));
 
-        let (sender, mut receiver) = tokio::sync::mpsc::channel::<ShieldProgramState>(10_000);
-        let mut vixen = VixenConfig {
-            source: config.grpc,
-            buffer: BufferConfig::default(),
+        // Build gRPC client with configuration
+        let mut builder = GeyserGrpcClient::build_from_shared(config.grpc.endpoint.clone())
+            .map_err(|e| {
+                StoreError::GrpcClientError(format!("Failed to build gRPC client: {}", e))
+            })?
+            .connect_timeout(config.grpc.connect_timeout)
+            .timeout(config.grpc.timeout);
+
+        if config.grpc.tcp_nodelay {
+            builder = builder.tcp_nodelay(true);
+        }
+
+        if config.grpc.http2_adaptive_window {
+            builder = builder.http2_adaptive_window(true);
+        }
+
+        // HTTP/2 keep-alive settings
+        if config.grpc.http2_keep_alive {
+            if let Some(interval) = config.grpc.http2_keep_alive_interval {
+                builder = builder.http2_keep_alive_interval(interval);
+            }
+
+            if let Some(timeout) = config.grpc.http2_keep_alive_timeout {
+                builder = builder.keep_alive_timeout(timeout);
+            }
+
+            if let Some(while_idle) = config.grpc.http2_keep_alive_while_idle {
+                builder = builder.keep_alive_while_idle(while_idle);
+            }
+        }
+
+        if let Some(window_size) = config.grpc.initial_connection_window_size {
+            builder = builder.initial_connection_window_size(window_size);
+        }
+
+        if let Some(stream_window_size) = config.grpc.initial_stream_window_size {
+            builder = builder.initial_stream_window_size(stream_window_size);
+        }
+
+        // Apply authentication token if provided
+        let builder = if let Some(ref token) = config.grpc.x_token {
+            builder
+                .x_token(Some(token.clone()))
+                .map_err(|e| StoreError::GrpcClientError(format!("Failed to set x-token: {}", e)))?
+        } else {
+            builder
         };
 
-        vixen.source.commitment_level = Some(CommitmentLevel::Confirmed);
+        let mut client = builder.connect().await.map_err(|e| {
+            StoreError::GrpcConnectionError(format!("Failed to connect to gRPC server: {}", e))
+        })?;
 
-        let pipeline = Pipeline::new(AccountParser, [PolicyHandler::new(sender)]);
-        let runtime = Runtime::<YellowstoneGrpcSource>::builder()
-            .account(pipeline)
-            .build(vixen);
+        log::info!("Connected to gRPC endpoint: {}", config.grpc.endpoint);
 
-        let cache = Arc::clone(&cache);
+        // Subscribe to account updates for the Shield program
+        let mut accounts = std::collections::HashMap::new();
+        accounts.insert(
+            "".to_string(),
+            SubscribeRequestFilterAccounts {
+                account: vec![],
+                owner: vec![program_id.to_string()],
+                filters: vec![],
+                nonempty_txn_signature: None,
+            },
+        );
 
-        let subscription_snapshot = Arc::clone(&snapshot);
+        let subscribe_request = SubscribeRequest {
+            accounts,
+            ..Default::default()
+        };
+
+        let mut stream = client
+            .subscribe_once(subscribe_request)
+            .await
+            .map_err(|e| {
+                StoreError::GrpcSubscriptionError(format!(
+                    "Failed to subscribe to gRPC stream: {}",
+                    e
+                ))
+            })?;
+
+        log::info!("Subscribed to Shield program account updates");
+
+        // Spawn task to process account updates
+        let cache_clone = Arc::clone(&cache);
+        let snapshot_clone = Arc::clone(&snapshot);
+        let program_id_clone = *program_id;
+
         tokio::task::spawn_local(async move {
-            if let Err(e) = runtime.try_run_async().await {
-                log::error!("Vixen runtime error: {:?}", e);
-            }
-        });
+            while let Some(message) = stream.next().await {
+                match message {
+                    Ok(msg) => {
+                        if let Some(UpdateOneof::Account(account_update)) = msg.update_oneof {
+                            // Parse account data
+                            if let Some(account) = account_update.account {
+                                let pubkey_bytes: [u8; 32] = match account.pubkey.try_into() {
+                                    Ok(bytes) => bytes,
+                                    Err(_) => {
+                                        log::warn!("Invalid pubkey length in account update");
+                                        continue;
+                                    }
+                                };
+                                let pubkey = Pubkey::from(pubkey_bytes);
 
-        while let Some(value) = receiver.recv().await {
-            let ShieldProgramState::Policy(slot, pubkey, policy) = value;
-            cache.insert(pubkey, slot, policy);
-            subscription_snapshot.store(Arc::new(Snapshot::new(&cache)));
-        }
+                                let owner_bytes: [u8; 32] = match account.owner.try_into() {
+                                    Ok(bytes) => bytes,
+                                    Err(_) => {
+                                        log::warn!("Invalid owner length in account update");
+                                        continue;
+                                    }
+                                };
+                                let owner = Pubkey::from(owner_bytes);
+
+                                // Parse the account
+                                match yellowstone_shield_parser::accounts::parse_account(
+                                    account_update.slot,
+                                    pubkey,
+                                    &owner,
+                                    &account.data,
+                                    Some(&program_id_clone),
+                                ) {
+                                    Ok(ShieldProgramState::Policy(slot, pubkey, policy)) => {
+                                        cache_clone.insert(pubkey, slot, policy);
+                                        snapshot_clone.store(Arc::new(Snapshot::new(&cache_clone)));
+                                        log::debug!("Updated policy for pubkey: {}", pubkey);
+                                    }
+                                    Err(e) => {
+                                        log::warn!("Failed to parse account update: {}", e);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Error receiving gRPC message: {}", e);
+                        break;
+                    }
+                }
+            }
+
+            log::warn!("gRPC stream ended");
+        });
 
         Ok(PolicyStore::new(snapshot))
     }
@@ -461,19 +616,14 @@ impl PolicyStore {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use solana_pubkey::Pubkey;
-    use yellowstone_shield_parser::accounts_parser::Policy;
+    use {super::*, solana_pubkey::Pubkey, yellowstone_shield_parser::accounts::Policy};
 
     #[test]
     fn test_policy_cache_insert_and_get() {
         let cache = PolicyCache::new();
         let address = Pubkey::new_unique();
         let validator = Pubkey::new_unique();
-        let policy = Policy::new(
-            yellowstone_shield_client::types::PermissionStrategy::Deny,
-            vec![validator],
-        );
+        let policy = Policy::new(PermissionStrategy::Deny, vec![validator]);
 
         cache.insert(address, 1, policy.clone());
         let retrieved_policy = cache.get(&address).unwrap();
@@ -490,17 +640,11 @@ mod tests {
         let policies = [
             (
                 Pubkey::new_unique(),
-                Policy::new(
-                    yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    vec![validator],
-                ),
+                Policy::new(PermissionStrategy::Deny, vec![validator]),
             ),
             (
                 Pubkey::new_unique(),
-                Policy::new(
-                    yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    vec![validator],
-                ),
+                Policy::new(PermissionStrategy::Allow, vec![validator]),
             ),
         ];
 
@@ -517,10 +661,7 @@ mod tests {
         let cache = PolicyCache::new();
         let address = Pubkey::new_unique();
         let validator = Pubkey::new_unique();
-        let policy = Policy::new(
-            yellowstone_shield_client::types::PermissionStrategy::Deny,
-            vec![validator],
-        );
+        let policy = Policy::new(PermissionStrategy::Deny, vec![validator]);
 
         cache.insert(address, 1, policy.clone());
         cache.remove(&address).unwrap();
@@ -542,19 +683,10 @@ mod tests {
         let sandwich = Pubkey::new_unique();
 
         let policies = [
-            (
-                allow,
-                Policy::new(
-                    yellowstone_shield_client::types::PermissionStrategy::Allow,
-                    vec![good],
-                ),
-            ),
+            (allow, Policy::new(PermissionStrategy::Allow, vec![good])),
             (
                 deny,
-                Policy::new(
-                    yellowstone_shield_client::types::PermissionStrategy::Deny,
-                    vec![sanctioned, sandwich],
-                ),
+                Policy::new(PermissionStrategy::Deny, vec![sanctioned, sandwich]),
             ),
         ];
 

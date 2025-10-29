@@ -6,7 +6,7 @@
 //!
 
 use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
+use solana_program_error::ToStr;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
@@ -152,10 +152,60 @@ pub enum ShieldError {
 }
 
 #[allow(deprecated)]
-impl solana_program_error::PrintProgramError for ShieldError {
-    fn print<E>(&self) {
-        solana_msg::msg!(&self.to_string());
-    }
+impl solana_program_error::ToStr for ShieldError {
+   fn to_str<E>(&self) -> &'static str
+   where
+       E: 'static + ToStr + TryFrom<u32>,
+   {
+      match self {
+            ShieldError::DeserializationError => "DeserializationError",
+            ShieldError::SerializationError => "SerializationError",
+            ShieldError::InvalidProgramOwner => "InvalidProgramOwner",
+            ShieldError::InvalidPda => "InvalidPda",
+            ShieldError::ExpectedEmptyAccount => "ExpectedEmptyAccount",
+            ShieldError::ExpectedNonEmptyAccount => "ExpectedNonEmptyAccount",
+            ShieldError::ExpectedSignerAccount => "ExpectedSignerAccount",
+            ShieldError::ExpectedWritableAccount => "ExpectedWritableAccount",
+            ShieldError::AccountMismatch => "AccountMismatch",
+            ShieldError::InvalidAccountKey => "InvalidAccountKey",
+            ShieldError::NumericalOverflow => "NumericalOverflow",
+            ShieldError::ExpectedPositiveAmount => "ExpectedPositiveAmount",
+            ShieldError::IncorrectTokenOwner => "IncorrectTokenOwner",
+            ShieldError::MistmatchMint => "MistmatchMint",
+            ShieldError::IdentityNotFound => "IdentityNotFound",
+            ShieldError::InvalidAssociatedTokenAccount => "InvalidAssociatedTokenAccount",
+            ShieldError::MissedCondition => "MissedCondition",
+            ShieldError::InvalidAccountData => "InvalidAccountData",
+            ShieldError::InvalidArgument => "InvalidArgument",
+            ShieldError::InvalidInstructionData => "InvalidInstructionData",
+            ShieldError::AccountDataTooSmall => "AccountDataTooSmall",
+            ShieldError::InsufficientFunds => "InsufficientFunds",
+            ShieldError::IncorrectProgramId => "IncorrectProgramId",
+            ShieldError::MissingRequiredSignature => "MissingRequiredSignature",
+            ShieldError::AccountAlreadyInitialized => "AccountAlreadyInitialized",
+            ShieldError::UninitializedAccount => "UninitializedAccount",
+            ShieldError::NotEnoughAccountKeys => "NotEnoughAccountKeys",
+            ShieldError::AccountBorrowFailed => "AccountBorrowFailed",
+            ShieldError::MaxSeedLengthExceeded => "MaxSeedLengthExceeded",
+            ShieldError::InvalidSeeds => "InvalidSeeds",
+            ShieldError::BorshIoError => "BorshIoError",
+            ShieldError::AccountNotRentExempt => "AccountNotRentExempt",
+            ShieldError::UnsupportedSysvar => "UnsupportedSysvar",
+            ShieldError::IllegalOwner => "IllegalOwner",
+            ShieldError::MaxAccountsDataAllocationsExceeded => "MaxAccountsDataAllocationsExceeded",
+            ShieldError::InvalidRealloc => "InvalidRealloc",
+            ShieldError::MaxInstructionTraceLengthExceeded => "MaxInstructionTraceLengthExceeded",
+            ShieldError::BuiltinProgramsMustConsumeComputeUnits => "BuiltinProgramsMustConsumeComputeUnits",
+            ShieldError::InvalidAccountOwner => "InvalidAccountOwner",
+            ShieldError::ArithmeticOverflow => "ArithmeticOverflow",
+            ShieldError::Immutable => "Immutable",
+            ShieldError::IncorrectAuthority => "IncorrectAuthority",
+            ShieldError::GenericError => "GenericError",
+            ShieldError::InvalidStrategy => "InvalidStrategy",
+            ShieldError::InvalidPolicyKind => "InvalidPolicyKind",
+            ShieldError::InvalidIndexToReferenceIdentity => "InvalidIndexToReferenceIdentity",
+        } 
+   } 
 }
 
 impl<T> solana_decode_error::DecodeError<T> for ShieldError {
