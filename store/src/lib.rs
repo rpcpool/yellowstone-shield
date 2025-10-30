@@ -14,10 +14,10 @@ use {
     std::{sync::Arc, time::Duration},
     yellowstone_grpc_client::GeyserGrpcClient,
     yellowstone_grpc_proto::geyser::{
-        subscribe_update::UpdateOneof, SubscribeRequest, SubscribeRequestFilterAccounts,
+        CommitmentLevel, SubscribeRequest, SubscribeRequestFilterAccounts, subscribe_update::UpdateOneof
     },
     yellowstone_shield_parser::accounts::{
-        PermissionStrategy, Policy, ShieldProgramState, ID as PROGRAM_ID,
+        ID as PROGRAM_ID, PermissionStrategy, Policy, ShieldProgramState
     },
 };
 
@@ -354,6 +354,10 @@ pub struct PolicyStoreRpcConfig {
 #[derive(Deserialize, Clone)]
 pub struct PolicyStoreGrpcConfig {
     pub endpoint: String,
+
+    #[serde(default = "default_commitment")]
+    pub commitment: Option<ShieldStoreCommitmentLevel>,
+    
     #[serde(rename = "x-token")]
     pub x_token: Option<String>,
 
@@ -380,9 +384,15 @@ pub struct PolicyStoreGrpcConfig {
 
     pub http2_keep_alive_while_idle: Option<bool>,
 
+    #[serde(default = "default_max_decoding_message_size")]
+    pub max_decoding_message_size: Option<usize>,
+
     pub initial_connection_window_size: Option<u32>,
 
     pub initial_stream_window_size: Option<u32>,
+}
+fn default_commitment() -> Option<ShieldStoreCommitmentLevel> {
+    Some(ShieldStoreCommitmentLevel::Confirmed)
 }
 
 fn default_timeout() -> Duration {
@@ -397,6 +407,10 @@ fn default_tcp_nodelay() -> bool {
     true
 }
 
+fn default_max_decoding_message_size() -> Option<usize> {
+    Some(2u32.pow(24) as usize) // 16 MiB (Should be enough for receiving accounts)
+}
+
 fn default_http2_adaptive_window() -> bool {
     true
 }
@@ -405,12 +419,46 @@ fn default_http2_keep_alive() -> bool {
     false
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ShieldStoreCommitmentLevel {
+    Processed,
+    Confirmed,
+    Finalized,
+}
+
+impl From<ShieldStoreCommitmentLevel> for CommitmentLevel {
+    fn from(def: ShieldStoreCommitmentLevel) -> Self {
+        match def {
+            ShieldStoreCommitmentLevel::Processed => CommitmentLevel::Processed,
+            ShieldStoreCommitmentLevel::Confirmed => CommitmentLevel::Confirmed,
+            ShieldStoreCommitmentLevel::Finalized => CommitmentLevel::Finalized,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ShieldStoreCommitmentLevel {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s: &str = serde::Deserialize::deserialize(deserializer)?;
+        match s {
+            "processed" => Ok(ShieldStoreCommitmentLevel::Processed),
+            "confirmed" => Ok(ShieldStoreCommitmentLevel::Confirmed),
+            "finalized" => Ok(ShieldStoreCommitmentLevel::Finalized),
+            _ => Err(serde::de::Error::custom(format!(
+                "Invalid commitment level: {}",
+                s
+            ))),
+        }
+    }
+}
+
 
 #[derive(Deserialize, Clone)]
 pub struct PolicyStoreConfig {
     pub rpc: PolicyStoreRpcConfig,
     pub grpc: PolicyStoreGrpcConfig,
-    /// Optional custom program ID. If not specified, uses the default Shield program ID
     pub program_id: Option<Pubkey>,
 }
 
@@ -490,6 +538,10 @@ impl PolicyStoreBuilder {
             if let Some(while_idle) = config.grpc.http2_keep_alive_while_idle {
                 builder = builder.keep_alive_while_idle(while_idle);
             }
+        }
+
+        if let Some(max_size) = config.grpc.max_decoding_message_size {
+            builder = builder.max_decoding_message_size(max_size)
         }
 
         if let Some(window_size) = config.grpc.initial_connection_window_size {
