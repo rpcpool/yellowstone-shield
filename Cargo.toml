@@ -75,4 +75,4 @@ format = "1.85"
 lint = "1.85"
 
 [workspace.metadata.cli]
-solana = "2"
+solana = "v2.3.6"
