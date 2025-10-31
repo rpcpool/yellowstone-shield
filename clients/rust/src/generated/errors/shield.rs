@@ -6,7 +6,6 @@
 //!
 
 use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
@@ -151,7 +150,6 @@ pub enum ShieldError {
     InvalidIndexToReferenceIdentity = 0x2D,
 }
 
-#[allow(deprecated)]
 impl solana_program_error::PrintProgramError for ShieldError {
     fn print<E>(&self) {
         solana_msg::msg!(&self.to_string());
