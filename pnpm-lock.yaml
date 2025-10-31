@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@codama/renderers-vixen-parser':
-        specifier: ^1.0.16
-        version: 1.0.16(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
     devDependencies:
       '@codama/nodes-from-anchor':
         specifier: ^1.2.1
@@ -57,9 +53,6 @@ packages:
 
   '@codama/renderers-rust@1.1.0':
     resolution: {integrity: sha512-rddbb+gg25rC5F8x+F3E6q/Ms26cdzbPHFlWAv37TcqzZxT/Tzn/WWo+wMcAVTuM2IGx03PJ1a25kQ05NfXsVw==}
-
-  '@codama/renderers-vixen-parser@1.0.16':
-    resolution: {integrity: sha512-ysUMKtLjGpeodwIZBLAyDyQIPM1LaM9L7fOQKAxYZ2N4dDyLCscdct/pHaY3QuEzZC6kDuPss2e0krNbCERB2Q==}
 
   '@codama/validators@1.3.0':
     resolution: {integrity: sha512-s6rG3fJSvS7zc+fQ5yJN1NHlGQiut+P3Bpi5sQcEikjdWDDezu4OOgkxTh8ksTsCu8Rsif2hVzFYDLMcKjNrag==}
@@ -563,20 +556,6 @@ snapshots:
       '@codama/errors': 1.3.0
       '@codama/nodes': 1.3.0
       '@codama/renderers-core': 1.0.16
-      '@codama/visitors-core': 1.3.0
-      '@solana/codecs-strings': 2.0.0-rc.4(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
-      nunjucks: 3.2.4
-    transitivePeerDependencies:
-      - chokidar
-      - fastestsmallesttextencoderdecoder
-      - typescript
-
-  '@codama/renderers-vixen-parser@1.0.16(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)':
-    dependencies:
-      '@codama/errors': 1.3.0
-      '@codama/nodes': 1.3.0
-      '@codama/renderers-core': 1.0.16
-      '@codama/renderers-rust': 1.1.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
       '@codama/visitors-core': 1.3.0
       '@solana/codecs-strings': 2.0.0-rc.4(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
       nunjucks: 3.2.4
