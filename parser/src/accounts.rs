@@ -1,7 +1,6 @@
 use solana_program::pubkey::Pubkey;
-use yellowstone_shield_client::ID;
-use yellowstone_shield_client::{accounts, types::PermissionStrategy, PolicyTrait};
-use yellowstone_vixen_core::AccountUpdate;
+use yellowstone_shield_client::{PolicyTrait, accounts};
+pub use yellowstone_shield_client::{types::PermissionStrategy, ID};
 
 #[derive(Debug, Clone)]
 pub struct Policy {
@@ -26,77 +25,55 @@ pub enum ShieldProgramState {
 }
 
 impl ShieldProgramState {
-    fn parse_policy<T: PolicyTrait>(data: &[u8]) -> yellowstone_vixen_core::ParseResult<Policy> {
-        let policy = T::from_bytes(data)?;
-        let identities = accounts::Policy::try_deserialize_identities(data)?;
-        let strategy = policy.try_strategy()?;
+    pub fn try_parse_account_data(
+        slot: u64,
+        pubkey: Pubkey,
+        owner: &Pubkey,
+        data: &[u8],
+        expected_program_id: Option<&Pubkey>,
+    ) -> Result<Self, String> {
 
-        Ok(Policy {
-            strategy,
-            identities,
-        })
-    }
-
-    pub fn try_unpack(account_update: &AccountUpdate) -> yellowstone_vixen_core::ParseResult<Self> {
-        let inner = account_update
-            .account
-            .as_ref()
-            .ok_or(solana_program::program_error::ProgramError::InvalidArgument)?;
-        let data = inner.data.as_slice();
-
-        if data.is_empty() {
-            return Err(yellowstone_vixen_core::ParseError::from(
-                "Data is empty".to_owned(),
+        let expected_id = expected_program_id.unwrap_or(&ID);
+        if owner != expected_id {
+            return Err(format!(
+                "Invalid owner: expected {}, got {}",
+                expected_id, owner
             ));
         }
 
-        let policy = match data[0] {
-            0 => Self::parse_policy::<accounts::Policy>(data)?,
-            1 => Self::parse_policy::<accounts::PolicyV2>(data)?,
-            _ => {
-                return Err(yellowstone_vixen_core::ParseError::from(
-                    "Unsupported data type".to_owned(),
-                ))
+        if data.is_empty() {
+            return Err("Data is empty".to_owned());
+        }
+
+        let (strategy, identities) = match data[0] {
+            0 => {
+                let policy = accounts::Policy::from_bytes(data).map_err(|e| e.to_string())?;
+                let strategy = policy.try_strategy().map_err(|e| e.to_string())?;
+                let identities =
+                    accounts::Policy::try_deserialize_identities(data).map_err(|e| e.to_string())?;
+                (strategy, identities)
             }
+            1 => {
+                let policy = accounts::PolicyV2::from_bytes(data).map_err(|e| e.to_string())?;
+                let strategy = policy.try_strategy().map_err(|e| e.to_string())?;
+                let identities = accounts::PolicyV2::try_deserialize_identities(data)
+                    .map_err(|e| e.to_string())?;
+                (strategy, identities)
+            }
+            _ => return Err("Unsupported data type".to_owned()),
         };
 
-        Ok(ShieldProgramState::Policy(
-            account_update.slot,
-            Pubkey::try_from(inner.pubkey.as_slice())?,
-            policy,
-        ))
+        let policy = Policy::new(strategy, identities);
+        Ok(ShieldProgramState::Policy(slot, pubkey, policy))
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct AccountParser;
-
-impl yellowstone_vixen_core::Parser for AccountParser {
-    type Input = yellowstone_vixen_core::AccountUpdate;
-    type Output = ShieldProgramState;
-
-    fn id(&self) -> std::borrow::Cow<'static, str> {
-        "shield::AccountParser".into()
-    }
-
-    fn prefilter(&self) -> yellowstone_vixen_core::Prefilter {
-        yellowstone_vixen_core::Prefilter::builder()
-            .account_owners([ID])
-            .build()
-            .unwrap()
-    }
-
-    async fn parse(
-        &self,
-        acct: &yellowstone_vixen_core::AccountUpdate,
-    ) -> yellowstone_vixen_core::ParseResult<Self::Output> {
-        ShieldProgramState::try_unpack(acct)
-    }
-}
-
-impl yellowstone_vixen_core::ProgramParser for AccountParser {
-    #[inline]
-    fn program_id(&self) -> yellowstone_vixen_core::Pubkey {
-        ID.to_bytes().into()
-    }
+pub fn parse_account(
+    slot: u64,
+    pubkey: Pubkey,
+    owner: &Pubkey,
+    data: &[u8],
+    expected_program_id: Option<&Pubkey>,
+) -> Result<ShieldProgramState, String> {
+    ShieldProgramState::try_parse_account_data(slot, pubkey, owner, data, expected_program_id)
 }

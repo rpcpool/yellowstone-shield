@@ -62,13 +62,13 @@ spl-token-2022 = "9.0.0"
 thiserror = "2.0.0"
 tokio = "1.0.0"
 toml = "0.8.2"
+futures = "0.3.31"
 yellowstone-shield = { path = "program" }
 yellowstone-shield-cli = { path = "cli", version = "0.7.0" }
 yellowstone-shield-client = { path = "clients/rust", version = "0.7.0" }
 yellowstone-shield-parser = { path = "parser", version = "0.7.0" }
-yellowstone-vixen = "0.5.0"
-yellowstone-vixen-core = "0.5.0"
-yellowstone-vixen-yellowstone-grpc-source = "0.3.0"
+yellowstone-grpc-client = "9.0.1"
+yellowstone-grpc-proto = "9.0.1"
 
 [workspace.metadata.toolchains]
 format = "1.85"

@@ -1,7 +1,50 @@
 [rpc]
-endpoint = "http://0.0.0.0:8899"
+# Solana RPC endpoint for initial policy fetching
+endpoint = "http://127.0.0.1:8899"
 
 [grpc]
-endpoint = "http://0.0.0.0:10000"
-x-token = "<X-TOKEN>"
-timeout = 60
+# Yellowstone gRPC endpoint for real-time policy updates
+endpoint = "http://127.0.0.1:10000"
+
+# Optional authentication token (required for some gRPC providers)
+# x_token = "your-token-here"
+
+# Commitment level for account updates (optional, defaults to "confirmed")
+# Options: "processed", "confirmed", "finalized"
+# commitment = "confirmed"
+
+# Connection timeout in seconds (optional, defaults to 10s)
+# connect-timeout = "10s"
+
+# Request timeout in seconds (optional, defaults to 60s)
+# timeout = "60s"
+
+# Enable TCP_NODELAY (optional, defaults to true)
+# tcp-nodelay = true
+
+# Enable HTTP/2 adaptive window (optional, defaults to true)
+# http2-adaptive-window = true
+
+# Enable HTTP/2 keep-alive (optional, defaults to false)
+# http2-keep-alive = false
+
+# HTTP/2 keep-alive interval (optional, only used if http2-keep-alive is true)
+# http2-keep-alive-interval = "30s"
+
+# HTTP/2 keep-alive timeout (optional, only used if http2-keep-alive is true)
+# http2-keep-alive-timeout = "10s"
+
+# HTTP/2 keep-alive while idle (optional, only used if http2-keep-alive is true)
+# http2-keep-alive-while-idle = true
+
+# Maximum message size for decoding (optional, defaults to 16 MiB)
+# max-decoding-message-size = 16777216
+
+# Initial connection window size (optional)
+# initial-connection-window-size = 65535
+
+# Initial stream window size (optional)
+# initial-stream-window-size = 65535
+
+# Optional custom program ID to track (defaults to Shield program ID)
+# program-id = "b1ockYL7X6sGtJzueDbxRVBEEPN4YeqoLW276R3MX8W"

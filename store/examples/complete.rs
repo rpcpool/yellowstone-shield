@@ -9,9 +9,9 @@ use yellowstone_shield_cli::{
 };
 use yellowstone_shield_store::{PolicyStore, PolicyStoreConfig, PolicyStoreTrait};
 
-#[derive(Parser)]
+#[derive(clap::Parser)]
 struct Opts {
-    #[clap(short, long)]
+    #[arg(short, long)]
     config: String,
 }
 

@@ -35,8 +35,5 @@
   "engines": {
     "node": ">=v20.0.0"
   },
-  "packageManager": "pnpm@9.1.0",
-  "dependencies": {
-    "@codama/renderers-vixen-parser": "^1.0.16"
-  }
+  "packageManager": "pnpm@9.1.0"
 }
