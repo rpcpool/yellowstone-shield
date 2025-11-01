@@ -11,7 +11,7 @@ use borsh::BorshDeserialize;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_token_2022::{
+use spl_token_2022_interface::{
     extension::{BaseStateWithExtensions, PodStateWithExtensions},
     pod::PodMint,
 };
@@ -81,7 +81,7 @@ impl RunCommand for AddBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;
@@ -235,7 +235,7 @@ impl RunCommand for UpdateBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;
@@ -435,7 +435,7 @@ impl RunCommand for RemoveBatchCommandBuilder<'_> {
         let token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let account_data = client.get_account(&address).await?;

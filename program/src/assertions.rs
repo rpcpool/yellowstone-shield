@@ -6,7 +6,7 @@ use pinocchio::{
     pubkey::{create_program_address, find_program_address, Pubkey},
     ProgramResult,
 };
-use spl_token_2022::extension::StateWithExtensions;
+use spl_token_2022_interface::extension::StateWithExtensions;
 
 /// Assert that the given strategy is valid.
 pub fn assert_strategy(strategy: u8) -> ProgramResult {
@@ -211,7 +211,7 @@ pub fn assert_same_pubkeys(
 // Assert that the given amount is positive.
 pub fn assert_positive_amount(
     account_name: &str,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if account.base.amount == 0 {
         msg!("Account \"{}\" must have a positive amount", account_name,);
@@ -225,7 +225,7 @@ pub fn assert_positive_amount(
 pub fn assert_token_owner(
     account_name: &str,
     expected: &Pubkey,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if *expected != account.base.owner.to_bytes() {
         msg!(
@@ -243,7 +243,7 @@ pub fn assert_token_owner(
 pub fn assert_mint_association(
     account_name: &str,
     expected: &Pubkey,
-    account: &StateWithExtensions<spl_token_2022::state::Account>,
+    account: &StateWithExtensions<spl_token_2022_interface::state::Account>,
 ) -> ProgramResult {
     if &account.base.mint.to_bytes() != expected {
         msg!(
@@ -264,7 +264,7 @@ pub fn assert_ata(
     mint: &Pubkey,
 ) -> ProgramResult {
     let (ata, _) = find_program_address(
-        &[owner, &spl_token_2022::ID.to_bytes(), mint],
+        &[owner, &spl_token_2022_interface::ID.to_bytes(), mint],
         &spl_associated_token_account::ID.to_bytes(),
     );
     if account.key() != &ata {

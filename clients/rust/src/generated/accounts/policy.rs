@@ -5,6 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+use crate::generated::types::Kind;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_pubkey::Pubkey;
@@ -17,6 +18,8 @@ pub struct Policy {
     pub nonce: u8,
     pub identities_len: [u8; 4],
 }
+
+pub const POLICY_KIND: u8 = Kind::Policy as u8;
 
 impl Policy {
     pub const LEN: usize = 7;
@@ -160,5 +163,5 @@ impl anchor_lang::IdlBuild for Policy {}
 
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::Discriminator for Policy {
-    const DISCRIMINATOR: [u8; 8] = [0; 8];
+    const DISCRIMINATOR: &[u8] = &[0; 8];
 }

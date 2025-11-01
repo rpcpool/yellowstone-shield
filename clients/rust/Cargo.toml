@@ -16,7 +16,7 @@ anchor = ["dep:anchor-lang"]
 serde = ["dep:serde", "dep:serde_with"]
 token-extensions = [
   "dep:spl-associated-token-account",
-  "dep:spl-token-2022",
+  "dep:spl-token-2022-interface",
   "dep:spl-token-metadata-interface",
   "dep:spl-pod",
 ]
@@ -42,9 +42,7 @@ solana-msg = { workspace = true }
 solana-system-interface = { workspace = true }
 solana-hash = { workspace = true }
 solana-transaction = { workspace = true }
-spl-token-2022 = { workspace = true, features = [
-  "no-entrypoint",
-], optional = true }
+spl-token-2022-interface = { workspace = true, optional = true }
 thiserror = { workspace = true }
 spl-associated-token-account = { workspace = true, features = [
   "no-entrypoint",

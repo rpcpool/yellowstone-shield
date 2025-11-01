@@ -165,5 +165,5 @@ impl anchor_lang::IdlBuild for PolicyV2 {}
 
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::Discriminator for PolicyV2 {
-    const DISCRIMINATOR: [u8; 8] = [0; 8];
+    const DISCRIMINATOR: &[u8] = &[0; 8];
 }

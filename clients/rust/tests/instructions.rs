@@ -6,7 +6,7 @@ use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
+use spl_token_2022_interface::{
     extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
     pod::PodMint,
     state::Mint,
@@ -37,7 +37,7 @@ async fn test_policy_v2_lifecycle() {
     let payer_token_account = get_associated_token_address_with_program_id(
         &context.payer.pubkey(),
         &mint.pubkey(),
-        &spl_token_2022::ID,
+        &spl_token_2022_interface::ID,
     );
     // Calculate the space required for the mint account with extensions.
     let mint_size =
@@ -59,7 +59,7 @@ async fn test_policy_v2_lifecycle() {
         .account(&mint.pubkey())
         .space(mint_size)
         .rent(rent)
-        .owner(&spl_token_2022::id())
+        .owner(&spl_token_2022_interface::id())
         .instruction();
 
     // Initialize metadata pointer extension.
@@ -156,7 +156,7 @@ async fn test_policy_v2_lifecycle() {
     assert!(payer_token_account_data.is_some());
 
     let payer_token_account_data = payer_token_account_data.unwrap();
-    assert_eq!(payer_token_account_data.owner, spl_token_2022::ID);
+    assert_eq!(payer_token_account_data.owner, spl_token_2022_interface::ID);
 
     let first = Pubkey::new_unique();
 

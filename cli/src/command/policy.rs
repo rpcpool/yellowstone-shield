@@ -6,7 +6,7 @@ use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
+use spl_token_2022_interface::{
     extension::{BaseStateWithExtensions, ExtensionType, PodStateWithExtensions},
     pod::PodMint,
     state::Mint,
@@ -101,7 +101,7 @@ impl RunCommand for CreateCommandBuilder {
         let payer_token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             &mint.pubkey(),
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         // Calculate the space required for the mint account with extensions.
@@ -125,7 +125,7 @@ impl RunCommand for CreateCommandBuilder {
             .account(&mint.pubkey())
             .space(mint_size)
             .rent(rent)
-            .owner(&spl_token_2022::id())
+            .owner(&spl_token_2022_interface::id())
             .instruction();
 
         // Initialize metadata pointer extension.
@@ -266,7 +266,7 @@ impl RunCommand for DeleteCommandBuilder<'_> {
         let payer_token_account = get_associated_token_address_with_program_id(
             &keypair.pubkey(),
             mint,
-            &spl_token_2022::ID,
+            &spl_token_2022_interface::ID,
         );
 
         let close_policy = ClosePolicyBuilder::new()

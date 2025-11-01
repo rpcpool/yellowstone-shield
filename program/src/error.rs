@@ -192,7 +192,7 @@ impl From<solana_program::program_error::ProgramError> for ShieldError {
                 Self::MaxSeedLengthExceeded
             }
             solana_program::program_error::ProgramError::InvalidSeeds => Self::InvalidSeeds,
-            solana_program::program_error::ProgramError::BorshIoError(_) => Self::BorshIoError,
+            solana_program::program_error::ProgramError::BorshIoError => Self::BorshIoError,
             solana_program::program_error::ProgramError::AccountNotRentExempt => {
                 Self::AccountNotRentExempt
             }

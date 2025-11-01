@@ -15,7 +15,7 @@ use std::str::FromStr;
 use spl_associated_token_account::instruction::create_associated_token_account;
 
 #[cfg(feature = "token-extensions")]
-use spl_token_2022::{
+use spl_token_2022_interface::{
     extension::metadata_pointer::instruction::initialize as initialize_metadata_pointer,
     instruction::{initialize_mint2, mint_to},
     ID as TOKEN_22_PROGRAM_ID,

@@ -318,16 +318,16 @@ fn validate_policy_associated_accounts(
     token_account: &AccountInfo,
 ) -> ProgramResult {
     assert_signer("owner", owner)?;
-    assert_program_owner("mint", mint, &spl_token_2022::id().to_bytes())?;
+    assert_program_owner("mint", mint, &spl_token_2022_interface::id().to_bytes())?;
     assert_program_owner(
         "token_account",
         token_account,
-        &spl_token_2022::ID.to_bytes(),
+        &spl_token_2022_interface::id().to_bytes(),
     )?;
 
     let token_account_data = &token_account.try_borrow_data()?;
     let account =
-        spl_token_2022::extension::StateWithExtensions::<spl_token_2022::state::Account>::unpack(
+        spl_token_2022_interface::extension::StateWithExtensions::<spl_token_2022_interface::state::Account>::unpack(
             token_account_data,
         )
         .map_err(Into::<ShieldError>::into)?;
