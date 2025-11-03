@@ -11,9 +11,7 @@ use spl_token_2022_interface::{
     pod::PodMint,
     state::Mint,
 };
-use spl_token_metadata_interface::{
-    borsh::BorshDeserialize as MetadataInterfaceBorshDeserialize, state::TokenMetadata,
-};
+use spl_token_metadata_interface::state::TokenMetadata;
 
 use yellowstone_shield_client::instructions::{ClosePolicyBuilder, ReplaceIdentityBuilder};
 use yellowstone_shield_client::types::{Kind, PermissionStrategy};

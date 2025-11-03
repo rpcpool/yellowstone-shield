@@ -153,13 +153,10 @@ impl anchor_lang::AccountSerialize for Policy {}
 
 #[cfg(feature = "anchor")]
 impl anchor_lang::Owner for Policy {
-    fn owner() -> Pubkey {
-        crate::SHIELD_ID
+    fn owner() -> anchor_lang::prelude::Pubkey {
+        anchor_lang::prelude::Pubkey::new_from_array(crate::SHIELD_ID.to_bytes())
     }
 }
-
-#[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for Policy {}
 
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::Discriminator for Policy {

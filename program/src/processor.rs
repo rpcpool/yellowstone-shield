@@ -326,11 +326,10 @@ fn validate_policy_associated_accounts(
     )?;
 
     let token_account_data = &token_account.try_borrow_data()?;
-    let account =
-        spl_token_2022_interface::extension::StateWithExtensions::<spl_token_2022_interface::state::Account>::unpack(
-            token_account_data,
-        )
-        .map_err(Into::<ShieldError>::into)?;
+    let account = spl_token_2022_interface::extension::StateWithExtensions::<
+        spl_token_2022_interface::state::Account,
+    >::unpack(token_account_data)
+    .map_err(Into::<ShieldError>::into)?;
 
     assert_ata("token_account", token_account, owner.key(), mint.key())?;
     assert_mint_association("token_account", mint.key(), &account)?;
