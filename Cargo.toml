@@ -59,7 +59,7 @@ spl-pod = "0.7.1"
 spl-token = { version = "9.0.0" }
 spl-token-group-interface = "0.7.1"
 spl-token-metadata-interface = "0.8.0"
-spl-token-2022-interface = "2.0.0"
+spl-token-2022-interface = "2.1.0"
 thiserror = "2.0.17"
 tokio = "1.48.0"
 toml = "0.9.8"

@@ -1,0 +1,5 @@
+[rpc]
+endpoint = "http://127.0.0.1:8899"
+
+[grpc]
+endpoint = "http://127.0.0.1:10000"
