@@ -596,7 +596,7 @@ impl PolicyStoreBuilder {
         let snapshot_clone = Arc::clone(&snapshot);
         let program_id_clone = *program_id;
 
-        tokio::task::spawn_local(async move {
+        tokio::spawn(async move {
             while let Some(message) = stream.next().await {
                 match message {
                     Ok(msg) => {
