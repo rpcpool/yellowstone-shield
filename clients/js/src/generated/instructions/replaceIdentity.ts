@@ -17,15 +17,15 @@ import {
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
-  type AccountMeta,
-  type AccountSignerMeta,
+  type IAccountMeta,
+  type IAccountSignerMeta,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
-  type Instruction,
-  type InstructionWithAccounts,
-  type InstructionWithData,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -43,14 +43,14 @@ export function getReplaceIdentityDiscriminatorBytes() {
 
 export type ReplaceIdentityInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
-  TAccountMint extends string | AccountMeta<string> = string,
-  TAccountTokenAccount extends string | AccountMeta<string> = string,
-  TAccountPolicy extends string | AccountMeta<string> = string,
-  TAccountOwner extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
-> = Instruction<TProgram> &
-  InstructionWithData<ReadonlyUint8Array> &
-  InstructionWithAccounts<
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountPolicy extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
+> = IInstruction<TProgram> &
+  IInstructionWithData<ReadonlyUint8Array> &
+  IInstructionWithAccounts<
     [
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
@@ -63,7 +63,7 @@ export type ReplaceIdentityInstruction<
         : TAccountPolicy,
       TAccountOwner extends string
         ? WritableSignerAccount<TAccountOwner> &
-            AccountSignerMeta<TAccountOwner>
+            IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       ...TRemainingAccounts,
     ]
@@ -189,7 +189,7 @@ export function getReplaceIdentityInstruction<
 
 export type ParsedReplaceIdentityInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -207,11 +207,11 @@ export type ParsedReplaceIdentityInstruction<
 
 export function parseReplaceIdentityInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly IAccountMeta[],
 >(
-  instruction: Instruction<TProgram> &
-    InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>
+  instruction: IInstruction<TProgram> &
+    IInstructionWithAccounts<TAccountMetas> &
+    IInstructionWithData<ReadonlyUint8Array>
 ): ParsedReplaceIdentityInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     // TODO: Coded error.

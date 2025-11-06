@@ -8,10 +8,9 @@
 
 import {
   AccountRole,
-  isProgramDerivedAddress,
   isTransactionSigner as kitIsTransactionSigner,
-  type AccountMeta,
-  type AccountSignerMeta,
+  type IAccountMeta,
+  type IAccountSignerMeta,
   type Address,
   type ProgramDerivedAddress,
   type TransactionSigner,
@@ -51,24 +50,6 @@ export function expectAddress<T extends string = string>(
     return value[0] as Address<T>;
   }
   return value as Address<T>;
-}
-
-/**
- * Asserts that the given value is a PDA.
- * @internal
- */
-export function expectProgramDerivedAddress<T extends string = string>(
-  value:
-    | Address<T>
-    | ProgramDerivedAddress<T>
-    | TransactionSigner<T>
-    | null
-    | undefined
-): ProgramDerivedAddress<T> {
-  if (!value || !Array.isArray(value) || !isProgramDerivedAddress(value)) {
-    throw new Error('Expected a ProgramDerivedAddress.');
-  }
-  return value;
 }
 
 /**
@@ -127,7 +108,7 @@ export function getAccountMetaFactory(
 ) {
   return (
     account: ResolvedAccount
-  ): AccountMeta | AccountSignerMeta | undefined => {
+  ): IAccountMeta | IAccountSignerMeta | undefined => {
     if (!account.value) {
       if (optionalAccountStrategy === 'omitted') return;
       return Object.freeze({

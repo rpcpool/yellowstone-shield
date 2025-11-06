@@ -14,15 +14,15 @@ import {
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
-  type AccountMeta,
-  type AccountSignerMeta,
+  type IAccountMeta,
+  type IAccountSignerMeta,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
-  type Instruction,
-  type InstructionWithAccounts,
-  type InstructionWithData,
+  type IInstruction,
+  type IInstructionWithAccounts,
+  type IInstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -54,18 +54,18 @@ export function getCreatePolicyDiscriminatorBytes() {
 
 export type CreatePolicyInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
-  TAccountMint extends string | AccountMeta<string> = string,
-  TAccountTokenAccount extends string | AccountMeta<string> = string,
-  TAccountPolicy extends string | AccountMeta<string> = string,
-  TAccountPayer extends string | AccountMeta<string> = string,
-  TAccountOwner extends string | AccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountPolicy extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountOwner extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
-> = Instruction<TProgram> &
-  InstructionWithData<ReadonlyUint8Array> &
-  InstructionWithAccounts<
+    | IAccountMeta<string> = '11111111111111111111111111111111',
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
+> = IInstruction<TProgram> &
+  IInstructionWithData<ReadonlyUint8Array> &
+  IInstructionWithAccounts<
     [
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
@@ -78,11 +78,11 @@ export type CreatePolicyInstruction<
         : TAccountPolicy,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
-            AccountSignerMeta<TAccountPayer>
+            IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
       TAccountOwner extends string
         ? WritableSignerAccount<TAccountOwner> &
-            AccountSignerMeta<TAccountOwner>
+            IAccountSignerMeta<TAccountOwner>
         : TAccountOwner,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
@@ -362,7 +362,7 @@ export function getCreatePolicyInstruction<
 
 export type ParsedCreatePolicyInstruction<
   TProgram extends string = typeof SHIELD_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -384,11 +384,11 @@ export type ParsedCreatePolicyInstruction<
 
 export function parseCreatePolicyInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
+  TAccountMetas extends readonly IAccountMeta[],
 >(
-  instruction: Instruction<TProgram> &
-    InstructionWithAccounts<TAccountMetas> &
-    InstructionWithData<ReadonlyUint8Array>
+  instruction: IInstruction<TProgram> &
+    IInstructionWithAccounts<TAccountMetas> &
+    IInstructionWithData<ReadonlyUint8Array>
 ): ParsedCreatePolicyInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
     // TODO: Coded error.
