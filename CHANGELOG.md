@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.6.0
+
+### Changed
+
+- Bump Solana dependencies to v3.0 (#38)
+- Update anchor-lang to v0.32.1
+- Update client generators and regenerate clients
+- Update rust-toolchain to 1.86
+
 ## 0.5.1
 
 ### Changed

@@ -65,9 +65,9 @@ tokio = "1.48.0"
 toml = "0.9.8"
 futures = "0.3.31"
 yellowstone-shield = { path = "program" }
-yellowstone-shield-cli = { path = "cli", version = "0.7.0" }
-yellowstone-shield-client = { path = "clients/rust", version = "0.7.0" }
-yellowstone-shield-parser = { path = "parser", version = "0.8.0" }
+yellowstone-shield-cli = { path = "cli", version = "0.8.0" }
+yellowstone-shield-client = { path = "clients/rust", version = "0.8.0" }
+yellowstone-shield-parser = { path = "parser", version = "0.9.0" }
 yellowstone-grpc-client = "10.1.1"
 yellowstone-grpc-proto = "10.1.1"
 
