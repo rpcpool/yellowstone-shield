@@ -15,7 +15,7 @@ use solana_client::{
 use solana_commitment_config::CommitmentConfig;
 use solana_pubkey::Pubkey;
 use std::time::Duration;
-use yellowstone_grpc_client::GeyserGrpcClient;
+use yellowstone_grpc_client::{ClientTlsConfig, GeyserGrpcClient};
 use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterAccounts,
@@ -516,6 +516,8 @@ impl PolicyStoreBuilder {
         if config.grpc.http2_adaptive_window {
             builder = builder.http2_adaptive_window(true);
         }
+
+        builder = builder.tls_config(ClientTlsConfig::new().with_native_roots()).expect("Failed to set TLS config");
 
         // HTTP/2 keep-alive settings
         if config.grpc.http2_keep_alive {
