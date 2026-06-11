@@ -7,6 +7,7 @@ use hashbrown::{HashMap, HashSet};
 use parking_lot::RwLock;
 use serde::Deserialize;
 
+use solana_account::Account;
 use solana_account_decoder_client_types::UiAccountEncoding;
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
@@ -20,7 +21,9 @@ use yellowstone_grpc_proto::geyser::{
     subscribe_update::UpdateOneof, CommitmentLevel, SubscribeRequest,
     SubscribeRequestFilterAccounts,
 };
-use yellowstone_shield_parser::accounts::{parse_account, PermissionStrategy, Policy, ShieldProgramState, ID as PROGRAM_ID};
+use yellowstone_shield_parser::accounts::{
+    parse_account, PermissionStrategy, Policy, ShieldProgramState, ID as PROGRAM_ID,
+};
 
 pub struct SlotCacheItem<T> {
     slot: u64,
@@ -238,7 +241,7 @@ impl PolicyRpcClient {
 
         let result = self
             .0
-            .get_program_accounts_with_config(
+            .get_program_ui_accounts_with_config(
                 program_id,
                 RpcProgramAccountsConfig {
                     account_config: RpcAccountInfoConfig {
@@ -252,6 +255,13 @@ impl PolicyRpcClient {
             .await?
             .into_iter()
             .filter_map(|(address, account)| {
+                let account: Account = match account.to_account() {
+                    Some(account) => account,
+                    None => {
+                        log::warn!("Failed to decode account data for {}", address);
+                        return None;
+                    }
+                };
                 let data: &[u8] = &account.data;
                 let owner = &account.owner;
 
@@ -496,7 +506,10 @@ impl PolicyStoreBuilder {
         let config = self.config.take().ok_or(StoreError::NoConfig)?;
         let rpc = RpcClient::new(config.rpc.endpoint);
 
-        let policies = PolicyRpcClient::new(rpc).list(&PROGRAM_ID).await.map_err(|e| StoreError::RpcError(e.to_string()))?;
+        let policies = PolicyRpcClient::new(rpc)
+            .list(&PROGRAM_ID)
+            .await
+            .map_err(|e| StoreError::RpcError(e.to_string()))?;
 
         let cache = Arc::new(policies.into());
         let snapshot = Arc::new(ArcSwap::from_pointee(Snapshot::new(&cache)));
@@ -517,7 +530,9 @@ impl PolicyStoreBuilder {
             builder = builder.http2_adaptive_window(true);
         }
 
-        builder = builder.tls_config(ClientTlsConfig::new().with_native_roots()).expect("Failed to set TLS config");
+        builder = builder
+            .tls_config(ClientTlsConfig::new().with_native_roots())
+            .expect("Failed to set TLS config");
 
         // HTTP/2 keep-alive settings
         if config.grpc.http2_keep_alive {
@@ -570,6 +585,7 @@ impl PolicyStoreBuilder {
                 owner: vec![PROGRAM_ID.to_string()],
                 filters: vec![],
                 nonempty_txn_signature: None,
+                cuckoo_accounts_filter: None,
             },
         );
 

@@ -1,5 +1,5 @@
 use borsh::BorshDeserialize;
-use solana_program::pubkey::Pubkey;
+use solana_pubkey::Pubkey;
 use yellowstone_shield_client::instructions::{
     AddIdentity as AddIdentityIxAccounts, AddIdentityInstructionArgs as AddIdentityIxData,
     CreatePolicy as CreatePolicyIxAccounts, CreatePolicyInstructionArgs as CreatePolicyIxData,

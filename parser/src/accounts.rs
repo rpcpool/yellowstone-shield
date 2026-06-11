@@ -1,5 +1,5 @@
-use solana_program::pubkey::Pubkey;
-use yellowstone_shield_client::{PolicyTrait, accounts};
+use solana_pubkey::Pubkey;
+use yellowstone_shield_client::{accounts, PolicyTrait};
 pub use yellowstone_shield_client::{types::PermissionStrategy, ID};
 
 #[derive(Debug, Clone)]
@@ -32,7 +32,6 @@ impl ShieldProgramState {
         data: &[u8],
         expected_program_id: Option<&Pubkey>,
     ) -> Result<Self, String> {
-
         let expected_id = expected_program_id.unwrap_or(&ID);
         if owner != expected_id {
             return Err(format!(
@@ -49,8 +48,8 @@ impl ShieldProgramState {
             0 => {
                 let policy = accounts::Policy::from_bytes(data).map_err(|e| e.to_string())?;
                 let strategy = policy.try_strategy().map_err(|e| e.to_string())?;
-                let identities =
-                    accounts::Policy::try_deserialize_identities(data).map_err(|e| e.to_string())?;
+                let identities = accounts::Policy::try_deserialize_identities(data)
+                    .map_err(|e| e.to_string())?;
                 (strategy, identities)
             }
             1 => {

@@ -20,23 +20,27 @@ test-sbf = ["no-entrypoint"]
 crate-type = ["cdylib", "lib"]
 doctest = false
 
+# Standalone on purpose: the program is excluded from the root workspace so its
+# dependency tree and lockfile stay pinned to the Solana toolchain in use,
+# independent of library upgrades.
+[workspace]
 
 [dependencies]
-borsh = { workspace = true, features = ["derive"] }
-shank = { workspace = true }
-num-derive = { workspace = true }
-num-traits = { workspace = true }
-solana-program = { workspace = true }
-thiserror = { workspace = true }
-spl-associated-token-account = { workspace = true, features = [
+borsh = { version = "1.0.0", features = ["derive"] }
+shank = "0.4.5"
+num-derive = "0.4.2"
+num-traits = "0.2.0"
+solana-program = "3.0.0"
+thiserror = "2.0.17"
+spl-associated-token-account = { version = "8.0.0", features = [
   "no-entrypoint",
 ] }
-spl-token = { workspace = true, features = ["no-entrypoint"] }
-spl-token-2022-interface = { workspace = true }
-spl-token-group-interface = { workspace = true }
-spl-token-metadata-interface = { workspace = true }
-spl-pod = { workspace = true }
-bytemuck = { workspace = true }
-pinocchio = { workspace = true, features = ["std"] }
-pinocchio-system = { workspace = true }
-pinocchio-pubkey = { workspace = true }
+spl-token = { version = "9.0.0", features = ["no-entrypoint"] }
+spl-token-2022-interface = "2.1.0"
+spl-token-group-interface = "0.7.1"
+spl-token-metadata-interface = "0.8.0"
+spl-pod = "0.7.1"
+bytemuck = "1.0.0"
+pinocchio = { version = "0.8.2", features = ["std"] }
+pinocchio-system = "0.2.0"
+pinocchio-pubkey = "0.2.0"

@@ -104,7 +104,7 @@ impl PolicyTrait for generated::accounts::Policy {
     fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
         let identities_data = &data[Self::LEN..];
 
-        if identities_data.len() % PUBKEY_BYTES != 0 {
+        if !identities_data.len().is_multiple_of(PUBKEY_BYTES) {
             return Err(ParseError::InvalidData);
         }
 
@@ -140,7 +140,7 @@ impl PolicyTrait for generated::accounts::PolicyV2 {
     fn try_deserialize_identities(data: &[u8]) -> Result<Vec<Pubkey>, ParseError> {
         let identities_data = &data[Self::LEN..];
 
-        if identities_data.len() % PUBKEY_BYTES != 0 {
+        if !identities_data.len().is_multiple_of(PUBKEY_BYTES) {
             return Err(ParseError::InvalidData);
         }
 

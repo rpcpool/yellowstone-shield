@@ -2,37 +2,40 @@
 name = "yellowstone-shield-store"
 version = "0.9.1"
 edition = "2021"
+rust-version.workspace = true
 readme = "README.md"
 description = "Policy store for the Yellowstone Shield program"
 repository = "https://github.com/rpcpool/yellowstone-shield"
 license = "Apache-2.0"
 
 [dependencies]
-arc-swap = { workspace = true }
-hashbrown = { workspace = true }
-parking_lot = { workspace = true }
-solana-client = { workspace = true }
-solana-pubkey = { workspace = true }
-solana-commitment-config = { workspace = true }
-log = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
-thiserror = { workspace = true }
 anyhow = { workspace = true }
+arc-swap = { workspace = true }
 borsh = { workspace = true, features = ["derive"] }
+futures = { workspace = true }
+hashbrown = { workspace = true }
+humantime-serde = { workspace = true }
+log = { workspace = true }
+parking_lot = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+# Agave Monorepo
+solana-account-decoder-client-types = { workspace = true }
+solana-client = { workspace = true }
+# Solana SDK
+solana-account = { workspace = true }
+solana-commitment-config = { workspace = true }
+solana-pubkey = { workspace = true }
+# Yellowstone
 yellowstone-grpc-client = { workspace = true }
 yellowstone-grpc-proto = { workspace = true }
-yellowstone-shield-parser = { workspace = true, features = [] }
-serde = { workspace = true, features = ["derive"] }
-humantime-serde = "1.1"
-solana-account-decoder-client-types = { workspace = true }
-futures = { workspace = true }
+yellowstone-shield-parser = { workspace = true }
 
 [dev-dependencies]
-toml = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-clap_derive = { workspace = true }
-yellowstone-shield-cli = { workspace = true }
-yellowstone-shield-client = { workspace = true }
 env_logger = { workspace = true }
 solana-cli-config = { workspace = true }
-solana-pubkey = { workspace = true }
+toml = { workspace = true }
+yellowstone-shield-cli = { workspace = true }
+yellowstone-shield-client = { workspace = true }

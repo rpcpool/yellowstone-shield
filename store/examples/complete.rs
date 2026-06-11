@@ -35,11 +35,7 @@ async fn main() {
 
     let local = tokio::task::LocalSet::new();
 
-    let policy_store = PolicyStore::build()
-        .config(config)
-        .run()
-        .await
-        .unwrap();
+    let policy_store = PolicyStore::build().config(config).run().await.unwrap();
 
     local
         .run_until(async {
