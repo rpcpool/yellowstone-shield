@@ -3,7 +3,7 @@ resolver = "2"
 members = ["cli", "clients/rust", "parser", "program", "store"]
 
 [workspace.package]
-version = "0.6.0"
+version = "0.7.0"
 rust-version = "1.93.1" # sets the minimum rustc to use this lib, keep in sync with rust-toolchain.toml
 
 [workspace.dependencies]
@@ -70,9 +70,9 @@ spl-token-metadata-interface = "0.8.0"
 # Yellowstone
 yellowstone-grpc-client = "13.1.0"
 yellowstone-grpc-proto = "12.4.0"
-yellowstone-shield-cli = { path = "cli", version = "0.8.0" }
-yellowstone-shield-client = { path = "clients/rust", version = "0.8.0" }
-yellowstone-shield-parser = { path = "parser", version = "0.9.0" }
+yellowstone-shield-cli = { path = "cli", version = "0.9.0" }
+yellowstone-shield-client = { path = "clients/rust", version = "0.9.0" }
+yellowstone-shield-parser = { path = "parser", version = "0.10.0" }
 
 [workspace.metadata.toolchains]
 format = "1.93.1"

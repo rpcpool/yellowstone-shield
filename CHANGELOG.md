@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.7.0
+
+### Changed
+
+- Bump Solana dependencies to Agave v4.0 (#43)
+- Bump yellowstone-grpc-client to v13.1 and yellowstone-grpc-proto to v12.4 (#43)
+- Bump the Solana CLI used for program builds and the local validator to v4.0.2 (#43)
+- Update rust-toolchain to 1.93.1 and declare `rust-version` on the published crates (#43)
+- Reorganize workspace dependencies into Agave, Solana SDK, SPL, and Yellowstone sections, and remove unused ones (#43)
+- Adapt the policy store to the v4 RPC client API (`get_program_ui_accounts_with_config`) (#43)
+- The parser now depends on solana-pubkey directly instead of solana-program (#43)
+
 ## 0.6.0
 
 ### Changed
