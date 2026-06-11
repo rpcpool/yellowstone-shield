@@ -13,12 +13,9 @@ import './dump.mjs';
 // ['--arg1', '--arg2', ...cliArguments()]
 const buildArgs = cliArguments();
 
-// Build the programs. The output directory is forced to the workspace-level
-// target/deploy folder because the program package lives outside the
-// workspace and would otherwise emit into its own target directory.
-const sbfOutDir = path.join(workingDirectory, 'target', 'deploy');
+// Build the programs.
 for (const folder of getProgramFolders()) {
   const manifestPath = path.join(workingDirectory, folder, 'Cargo.toml');
 
-  await $`cargo-build-sbf --manifest-path ${manifestPath} --sbf-out-dir ${sbfOutDir} ${buildArgs}`;
+  await $`cargo-build-sbf --manifest-path ${manifestPath} ${buildArgs}`;
 }

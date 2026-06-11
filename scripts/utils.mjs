@@ -65,8 +65,7 @@ export function getProgramFolders() {
 }
 
 export function getAllProgramFolders() {
-  const { members = [], exclude = [] } = getCargo().workspace;
-  return [...members, ...exclude].filter((member) =>
+  return getCargo().workspace.members.filter((member) =>
     (getCargo(member).lib?.['crate-type'] ?? []).includes('cdylib')
   );
 }
