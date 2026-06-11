@@ -4,7 +4,9 @@ members = ["cli", "clients/rust", "parser", "program", "store"]
 
 [workspace.package]
 version = "0.7.0"
-rust-version = "1.93.1" # sets the minimum rustc to use this lib, keep in sync with rust-toolchain.toml
+# Minimum rustc to build the published crates. rust-toolchain.toml is newer
+# because dev-only dependencies (solana-program-test v4) need rustc 1.92+.
+rust-version = "1.89.0"
 
 [workspace.dependencies]
 anchor-lang = "0.32.1"
