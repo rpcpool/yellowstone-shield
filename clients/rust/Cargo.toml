@@ -44,7 +44,7 @@ solana-pubkey = { workspace = true, features = ["curve25519", "borsh"] }
 solana-rent = { workspace = true }
 solana-signer = { workspace = true }
 solana-system-interface = { workspace = true, features = ["bincode"] }
-solana-transaction = { workspace = true }
+solana-transaction = { workspace = true, features = ["wincode"] }
 # SPL
 spl-associated-token-account = { workspace = true, features = [
   "no-entrypoint",
