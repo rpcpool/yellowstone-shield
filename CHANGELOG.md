@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bump yellowstone-grpc-client to v15.0 and yellowstone-grpc-proto to v14.0
+- Bump hashbrown to v0.17 and num-derive to v0.5
+- Refresh the lockfile to the latest compatible releases (Agave v4.3)
+- Update rust-toolchain to 1.97.1, required by the Agave v4.3 dev-dependencies
+
 ## 0.7.0
 
 ### Changed

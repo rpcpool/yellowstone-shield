@@ -5,7 +5,7 @@ members = ["cli", "clients/rust", "parser", "program", "store"]
 [workspace.package]
 version = "0.7.0"
 # Minimum rustc to build the published crates. rust-toolchain.toml is newer
-# because dev-only dependencies (solana-program-test v4) need rustc 1.92+.
+# because dev-only dependencies (solana-program-test v4.3) need rustc 1.97.1+.
 rust-version = "1.89.0"
 
 [workspace.dependencies]
@@ -20,10 +20,10 @@ clap = "4.5.32"
 clap_derive = "4.5.32"
 env_logger = "0.11.3"
 futures = "0.3.31"
-hashbrown = "0.16.0"
+hashbrown = "0.17.1"
 humantime-serde = "1.1.1"
 log = "0.4.21"
-num-derive = "0.4.2"
+num-derive = "0.5.1"
 num-traits = "0.2.0"
 parking_lot = "0.12.0"
 pinocchio = "0.8.2"
@@ -70,15 +70,15 @@ spl-token-group-interface = "0.7.1"
 spl-token-metadata-interface = "0.8.0"
 
 # Yellowstone
-yellowstone-grpc-client = "13.1.0"
-yellowstone-grpc-proto = "12.4.0"
+yellowstone-grpc-client = "15.0.0"
+yellowstone-grpc-proto = "14.0.1"
 yellowstone-shield-cli = { path = "cli", version = "0.10.0" }
 yellowstone-shield-client = { path = "clients/rust", version = "0.10.0" }
 yellowstone-shield-parser = { path = "parser", version = "0.11.0" }
 
 [workspace.metadata.toolchains]
-format = "1.93.1"
-lint = "1.93.1"
+format = "1.97.1"
+lint = "1.97.1"
 
 [workspace.metadata.cli]
 solana = "v4.0.2"
