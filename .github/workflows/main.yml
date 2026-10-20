@@ -9,7 +9,7 @@ on:
 jobs:
   format_and_lint_programs:
     name: Format & Lint Programs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
 
   format_and_lint_client_js:
     name: Format & Lint Client JS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
 
   format_and_lint_client_rust:
     name: Format & Lint Client Rust
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
 
   build_programs:
     name: Build programs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format_and_lint_programs
     steps:
       - name: Git Checkout
@@ -95,7 +95,7 @@ jobs:
 
   test_programs:
     name: Test Programs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format_and_lint_programs
     steps:
       - name: Git Checkout
@@ -113,7 +113,7 @@ jobs:
 
   generate_idls:
     name: Check IDL Generation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format_and_lint_programs
     steps:
       - name: Git Checkout
@@ -138,7 +138,7 @@ jobs:
 
   generate_clients:
     name: Check Client Generation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: format_and_lint_programs
     steps:
       - name: Git Checkout
@@ -159,7 +159,7 @@ jobs:
 
   test_client_js:
     name: Test Client JS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build_programs
     steps:
       - name: Git Checkout
@@ -183,7 +183,7 @@ jobs:
 
   test_client_rust:
     name: Test Client Rust
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build_programs
     steps:
       - name: Git Checkout
